@@ -30,6 +30,12 @@ export default function BeforeAfter() {
   const currentBefore = beforeImages[activeBeforeIdx];
   const currentAi = currentBefore ? getAiImage(currentBefore.id, selectedColor) : null;
 
+  // Standalone AI images (no before images to pair with)
+  const standaloneAiImages = hasTransformations && beforeImages.length === 0;
+  const currentStandaloneAi = standaloneAiImages
+    ? (selectedColor === "white" ? aiWhiteImages : aiGrayImages)
+    : [];
+
   // If no before images or no AI images at all, show placeholder
   if (beforeImages.length === 0 && !hasTransformations) {
     return (
@@ -71,48 +77,50 @@ export default function BeforeAfter() {
         icon={<Sparkles className="w-5 h-5" />}
       />
 
-      {/* AI Transformation Slider Section */}
+      {/* Color Toggle — shared between slider and standalone modes */}
+      {hasTransformations && (
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div>
+                <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-amber-500" />
+                  AI Roof Visualization
+                </h3>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  See how your roof will look with silicone coating applied
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant={selectedColor === "white" ? "default" : "outline"}
+                  size="sm"
+                  className="text-xs h-8 gap-2"
+                  onClick={() => setSelectedColor("white")}
+                  data-testid="button-color-white"
+                >
+                  <div className="w-3.5 h-3.5 rounded-full bg-white border border-gray-300" />
+                  White Silicone
+                </Button>
+                <Button
+                  variant={selectedColor === "gray" ? "default" : "outline"}
+                  size="sm"
+                  className="text-xs h-8 gap-2"
+                  onClick={() => setSelectedColor("gray")}
+                  data-testid="button-color-gray"
+                >
+                  <div className="w-3.5 h-3.5 rounded-full bg-gray-400 border border-gray-500" />
+                  Gray Silicone
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* AI Transformation Slider Section (when before images exist) */}
       {hasTransformations && currentBefore && (
         <div className="space-y-4">
-          {/* Color Toggle */}
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                <div>
-                  <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                    <Sparkles className="w-4 h-4 text-amber-500" />
-                    AI Roof Visualization
-                  </h3>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    See how your roof will look with silicone coating applied
-                  </p>
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    variant={selectedColor === "white" ? "default" : "outline"}
-                    size="sm"
-                    className="text-xs h-8 gap-2"
-                    onClick={() => setSelectedColor("white")}
-                    data-testid="button-color-white"
-                  >
-                    <div className="w-3.5 h-3.5 rounded-full bg-white border border-gray-300" />
-                    White Silicone
-                  </Button>
-                  <Button
-                    variant={selectedColor === "gray" ? "default" : "outline"}
-                    size="sm"
-                    className="text-xs h-8 gap-2"
-                    onClick={() => setSelectedColor("gray")}
-                    data-testid="button-color-gray"
-                  >
-                    <div className="w-3.5 h-3.5 rounded-full bg-gray-400 border border-gray-500" />
-                    Gray Silicone
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
           {/* Slider */}
           {currentAi ? (
             <ImageComparisonSlider
@@ -160,22 +168,72 @@ export default function BeforeAfter() {
               ))}
             </div>
           )}
-
-          {/* Info callout */}
-          <Card className="bg-primary/5 border-primary/20">
-            <CardContent className="p-4 flex items-start gap-3">
-              <Sparkles className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
-              <div>
-                <p className="text-xs font-semibold text-foreground">AI-Powered Visualization</p>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  This preview was generated from your actual roof photos using artificial intelligence.
-                  It shows a realistic approximation of the finished silicone coating. Actual results may vary
-                  slightly based on roof conditions and application technique.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
         </div>
+      )}
+
+      {/* Standalone AI Gallery (AI images exist but no before photos to pair) */}
+      {standaloneAiImages && (
+        <div className="space-y-4">
+          {aiWhiteImages.length > 0 && aiGrayImages.length > 0 ? (
+            <ImageComparisonSlider
+              beforeSrc={(selectedColor === "white" ? aiGrayImages : aiWhiteImages)[0]?.imageUrl || ""}
+              afterSrc={(selectedColor === "white" ? aiWhiteImages : aiGrayImages)[0]?.imageUrl || ""}
+              beforeLabel={selectedColor === "white" ? "Gray Silicone" : "White Silicone"}
+              afterLabel={selectedColor === "white" ? "White Silicone" : "Gray Silicone"}
+              className="aspect-[4/3]"
+            />
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {currentStandaloneAi.map((img) => (
+                <Card key={img.id} className="overflow-hidden">
+                  <img
+                    src={img.imageUrl}
+                    alt={img.caption || "AI Preview"}
+                    className="w-full aspect-[4/3] object-cover"
+                  />
+                  <CardContent className="p-3">
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="text-[9px]">
+                        {selectedColor === "white" ? "White" : "Gray"} Silicone
+                      </Badge>
+                      {img.caption && (
+                        <span className="text-xs text-muted-foreground truncate">{img.caption}</span>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+
+          {/* Second comparison if we have 2+ images */}
+          {aiWhiteImages.length > 1 && aiGrayImages.length > 1 && (
+            <ImageComparisonSlider
+              beforeSrc={(selectedColor === "white" ? aiGrayImages : aiWhiteImages)[1]?.imageUrl || ""}
+              afterSrc={(selectedColor === "white" ? aiWhiteImages : aiGrayImages)[1]?.imageUrl || ""}
+              beforeLabel={selectedColor === "white" ? "Gray Silicone" : "White Silicone"}
+              afterLabel={selectedColor === "white" ? "White Silicone" : "Gray Silicone"}
+              className="aspect-[4/3]"
+            />
+          )}
+        </div>
+      )}
+
+      {/* Info callout */}
+      {hasTransformations && (
+        <Card className="bg-primary/5 border-primary/20">
+          <CardContent className="p-4 flex items-start gap-3">
+            <Sparkles className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="text-xs font-semibold text-foreground">AI-Powered Visualization</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                This preview was generated from your actual roof photos using artificial intelligence.
+                It shows a realistic approximation of the finished silicone coating. Actual results may vary
+                slightly based on roof conditions and application technique.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
       )}
 
       {/* Original Before/After Gallery (for non-AI images or as additional reference) */}
