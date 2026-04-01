@@ -1,5 +1,6 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { apiRequest, queryClient, API_BASE } from "@/lib/queryClient";
+import { resolveApiUrl } from "@/lib/utils";
 import { PageHeader } from "@/components/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -94,7 +95,7 @@ function AITransformSection({ proposalId, images }: { proposalId: number; images
 
         return (
           <div key={img.id} className="flex items-center gap-3 p-2 rounded-md bg-background border">
-            <img src={img.imageUrl} alt="" className="w-16 h-12 rounded object-cover flex-shrink-0" />
+            <img src={resolveApiUrl(img.imageUrl)} alt="" className="w-16 h-12 rounded object-cover flex-shrink-0" />
             <div className="flex-1 min-w-0">
               <p className="text-xs font-medium truncate">{img.caption || "Before photo"}</p>
               <div className="flex gap-1 mt-1">
@@ -113,10 +114,10 @@ function AITransformSection({ proposalId, images }: { proposalId: number; images
             {/* Show AI image thumbnails if available */}
             <div className="flex gap-1.5 flex-shrink-0">
               {whiteImg && (
-                <img src={whiteImg.imageUrl} alt="White AI" className="w-12 h-9 rounded object-cover border border-green-300" />
+                <img src={resolveApiUrl(whiteImg.imageUrl)} alt="White AI" className="w-12 h-9 rounded object-cover border border-green-300" />
               )}
               {grayImg && (
-                <img src={grayImg.imageUrl} alt="Gray AI" className="w-12 h-9 rounded object-cover border border-gray-400" />
+                <img src={resolveApiUrl(grayImg.imageUrl)} alt="Gray AI" className="w-12 h-9 rounded object-cover border border-gray-400" />
               )}
             </div>
           </div>
@@ -179,7 +180,7 @@ export default function AdminProposalEdit() {
     try {
       const formData = new FormData();
       formData.append("file", file);
-      const uploadRes = await fetch("/api/admin/upload", { method: "POST", body: formData });
+      const uploadRes = await fetch(`${API_BASE}/api/admin/upload`, { method: "POST", body: formData, credentials: API_BASE ? "include" : "same-origin" });
       const uploadData = await uploadRes.json();
 
       if (!uploadRes.ok) throw new Error(uploadData.error || "Upload failed");
@@ -361,7 +362,7 @@ export default function AdminProposalEdit() {
                 </div>
                 <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                   {doc.documentUrl && (
-                    <a href={doc.documentUrl} target="_blank" rel="noopener noreferrer">
+                    <a href={resolveApiUrl(doc.documentUrl)} target="_blank" rel="noopener noreferrer">
                       <Button variant="ghost" size="sm" className="h-7 w-7 p-0"><Eye className="w-3.5 h-3.5" /></Button>
                     </a>
                   )}
@@ -388,7 +389,7 @@ export default function AdminProposalEdit() {
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {images.map(img => (
                 <div key={img.id} className="relative group rounded-md overflow-hidden border" data-testid={`card-image-${img.id}`}>
-                  <img src={img.imageUrl} alt={img.caption || ""} className="w-full h-32 object-cover" />
+                  <img src={resolveApiUrl(img.imageUrl)} alt={img.caption || ""} className="w-full h-32 object-cover" />
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center">
                     <Button
                       variant="destructive"
@@ -432,7 +433,7 @@ export default function AdminProposalEdit() {
                 </div>
                 <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                   {doc.documentUrl && (
-                    <a href={doc.documentUrl} target="_blank" rel="noopener noreferrer">
+                    <a href={resolveApiUrl(doc.documentUrl)} target="_blank" rel="noopener noreferrer">
                       <Button variant="ghost" size="sm" className="h-7 w-7 p-0"><Eye className="w-3.5 h-3.5" /></Button>
                     </a>
                   )}

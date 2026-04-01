@@ -1,6 +1,8 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
-const API_BASE = "__PORT_5000__".startsWith("__") ? "" : "__PORT_5000__";
+// In hybrid mode VITE_API_URL points to the Render backend (e.g. "https://mccurdy-api.onrender.com").
+// When empty / unset the app behaves as before — same-origin requests.
+export const API_BASE = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/+$/, "") ?? "";
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
@@ -18,6 +20,7 @@ export async function apiRequest(
     method,
     headers: data ? { "Content-Type": "application/json" } : {},
     body: data ? JSON.stringify(data) : undefined,
+    credentials: API_BASE ? "include" : "same-origin",
   });
 
   await throwIfResNotOk(res);
@@ -30,7 +33,9 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
-    const res = await fetch(`${API_BASE}${queryKey.join("/")}`);
+    const res = await fetch(`${API_BASE}${queryKey.join("/")}`, {
+      credentials: API_BASE ? "include" : "same-origin",
+    });
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {
       return null;

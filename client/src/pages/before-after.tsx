@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ImageIcon, Camera, Sparkles, ArrowLeftRight } from "lucide-react";
 import { useEffect, useState, useMemo } from "react";
+import { resolveApiUrl } from "@/lib/utils";
 
 type ColorChoice = "white" | "gray";
 
@@ -124,8 +125,8 @@ export default function BeforeAfter() {
           {/* Slider */}
           {currentAi ? (
             <ImageComparisonSlider
-              beforeSrc={currentBefore.imageUrl}
-              afterSrc={currentAi.imageUrl}
+              beforeSrc={resolveApiUrl(currentBefore.imageUrl)}
+              afterSrc={resolveApiUrl(currentAi.imageUrl)}
               beforeLabel="Current Condition"
               afterLabel={`${selectedColor === "white" ? "White" : "Gray"} Silicone Finish`}
               className="aspect-[4/3]"
@@ -160,7 +161,7 @@ export default function BeforeAfter() {
                   data-testid={`button-photo-${idx}`}
                 >
                   <img
-                    src={img.imageUrl}
+                    src={resolveApiUrl(img.imageUrl)}
                     alt={img.caption || `Photo ${idx + 1}`}
                     className="w-20 h-14 object-cover"
                   />
@@ -176,8 +177,8 @@ export default function BeforeAfter() {
         <div className="space-y-4">
           {aiWhiteImages.length > 0 && aiGrayImages.length > 0 ? (
             <ImageComparisonSlider
-              beforeSrc={(selectedColor === "white" ? aiGrayImages : aiWhiteImages)[0]?.imageUrl || ""}
-              afterSrc={(selectedColor === "white" ? aiWhiteImages : aiGrayImages)[0]?.imageUrl || ""}
+              beforeSrc={resolveApiUrl((selectedColor === "white" ? aiGrayImages : aiWhiteImages)[0]?.imageUrl || "")}
+              afterSrc={resolveApiUrl((selectedColor === "white" ? aiWhiteImages : aiGrayImages)[0]?.imageUrl || "")}
               beforeLabel={selectedColor === "white" ? "Gray Silicone" : "White Silicone"}
               afterLabel={selectedColor === "white" ? "White Silicone" : "Gray Silicone"}
               className="aspect-[4/3]"
@@ -187,7 +188,7 @@ export default function BeforeAfter() {
               {currentStandaloneAi.map((img) => (
                 <Card key={img.id} className="overflow-hidden">
                   <img
-                    src={img.imageUrl}
+                    src={resolveApiUrl(img.imageUrl)}
                     alt={img.caption || "AI Preview"}
                     className="w-full aspect-[4/3] object-cover"
                   />
@@ -209,8 +210,8 @@ export default function BeforeAfter() {
           {/* Second comparison if we have 2+ images */}
           {aiWhiteImages.length > 1 && aiGrayImages.length > 1 && (
             <ImageComparisonSlider
-              beforeSrc={(selectedColor === "white" ? aiGrayImages : aiWhiteImages)[1]?.imageUrl || ""}
-              afterSrc={(selectedColor === "white" ? aiWhiteImages : aiGrayImages)[1]?.imageUrl || ""}
+              beforeSrc={resolveApiUrl((selectedColor === "white" ? aiGrayImages : aiWhiteImages)[1]?.imageUrl || "")}
+              afterSrc={resolveApiUrl((selectedColor === "white" ? aiWhiteImages : aiGrayImages)[1]?.imageUrl || "")}
               beforeLabel={selectedColor === "white" ? "Gray Silicone" : "White Silicone"}
               afterLabel={selectedColor === "white" ? "White Silicone" : "Gray Silicone"}
               className="aspect-[4/3]"
@@ -247,7 +248,7 @@ export default function BeforeAfter() {
             {beforeImages.map((img) => (
               <Card key={img.id}>
                 <CardContent className="p-0">
-                  <img src={img.imageUrl} alt={img.caption || "Before"} className="w-full h-48 object-cover rounded-t-md" />
+                  <img src={resolveApiUrl(img.imageUrl)} alt={img.caption || "Before"} className="w-full h-48 object-cover rounded-t-md" />
                   <div className="p-3 flex items-center gap-2">
                     <Badge variant="outline" className="text-[9px]">Before</Badge>
                     {img.caption && <span className="text-xs text-muted-foreground truncate">{img.caption}</span>}
