@@ -115,7 +115,7 @@ export default function Welcome() {
 
       {/* ── Premium Divider ── */}
       <div className="px-4">
-        <div className="premium-divider mx-auto" style={{ width: '80%' }} />
+        <div className="premium-divider mx-auto w-4/5" />
       </div>
 
       {/* ── Property & System Summary ── */}
