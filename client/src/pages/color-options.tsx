@@ -1,5 +1,6 @@
 import { useProposal } from "@/lib/proposal-context";
 import { PageHeader } from "@/components/page-header";
+import { ScrollReveal } from "@/components/scroll-reveal";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Palette, Star, Info } from "lucide-react";
@@ -58,6 +59,7 @@ export default function ColorOptions() {
       )}
 
       {/* Available Alternatives */}
+      <ScrollReveal delay={100}>
       {alternates.length > 0 && (
         <Card className="glass-card border-0">
           <div className="p-5 border-b border-border/50">
@@ -78,8 +80,10 @@ export default function ColorOptions() {
           </CardContent>
         </Card>
       )}
+      </ScrollReveal>
 
       {/* Color Notes */}
+      <ScrollReveal delay={200}>
       {proposal.colorNotes && (
         <Card className="glass-card border-0">
           <CardContent className="p-5 flex items-start gap-3">
@@ -88,6 +92,7 @@ export default function ColorOptions() {
           </CardContent>
         </Card>
       )}
+      </ScrollReveal>
       <PageNavigation />
     </div>
   );

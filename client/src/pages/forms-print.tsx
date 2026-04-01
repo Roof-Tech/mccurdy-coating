@@ -1,5 +1,6 @@
 import { useProposal } from "@/lib/proposal-context";
 import { PageHeader } from "@/components/page-header";
+import { ScrollReveal } from "@/components/scroll-reveal";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -69,6 +70,7 @@ export default function FormsPrint() {
       </Card>
 
       {/* Records to Save */}
+      <ScrollReveal delay={100}>
       <Card className="glass-card border-0">
         <div className="p-5 border-b border-border/50">
           <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
@@ -87,6 +89,7 @@ export default function FormsPrint() {
           </div>
         </CardContent>
       </Card>
+      </ScrollReveal>
       <PageNavigation />
     </div>
   );

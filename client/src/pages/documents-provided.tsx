@@ -1,5 +1,6 @@
 import { useProposal } from "@/lib/proposal-context";
 import { PageHeader } from "@/components/page-header";
+import { ScrollReveal } from "@/components/scroll-reveal";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -41,6 +42,7 @@ export default function DocumentsProvided() {
         icon={<FolderOpen className="w-5 h-5" />}
       />
 
+      <ScrollReveal delay={100}>
       <Card className="glass-card border-0 overflow-hidden">
         <div className="p-5 border-b border-border/50">
           <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
@@ -68,6 +70,7 @@ export default function DocumentsProvided() {
           })}
         </div>
       </Card>
+      </ScrollReveal>
       <PageNavigation />
     </div>
   );

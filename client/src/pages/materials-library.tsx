@@ -1,5 +1,6 @@
 import { useProposal } from "@/lib/proposal-context";
 import { PageHeader } from "@/components/page-header";
+import { ScrollReveal } from "@/components/scroll-reveal";
 import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Package, Layers, Paintbrush, Wrench, Droplets, Filter, Building2, FileText, Shield } from "lucide-react";
@@ -83,6 +84,7 @@ export default function MaterialsLibrary() {
         </p>
       </div>
 
+      <ScrollReveal delay={100}>
       <Accordion type="multiple" className="space-y-3 stagger-children">
         {materialsList.map((mat: any, i: number) => {
           const displayName = getDisplayName(mat);
@@ -148,6 +150,7 @@ export default function MaterialsLibrary() {
           );
         })}
       </Accordion>
+      </ScrollReveal>
       <PageNavigation />
     </div>
   );

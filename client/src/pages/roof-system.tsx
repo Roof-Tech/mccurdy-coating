@@ -1,5 +1,6 @@
 import { useProposal } from "@/lib/proposal-context";
 import { PageHeader } from "@/components/page-header";
+import { ScrollReveal } from "@/components/scroll-reveal";
 import { Card, CardContent } from "@/components/ui/card";
 import { Layers, Package, Wrench, Factory } from "lucide-react";
 import { useEffect } from "react";
@@ -61,6 +62,7 @@ export default function RoofSystem() {
       </Card>
 
       {/* System Build Stack */}
+      <ScrollReveal delay={100}>
       <Card className="glass-card border-0 overflow-hidden">
         <div className="p-5 border-b border-border/50">
           <h3 className="text-sm font-semibold text-foreground">System Build Stack</h3>
@@ -79,13 +81,14 @@ export default function RoofSystem() {
             ))}
           </div>
           {proposal.totalDryMils && (
-            <div className="mt-4 p-4 rounded-xl bg-primary/5 border border-primary/10">
+            <div className="mt-4 p-4 rounded-xl premium-card bg-primary/5 border border-primary/10">
               <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Total Dry Mil Target</p>
               <p className="text-sm font-bold text-primary">{proposal.totalDryMils}</p>
             </div>
           )}
         </CardContent>
       </Card>
+      </ScrollReveal>
       <PageNavigation />
     </div>
   );

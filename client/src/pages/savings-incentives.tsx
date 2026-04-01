@@ -1,5 +1,6 @@
 import { useProposal } from "@/lib/proposal-context";
 import { PageHeader } from "@/components/page-header";
+import { ScrollReveal } from "@/components/scroll-reveal";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -182,6 +183,7 @@ export default function SavingsIncentives() {
       </div>
 
       {/* Legal Disclaimer */}
+      <ScrollReveal delay={100}>
       <div className="glass-card rounded-lg p-4 flex items-start gap-3 border border-amber-500/20 bg-amber-500/5 animate-fade-in">
         <div className="w-8 h-8 rounded-lg bg-amber-500/15 flex items-center justify-center flex-shrink-0">
           <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400" />
@@ -190,6 +192,7 @@ export default function SavingsIncentives() {
           The items below represent potential pathways and are not guaranteed savings. McCurdy Roofing provides documentation and guidance but does not provide tax, legal, or financial advice. Always consult your CPA or qualified professional before making financial decisions. Program availability and amounts are subject to change.
         </p>
       </div>
+      </ScrollReveal>
 
       {/* County Selector — Premium Style */}
       <div className="glass-card rounded-xl p-5 space-y-4 animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
@@ -250,6 +253,7 @@ export default function SavingsIncentives() {
 
       {/* County Programs — Premium Layout */}
       {countyData && !loadingCounty && (
+        <ScrollReveal delay={200}>
         <div className="space-y-5 animate-fade-in-up" style={{ animationDelay: "0.15s" }}>
           {/* Summary Strip */}
           <div className="glass-card rounded-xl p-4">
@@ -334,6 +338,7 @@ export default function SavingsIncentives() {
             })}
           </div>
         </div>
+        </ScrollReveal>
       )}
 
       {/* Empty State — Premium */}

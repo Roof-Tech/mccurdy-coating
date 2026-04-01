@@ -1,5 +1,6 @@
 import { useProposal } from "@/lib/proposal-context";
 import { PageHeader } from "@/components/page-header";
+import { ScrollReveal } from "@/components/scroll-reveal";
 import { ImageComparisonSlider } from "@/components/image-comparison-slider";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -261,6 +262,7 @@ export default function BeforeAfter() {
       )}
 
       {/* Benefits callout */}
+      <ScrollReveal delay={100}>
       <Card>
         <CardContent className="p-5">
           <h3 className="text-sm font-semibold mb-3">Why Silicone Roof Coating?</h3>
@@ -282,6 +284,7 @@ export default function BeforeAfter() {
           </div>
         </CardContent>
       </Card>
+      </ScrollReveal>
       <PageNavigation />
     </div>
   );

@@ -1,5 +1,6 @@
 import { useProposal } from "@/lib/proposal-context";
 import { PageHeader } from "@/components/page-header";
+import { ScrollReveal } from "@/components/scroll-reveal";
 import { Card, CardContent } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Scale, HelpCircle, FileCheck, Building2 } from "lucide-react";
@@ -37,6 +38,7 @@ export default function Compliance() {
         icon={<Scale className="w-5 h-5" />}
       />
 
+      <ScrollReveal delay={100}>
       <Accordion type="multiple" defaultValue={["what", "when", "docs", "help"]} className="space-y-3 stagger-children">
         {sections.map((section) => (
           <AccordionItem key={section.value} value={section.value} className="glass-card border-0 rounded-xl px-5 overflow-hidden">
@@ -54,6 +56,7 @@ export default function Compliance() {
           </AccordionItem>
         ))}
       </Accordion>
+      </ScrollReveal>
       <PageNavigation />
     </div>
   );

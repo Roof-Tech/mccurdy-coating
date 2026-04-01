@@ -1,5 +1,6 @@
 import { useProposal } from "@/lib/proposal-context";
 import { PageHeader } from "@/components/page-header";
+import { ScrollReveal } from "@/components/scroll-reveal";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Users, MessageSquare, Building2, UserCheck, Copy, Check } from "lucide-react";
@@ -75,8 +76,9 @@ export default function CpaQuestions() {
       />
 
       <div className="space-y-4 stagger-children">
-        {questionSections.map((section) => (
-          <Card key={section.title} className={`glass-card border-0 overflow-hidden border-l-4 ${section.borderColor}`}>
+        {questionSections.map((section, idx) => (
+          <ScrollReveal key={section.title} delay={(idx + 1) * 100}>
+          <Card className={`glass-card border-0 overflow-hidden border-l-4 ${section.borderColor}`}>
             <div className="p-5 border-b border-border/50 flex items-center justify-between">
               <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
                 <div className={`w-7 h-7 rounded-lg ${section.bgColor} flex items-center justify-center`}>
@@ -108,6 +110,7 @@ export default function CpaQuestions() {
               </div>
             </CardContent>
           </Card>
+          </ScrollReveal>
         ))}
       </div>
       <PageNavigation />

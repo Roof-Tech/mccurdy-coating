@@ -1,5 +1,6 @@
 import { useProposal } from "@/lib/proposal-context";
 import { PageHeader } from "@/components/page-header";
+import { ScrollReveal } from "@/components/scroll-reveal";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Layers, Info, Target } from "lucide-react";
@@ -26,6 +27,7 @@ export default function MilsBuild() {
       />
 
       {/* Layer Breakdown */}
+      <ScrollReveal delay={100}>
       <Card className="glass-card border-0">
         <div className="p-5 border-b border-border/50">
           <h3 className="text-sm font-semibold text-foreground">Layer Breakdown</h3>
@@ -46,10 +48,12 @@ export default function MilsBuild() {
           ))}
         </CardContent>
       </Card>
+      </ScrollReveal>
 
       {/* Total Dry Mil Target */}
+      <ScrollReveal delay={200}>
       {proposal.totalDryMils && (
-        <div className="relative overflow-hidden rounded-xl premium-gradient p-6">
+        <div className="relative overflow-hidden rounded-xl premium-gradient premium-card p-6">
           <div className="absolute inset-0 overflow-hidden">
             <div className="absolute -top-10 -right-10 w-32 h-32 rounded-full bg-white/[0.03]" />
           </div>
@@ -68,6 +72,7 @@ export default function MilsBuild() {
           </div>
         </div>
       )}
+      </ScrollReveal>
 
       {/* Layer count */}
       <div className="glass-card rounded-xl p-4 flex items-center justify-between">

@@ -1,5 +1,6 @@
 import { useProposal } from "@/lib/proposal-context";
 import { PageHeader } from "@/components/page-header";
+import { ScrollReveal } from "@/components/scroll-reveal";
 import { Card, CardContent } from "@/components/ui/card";
 import { AlertTriangle, CheckCircle, Shield, Zap, DollarSign, Clock, Droplets } from "lucide-react";
 import { useEffect } from "react";
@@ -37,6 +38,7 @@ export default function WhySystem() {
       )}
 
       {/* ── Key Issues ── */}
+      <ScrollReveal delay={100}>
       {issues.length > 0 && (
         <Card className="glass-card border-0 overflow-hidden border-l-4 border-l-amber-500/60">
           <div className="p-5 border-b border-border/50">
@@ -59,8 +61,10 @@ export default function WhySystem() {
           </CardContent>
         </Card>
       )}
+      </ScrollReveal>
 
       {/* ── Why We Recommend This System ── */}
+      <ScrollReveal delay={200}>
       {reasons.length > 0 && (
         <Card className="glass-card border-0 overflow-hidden border-l-4 border-l-green-500/60">
           <div className="p-5 border-b border-border/50">
@@ -83,6 +87,7 @@ export default function WhySystem() {
           </CardContent>
         </Card>
       )}
+      </ScrollReveal>
       <PageNavigation />
     </div>
   );
