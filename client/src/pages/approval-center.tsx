@@ -10,6 +10,7 @@ import { CheckCircle, Phone, MessageCircle, Send, RefreshCw, Shield, ArrowRight 
 import { useEffect, useState } from "react";
 import { apiRequest } from "@/lib/queryClient";
 import { PageNavigation } from "@/components/page-navigation";
+import { ScrollReveal } from "@/components/scroll-reveal";
 
 export default function ApprovalCenter() {
   const { proposal, trackEvent, token } = useProposal();
@@ -85,7 +86,8 @@ export default function ApprovalCenter() {
       />
 
       {/* ── Your Information ── */}
-      <Card className="glass-card border-0">
+      <ScrollReveal delay={100}>
+      <Card className="premium-card border-0">
         <div className="p-5 border-b border-border/50">
           <h3 className="text-sm font-semibold text-foreground">Your Information</h3>
         </div>
@@ -106,11 +108,13 @@ export default function ApprovalCenter() {
           </div>
         </CardContent>
       </Card>
+      </ScrollReveal>
 
       {/* ── Action Cards Grid ── */}
+      <ScrollReveal delay={200}>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Approve Proposal */}
-        <Card className="glass-card border-0 overflow-hidden border-t-4 border-t-green-500">
+        <Card className="premium-card border-0 overflow-hidden border-t-4 border-t-green-500">
           <CardContent className="p-5 space-y-4">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-lg bg-green-500/10 flex items-center justify-center">
@@ -132,7 +136,7 @@ export default function ApprovalCenter() {
               </Select>
             </div>
             <Button
-              className="w-full bg-green-600 hover:bg-green-700 text-white gap-2 font-semibold"
+              className="w-full bg-green-600 hover:bg-green-700 text-white gap-2 font-semibold animate-pulse-glow"
               onClick={handleApprove}
               disabled={submitting === "approve"}
               data-testid="button-approve"
@@ -144,7 +148,7 @@ export default function ApprovalCenter() {
         </Card>
 
         {/* Ask a Question */}
-        <Card className="glass-card border-0 overflow-hidden border-t-4 border-t-primary">
+        <Card className="premium-card border-0 overflow-hidden border-t-4 border-t-primary">
           <CardContent className="p-5 space-y-4">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
@@ -173,7 +177,7 @@ export default function ApprovalCenter() {
         </Card>
 
         {/* Request Revision */}
-        <Card className="glass-card border-0 overflow-hidden border-t-4 border-t-amber-500">
+        <Card className="premium-card border-0 overflow-hidden border-t-4 border-t-amber-500">
           <CardContent className="p-5 space-y-4">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center">
@@ -202,7 +206,7 @@ export default function ApprovalCenter() {
         </Card>
 
         {/* Contact McCurdy */}
-        <Card className="glass-card border-0 overflow-hidden border-t-4 border-t-accent">
+        <Card className="premium-card border-0 overflow-hidden border-t-4 border-t-accent">
           <CardContent className="p-5 space-y-4">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center">
@@ -211,14 +215,14 @@ export default function ApprovalCenter() {
               <h3 className="text-sm font-semibold text-foreground">Contact McCurdy</h3>
             </div>
             <div className="space-y-2">
-              <a href="tel:6509520233" className="flex items-center gap-3 p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
+              <a href="tel:6509520233" className="flex items-center gap-3 p-3 rounded-lg bg-accent/10 hover:bg-accent/20 border border-accent/20 transition-colors">
                 <Phone className="w-4 h-4 text-accent" />
                 <div>
                   <p className="text-sm font-medium text-foreground">Call 650-952-0233</p>
                   <p className="text-[10px] text-muted-foreground">Talk directly with our team</p>
                 </div>
               </a>
-              <a href="sms:6508085469" className="flex items-center gap-3 p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
+              <a href="sms:6508085469" className="flex items-center gap-3 p-3 rounded-lg bg-accent/10 hover:bg-accent/20 border border-accent/20 transition-colors">
                 <MessageCircle className="w-4 h-4 text-accent" />
                 <div>
                   <p className="text-sm font-medium text-foreground">Text 650-808-5469</p>
@@ -229,6 +233,7 @@ export default function ApprovalCenter() {
           </CardContent>
         </Card>
       </div>
+      </ScrollReveal>
       <PageNavigation />
     </div>
   );

@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Shield, Clock, Award, FileCheck, Wrench, Calendar } from "lucide-react";
 import { useEffect } from "react";
 import { PageNavigation } from "@/components/page-navigation";
+import { ScrollReveal } from "@/components/scroll-reveal";
 
 export default function WarrantyCenter() {
   const { proposal, trackEvent } = useProposal();
@@ -30,8 +31,8 @@ export default function WarrantyCenter() {
               <Clock className="w-7 h-7 text-white/80" />
             </div>
             <div>
-              <p className="text-white/50 text-xs uppercase tracking-wider">Warranty Duration</p>
-              <p className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-300 to-orange-300 mt-0.5">
+              <p className="text-white/50 text-xs uppercase tracking-wider font-medium">Warranty Duration</p>
+              <p className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-300 to-orange-300 mt-0.5">
                 {proposal.warrantyTerm}
               </p>
             </div>
@@ -40,9 +41,10 @@ export default function WarrantyCenter() {
       )}
 
       {/* ── Warranty Cards Grid ── */}
+      <ScrollReveal delay={100}>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 stagger-children">
         {/* Manufacturer Warranty */}
-        <Card className="glass-card border-0 overflow-hidden">
+        <Card className="premium-card border-0 overflow-hidden">
           <div className="h-1 copper-gradient" />
           <CardContent className="p-5">
             <div className="flex items-center gap-3 mb-3">
@@ -56,7 +58,7 @@ export default function WarrantyCenter() {
         </Card>
 
         {/* Workmanship Warranty */}
-        <Card className="glass-card border-0 overflow-hidden">
+        <Card className="premium-card border-0 overflow-hidden">
           <div className="h-1 bg-primary" />
           <CardContent className="p-5">
             <div className="flex items-center gap-3 mb-3">
@@ -69,10 +71,11 @@ export default function WarrantyCenter() {
           </CardContent>
         </Card>
       </div>
-
+      </ScrollReveal>
       {/* ── NDL Coverage ── */}
       {proposal.ndlWarranty && (
-        <Card className="glass-card border-0 overflow-hidden border-l-4 border-l-accent">
+        <ScrollReveal delay={200}>
+        <Card className="premium-card border-0 overflow-hidden border-l-4 border-l-accent animate-border-glow">
           <CardContent className="p-5">
             <div className="flex items-center gap-3 mb-3">
               <div className="w-9 h-9 rounded-lg bg-accent/10 flex items-center justify-center">
@@ -86,11 +89,13 @@ export default function WarrantyCenter() {
             <p className="text-sm text-foreground/75 leading-relaxed">{proposal.ndlWarranty}</p>
           </CardContent>
         </Card>
+        </ScrollReveal>
       )}
 
       {/* ── Warranty Summary ── */}
       {proposal.warrantySummary && (
-        <Card className="glass-card border-0">
+        <ScrollReveal delay={300}>
+        <Card className="premium-card border-0">
           <div className="p-5 border-b border-border/50">
             <h3 className="text-sm font-semibold text-foreground">Warranty Summary</h3>
           </div>
@@ -98,11 +103,13 @@ export default function WarrantyCenter() {
             <p className="text-sm text-foreground/75 leading-relaxed">{proposal.warrantySummary}</p>
           </CardContent>
         </Card>
+        </ScrollReveal>
       )}
 
       {/* ── Maintenance Requirements ── */}
       {proposal.warrantyMaintenance && (
-        <Card className="glass-card border-0">
+        <ScrollReveal delay={400}>
+        <Card className="premium-card border-0">
           <div className="p-5 border-b border-border/50">
             <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
               <Calendar className="w-4 h-4 text-muted-foreground" />
@@ -113,6 +120,7 @@ export default function WarrantyCenter() {
             <p className="text-sm text-foreground/75 leading-relaxed">{proposal.warrantyMaintenance}</p>
           </CardContent>
         </Card>
+        </ScrollReveal>
       )}
       <PageNavigation />
     </div>

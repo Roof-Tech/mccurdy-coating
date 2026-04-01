@@ -7,6 +7,7 @@ import { DollarSign, Check, Star, ArrowRight, Shield, Layers, Zap, CreditCard, I
 import { Link } from "wouter";
 import { useEffect, useState } from "react";
 import { PageNavigation } from "@/components/page-navigation";
+import { ScrollReveal } from "@/components/scroll-reveal";
 
 interface PricingOption {
   name: string;
@@ -92,8 +93,8 @@ export default function PricingOptions() {
                 key={i}
                 className={`relative rounded-xl transition-all duration-300 ${
                   isRecommended
-                    ? 'bg-gradient-to-r from-accent/[0.06] via-accent/[0.03] to-transparent border-2 border-accent/40 shadow-lg shadow-accent/10'
-                    : 'glass-card hover:shadow-md hover:border-primary/20'
+                    ? 'bg-gradient-to-r from-accent/[0.06] via-accent/[0.03] to-transparent border-2 border-accent/40 shadow-lg shadow-accent/10 animate-border-glow'
+                    : 'premium-card hover:shadow-md hover:border-primary/20'
                 }`}
                 data-testid={`card-pricing-option-${i}`}
               >
@@ -173,7 +174,7 @@ export default function PricingOptions() {
                         <Button
                           variant={isRecommended ? "default" : "outline"}
                           className={`w-full text-xs gap-1.5 h-10 font-semibold transition-all ${
-                            isRecommended ? 'bg-accent hover:bg-accent/90 shadow-md animate-pulse-glow' : ''
+                            isRecommended ? 'copper-gradient text-white hover:opacity-90 shadow-md animate-pulse-glow border-0' : ''
                           }`}
                           data-testid={`button-select-option-${i}`}
                         >
@@ -186,6 +187,11 @@ export default function PricingOptions() {
 
                 {/* Visual warranty bar */}
                 <div className="px-5 pb-3">
+                  <div className="flex justify-between mb-1">
+                    <span className={`text-[10px] font-semibold ${isRecommended ? 'text-accent' : 'text-primary/70'}`}>
+                      {years ? `${years}-Year Warranty` : 'Warranty'}
+                    </span>
+                  </div>
                   <div className="h-1 rounded-full bg-muted/50 overflow-hidden">
                     <div
                       className={`h-full rounded-full transition-all duration-700 ${
@@ -206,6 +212,7 @@ export default function PricingOptions() {
       )}
 
       {/* ── Payment Schedule ── */}
+      <ScrollReveal delay={200}>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <div className="glass-card rounded-xl p-5">
           <div className="flex items-center gap-2 mb-3">
@@ -258,6 +265,7 @@ export default function PricingOptions() {
           </div>
         </div>
       </div>
+      </ScrollReveal>
       <PageNavigation />
     </div>
   );
