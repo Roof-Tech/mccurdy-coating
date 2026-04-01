@@ -50,9 +50,16 @@ export function PageNavigation() {
             </div>
           </Button>
         </Link>
-      ) : <div />}
+      ) : <div aria-hidden="true" />}
       
-      <div className="flex items-center gap-1">
+      <div
+        className="flex items-center gap-1"
+        role="progressbar"
+        aria-label={`Page ${currentIdx + 1} of ${pageOrder.length}`}
+        aria-valuenow={currentIdx + 1}
+        aria-valuemin={1}
+        aria-valuemax={pageOrder.length}
+      >
         {pageOrder.map((_, i) => (
           <div
             key={i}
@@ -77,7 +84,7 @@ export function PageNavigation() {
             <ChevronRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
           </Button>
         </Link>
-      ) : <div />}
+      ) : <div aria-hidden="true" />}
     </div>
   );
 }
