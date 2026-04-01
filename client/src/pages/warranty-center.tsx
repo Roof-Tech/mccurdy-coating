@@ -3,6 +3,7 @@ import { PageHeader } from "@/components/page-header";
 import { Card, CardContent } from "@/components/ui/card";
 import { Shield, Clock, Award, FileCheck, Wrench, Calendar } from "lucide-react";
 import { useEffect } from "react";
+import { PageNavigation } from "@/components/page-navigation";
 
 export default function WarrantyCenter() {
   const { proposal, trackEvent } = useProposal();
@@ -113,6 +114,7 @@ export default function WarrantyCenter() {
           </CardContent>
         </Card>
       )}
+      <PageNavigation />
     </div>
   );
 }

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { DollarSign, Check, Star, ArrowRight, Shield, Layers, Zap, CreditCard, Info } from "lucide-react";
 import { Link } from "wouter";
 import { useEffect, useState } from "react";
+import { PageNavigation } from "@/components/page-navigation";
 
 interface PricingOption {
   name: string;
@@ -257,6 +258,7 @@ export default function PricingOptions() {
           </div>
         </div>
       </div>
+      <PageNavigation />
     </div>
   );
 }

@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { CheckCircle, Phone, MessageCircle, Send, RefreshCw, Shield, ArrowRight } from "lucide-react";
 import { useEffect, useState } from "react";
 import { apiRequest } from "@/lib/queryClient";
+import { PageNavigation } from "@/components/page-navigation";
 
 export default function ApprovalCenter() {
   const { proposal, trackEvent, token } = useProposal();
@@ -228,6 +229,7 @@ export default function ApprovalCenter() {
           </CardContent>
         </Card>
       </div>
+      <PageNavigation />
     </div>
   );
 }

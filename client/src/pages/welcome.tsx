@@ -10,6 +10,7 @@ import {
   MapPin, Calendar, User, Building2, Shield, Sparkles, ArrowRight,
   Phone, Clock, Award,
 } from "lucide-react";
+import { PageNavigation } from "@/components/page-navigation";
 
 export default function Welcome() {
   const { proposal, isLoading, token } = useProposal();
@@ -220,6 +221,7 @@ export default function Welcome() {
             </a>
           </div>
         </div>
+        <PageNavigation />
       </div>
     </div>
   );

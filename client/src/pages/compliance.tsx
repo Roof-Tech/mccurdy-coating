@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Scale, HelpCircle, FileCheck, Building2 } from "lucide-react";
 import { useEffect } from "react";
+import { PageNavigation } from "@/components/page-navigation";
 
 export default function Compliance() {
   const { trackEvent } = useProposal();
@@ -53,6 +54,7 @@ export default function Compliance() {
           </AccordionItem>
         ))}
       </Accordion>
+      <PageNavigation />
     </div>
   );
 }

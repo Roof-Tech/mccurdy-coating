@@ -6,6 +6,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Printer, Mail, Share2, Copy, FileText, Check } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { PageNavigation } from "@/components/page-navigation";
 
 export default function FormsPrint() {
   const { trackEvent } = useProposal();
@@ -86,6 +87,7 @@ export default function FormsPrint() {
           </div>
         </CardContent>
       </Card>
+      <PageNavigation />
     </div>
   );
 }

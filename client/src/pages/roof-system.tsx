@@ -3,6 +3,7 @@ import { PageHeader } from "@/components/page-header";
 import { Card, CardContent } from "@/components/ui/card";
 import { Layers, Package, Wrench, Factory } from "lucide-react";
 import { useEffect } from "react";
+import { PageNavigation } from "@/components/page-navigation";
 
 export default function RoofSystem() {
   const { proposal, trackEvent } = useProposal();
@@ -85,6 +86,7 @@ export default function RoofSystem() {
           )}
         </CardContent>
       </Card>
+      <PageNavigation />
     </div>
   );
 }

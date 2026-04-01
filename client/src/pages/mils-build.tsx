@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Layers, Info, Target } from "lucide-react";
 import { useEffect } from "react";
+import { PageNavigation } from "@/components/page-navigation";
 
 export default function MilsBuild() {
   const { proposal, trackEvent } = useProposal();
@@ -85,6 +86,7 @@ export default function MilsBuild() {
           </CardContent>
         </Card>
       )}
+      <PageNavigation />
     </div>
   );
 }

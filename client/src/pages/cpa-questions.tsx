@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Users, MessageSquare, Building2, UserCheck, Copy, Check } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { PageNavigation } from "@/components/page-navigation";
 
 const questionSections = [
   {
@@ -109,6 +110,7 @@ export default function CpaQuestions() {
           </Card>
         ))}
       </div>
+      <PageNavigation />
     </div>
   );
 }

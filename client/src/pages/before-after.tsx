@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ImageIcon, Camera, Sparkles, ArrowLeftRight } from "lucide-react";
 import { useEffect, useState, useMemo } from "react";
+import { PageNavigation } from "@/components/page-navigation";
 
 type ColorChoice = "white" | "gray";
 
@@ -281,6 +282,7 @@ export default function BeforeAfter() {
           </div>
         </CardContent>
       </Card>
+      <PageNavigation />
     </div>
   );
 }

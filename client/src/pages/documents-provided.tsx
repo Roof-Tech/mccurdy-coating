@@ -7,6 +7,7 @@ import {
   FileSpreadsheet, Shield, Wrench, Camera, Scale, Calculator, CheckCircle
 } from "lucide-react";
 import { useEffect } from "react";
+import { PageNavigation } from "@/components/page-navigation";
 
 const documentItems = [
   { name: "Proposal", desc: "Complete project proposal with scope and pricing", icon: FileText, status: "included" },
@@ -67,6 +68,7 @@ export default function DocumentsProvided() {
           })}
         </div>
       </Card>
+      <PageNavigation />
     </div>
   );
 }

@@ -3,6 +3,7 @@ import { PageHeader } from "@/components/page-header";
 import { Card, CardContent } from "@/components/ui/card";
 import { Droplets, DollarSign, Zap, Building2, Leaf, Shield, ThermometerSun, Paintbrush, Recycle, Volume2 } from "lucide-react";
 import { useEffect } from "react";
+import { PageNavigation } from "@/components/page-navigation";
 
 const benefitSections = [
   {
@@ -100,6 +101,7 @@ export default function SiliconeBenefits() {
           </Card>
         ))}
       </div>
+      <PageNavigation />
     </div>
   );
 }

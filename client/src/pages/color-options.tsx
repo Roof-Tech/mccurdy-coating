@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Palette, Star, Info } from "lucide-react";
 import { useEffect } from "react";
+import { PageNavigation } from "@/components/page-navigation";
 
 const colorSwatches: Record<string, string> = {
   "white": "#F5F5F0",
@@ -87,6 +88,7 @@ export default function ColorOptions() {
           </CardContent>
         </Card>
       )}
+      <PageNavigation />
     </div>
   );
 }

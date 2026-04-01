@@ -3,6 +3,7 @@ import { PageHeader } from "@/components/page-header";
 import { Card, CardContent } from "@/components/ui/card";
 import { AlertTriangle, CheckCircle, Shield, Zap, DollarSign, Clock, Droplets } from "lucide-react";
 import { useEffect } from "react";
+import { PageNavigation } from "@/components/page-navigation";
 
 const issueIcons = [AlertTriangle, Droplets, Droplets, Zap, Shield];
 
@@ -82,6 +83,7 @@ export default function WhySystem() {
           </CardContent>
         </Card>
       )}
+      <PageNavigation />
     </div>
   );
 }

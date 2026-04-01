@@ -6,6 +6,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { FileText, Clock, ListChecks, AlertCircle, User, Layers, Ruler, Building2, ArrowRight } from "lucide-react";
 import { useEffect } from "react";
 import { Link } from "wouter";
+import { PageNavigation } from "@/components/page-navigation";
 
 export default function ProposalSummary() {
   const { proposal, trackEvent, token } = useProposal();
@@ -178,6 +179,7 @@ export default function ProposalSummary() {
           <ArrowRight className="w-4 h-4 text-muted-foreground/40 group-hover:text-primary group-hover:translate-x-1 transition-all" />
         </div>
       </Link>
+      <PageNavigation />
     </div>
   );
 }

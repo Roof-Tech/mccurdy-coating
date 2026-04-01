@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { TrendingUp, ExternalLink, AlertCircle, FileText, Coins, Zap, Scale, MapPin, Building2, Thermometer, DollarSign, Leaf, Shield, ChevronRight } from "lucide-react";
 import { useEffect, useState } from "react";
 import { apiRequest } from "@/lib/queryClient";
+import { PageNavigation } from "@/components/page-navigation";
 
 const typeIcons: Record<string, any> = {
   tax_deduction: FileText,
@@ -397,6 +398,7 @@ export default function SavingsIncentives() {
           </div>
         </div>
       )}
+      <PageNavigation />
     </div>
   );
 }

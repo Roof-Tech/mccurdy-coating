@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Package, Layers, Paintbrush, Wrench, Droplets, Filter, Building2, FileText, Shield } from "lucide-react";
 import { useEffect } from "react";
+import { PageNavigation } from "@/components/page-navigation";
 
 const materialIcons: Record<string, any> = {
   primer: Droplets, base_coat: Layers, top_coat: Paintbrush,
@@ -147,6 +148,7 @@ export default function MaterialsLibrary() {
           );
         })}
       </Accordion>
+      <PageNavigation />
     </div>
   );
 }
