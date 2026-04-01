@@ -8,7 +8,9 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { ProposalSidebar } from "@/components/proposal-sidebar";
 import { AdminSidebar } from "@/components/admin-sidebar";
 import { ProposalProvider } from "@/lib/proposal-context";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
+import { McCurdyLogo } from "@/components/mccurdy-logo";
+import { ArrowRight, Shield, Sparkles, Star, ChevronRight } from "lucide-react";
 
 // Customer pages
 import Welcome from "@/pages/welcome";
@@ -38,6 +40,35 @@ import AdminActivity from "@/pages/admin-activity";
 
 import NotFound from "@/pages/not-found";
 
+const CUSTOMER_PAGES = [
+  "", "/summary", "/why", "/system", "/materials", "/mils", "/colors",
+  "/pricing", "/warranty", "/visualizer", "/savings", "/compliance",
+  "/silicone", "/forms", "/documents", "/cpa-questions", "/approve",
+];
+
+function ProposalProgressBar({ token }: { token: string }) {
+  const [location] = useHashLocation();
+  const basePath = `/view/${token}`;
+
+  const currentIdx = CUSTOMER_PAGES.findIndex(p => {
+    const fullPath = `${basePath}${p}`;
+    return location === fullPath;
+  });
+
+  const progress = currentIdx >= 0 ? ((currentIdx + 1) / CUSTOMER_PAGES.length) * 100 : 0;
+
+  if (currentIdx < 0) return null;
+
+  return (
+    <div className="h-0.5 bg-muted/50 w-full">
+      <div
+        className="h-full copper-gradient transition-all duration-500 ease-out"
+        style={{ width: `${progress}%` }}
+      />
+    </div>
+  );
+}
+
 function CustomerProposalApp({ token }: { token: string }) {
   const sidebarStyle = {
     "--sidebar-width": "17rem",
@@ -50,11 +81,17 @@ function CustomerProposalApp({ token }: { token: string }) {
         <div className="flex h-screen w-full">
           <ProposalSidebar />
           <div className="flex flex-col flex-1 min-w-0">
-            <header className="flex items-center justify-between p-2 border-b" data-testid="header-customer">
-              <SidebarTrigger data-testid="button-sidebar-toggle" />
-              <span className="text-xs text-muted-foreground pr-2">McCurdy Roofing</span>
+            <header className="flex items-center justify-between px-3 py-2 border-b bg-card/50 backdrop-blur-sm" data-testid="header-customer">
+              <div className="flex items-center gap-2">
+                <SidebarTrigger data-testid="button-sidebar-toggle" />
+              </div>
+              <div className="flex items-center gap-2">
+                <McCurdyLogo className="w-4 h-4 text-muted-foreground/50" />
+                <span className="text-xs font-medium text-muted-foreground">McCurdy Roofing</span>
+              </div>
             </header>
-            <main className="flex-1 overflow-y-auto">
+            <ProposalProgressBar token={token} />
+            <main className="flex-1 overflow-y-auto scroll-smooth">
               <Switch>
                 <Route path="/view/:token" component={Welcome} />
                 <Route path="/view/:token/summary" component={ProposalSummary} />
@@ -94,9 +131,12 @@ function AdminApp() {
       <div className="flex h-screen w-full">
         <AdminSidebar />
         <div className="flex flex-col flex-1 min-w-0">
-          <header className="flex items-center justify-between p-2 border-b" data-testid="header-admin">
+          <header className="flex items-center justify-between px-3 py-2 border-b bg-card/50 backdrop-blur-sm" data-testid="header-admin">
             <SidebarTrigger data-testid="button-admin-sidebar-toggle" />
-            <span className="text-xs text-muted-foreground pr-2">Admin Portal</span>
+            <div className="flex items-center gap-2">
+              <Shield className="w-3.5 h-3.5 text-muted-foreground/50" />
+              <span className="text-xs font-medium text-muted-foreground">Admin Portal</span>
+            </div>
           </header>
           <main className="flex-1 overflow-y-auto">
             <Switch>
@@ -116,33 +156,63 @@ function AdminApp() {
 
 function LandingPage() {
   return (
-    <div className="flex items-center justify-center min-h-screen bg-background">
-      <div className="text-center space-y-4 p-8 max-w-md">
-        <div className="w-16 h-16 mx-auto mb-2 text-primary">
-          <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M20 4L2 20h6v14h24V20h6L20 4z" fill="currentColor" opacity="0.15" />
-            <path d="M20 6L4 20h5v13h22V20h5L20 6z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" fill="none" />
-            <path d="M14 22v8M20 18v12M26 22v8" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
-            <path d="M14 22l3-4 3 4 3-4 3 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-          </svg>
+    <div className="relative flex items-center justify-center min-h-screen bg-background overflow-hidden">
+      {/* Background decorative elements */}
+      <div className="absolute inset-0 dot-pattern" />
+      <div className="absolute top-0 right-0 w-[500px] h-[500px] rounded-full bg-accent/[0.03] blur-3xl -translate-y-1/2 translate-x-1/4" />
+      <div className="absolute bottom-0 left-0 w-[400px] h-[400px] rounded-full bg-primary/[0.04] blur-3xl translate-y-1/3 -translate-x-1/4" />
+
+      <div className="relative text-center space-y-6 p-8 max-w-lg animate-fade-in-up">
+        {/* Logo */}
+        <div className="w-20 h-20 mx-auto mb-4 relative">
+          <div className="absolute inset-0 rounded-2xl copper-gradient opacity-10 animate-pulse-glow" />
+          <div className="relative w-full h-full rounded-2xl bg-card border border-border/50 flex items-center justify-center shadow-lg">
+            <McCurdyLogo className="w-10 h-10 text-primary" />
+          </div>
         </div>
-        <h1 className="text-xl font-bold" data-testid="text-landing-title">McCurdy Roof Investment Proposal</h1>
-        <p className="text-sm text-muted-foreground">
-          Welcome to the McCurdy Proposal Platform. If you have a proposal link, please use it to access your personalized proposal.
-        </p>
-        <div className="space-y-2">
+
+        {/* Title */}
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight" data-testid="text-landing-title">
+            McCurdy Roof
+            <span className="gradient-text-copper"> Investment Proposal</span>
+          </h1>
+          <p className="text-sm text-muted-foreground mt-3 max-w-sm mx-auto leading-relaxed">
+            Welcome to the McCurdy Proposal Platform. Access your personalized investment proposal or manage proposals through the admin portal.
+          </p>
+        </div>
+
+        {/* CTA Buttons */}
+        <div className="space-y-3 pt-2">
           <a href="/#/view/demo-proposal-2026" className="block">
-            <button className="w-full px-4 py-2.5 bg-primary text-primary-foreground rounded-md text-sm font-medium" data-testid="button-demo">
+            <button className="w-full px-5 py-3 copper-gradient text-white rounded-xl text-sm font-semibold shadow-lg shadow-accent/20 hover:shadow-xl hover:shadow-accent/30 hover:-translate-y-0.5 transition-all duration-300 flex items-center justify-center gap-2 group" data-testid="button-demo">
+              <Sparkles className="w-4 h-4" />
               View Demo Proposal
+              <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
             </button>
           </a>
           <a href="/#/admin" className="block">
-            <button className="w-full px-4 py-2.5 border border-border rounded-md text-sm text-foreground" data-testid="button-admin">
+            <button className="w-full px-5 py-3 bg-card border border-border rounded-xl text-sm font-medium text-foreground hover:bg-muted/50 hover:border-primary/20 transition-all duration-200 flex items-center justify-center gap-2" data-testid="button-admin">
+              <Shield className="w-4 h-4 text-muted-foreground" />
               Admin Portal
             </button>
           </a>
         </div>
-        <p className="text-xs text-muted-foreground pt-2">McCurdy Roofing Inc. &middot; License #477152 &middot; 650-952-0233</p>
+
+        {/* Trust badges */}
+        <div className="flex items-center justify-center gap-4 pt-4">
+          {[
+            { icon: Shield, label: "Lic #477152" },
+            { icon: Star, label: "30-Yr Warranty" },
+          ].map((item) => (
+            <div key={item.label} className="flex items-center gap-1.5 text-muted-foreground">
+              <item.icon className="w-3 h-3" />
+              <span className="text-[11px]">{item.label}</span>
+            </div>
+          ))}
+        </div>
+
+        <p className="text-[11px] text-muted-foreground/60 pt-2">McCurdy Roofing Inc. &middot; 650-952-0233</p>
       </div>
     </div>
   );

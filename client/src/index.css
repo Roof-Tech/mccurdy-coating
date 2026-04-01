@@ -169,6 +169,16 @@
   to { opacity: 1; transform: translateX(0); }
 }
 
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(12px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
 @keyframes shimmer {
   0% { background-position: -200% 0; }
   100% { background-position: 200% 0; }
@@ -188,6 +198,30 @@
   0% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
   100% { background-position: 0% 50%; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-6px); }
+}
+
+@keyframes borderGlow {
+  0%, 100% { border-color: hsl(28 85% 56% / 0.2); }
+  50% { border-color: hsl(28 85% 56% / 0.5); }
+}
+
+@keyframes subtlePulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes progressFill {
+  from { width: 0%; }
 }
 
 /* ── Premium utility classes ── */
@@ -332,6 +366,130 @@
 
   .dark .premium-divider {
     background: linear-gradient(90deg, transparent, hsl(220 18% 20%), hsl(28 80% 55% / 0.3), hsl(220 18% 20%), transparent);
+  }
+
+  /* Additional premium animations */
+  .animate-slide-in-right {
+    animation: slideInRight 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  .animate-scale-in {
+    animation: scaleIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  .animate-float {
+    animation: float 4s ease-in-out infinite;
+  }
+
+  .animate-border-glow {
+    animation: borderGlow 3s ease-in-out infinite;
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  .animate-progress-fill {
+    animation: progressFill 1s ease-out forwards;
+  }
+
+  /* Premium gradient text */
+  .gradient-text-copper {
+    background: linear-gradient(135deg, hsl(28 85% 55%), hsl(35 90% 62%), hsl(24 80% 48%));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .gradient-text-primary {
+    background: linear-gradient(135deg, hsl(220 55% 35%), hsl(220 60% 45%), hsl(220 50% 30%));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Premium card with hover lift */
+  .premium-card {
+    background: linear-gradient(135deg, hsl(0 0% 100% / 0.95), hsl(0 0% 100% / 0.98));
+    backdrop-filter: blur(24px);
+    border: 1px solid hsl(220 20% 92%);
+    box-shadow: 0 1px 3px hsl(220 25% 10% / 0.04), 0 4px 24px -4px hsl(220 25% 10% / 0.06);
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .premium-card:hover {
+    box-shadow: 0 4px 12px hsl(220 25% 10% / 0.06), 0 8px 32px -4px hsl(220 25% 10% / 0.1);
+    transform: translateY(-2px);
+    border-color: hsl(220 20% 88%);
+  }
+
+  .dark .premium-card {
+    background: linear-gradient(135deg, hsl(220 22% 12% / 0.95), hsl(220 22% 14% / 0.98));
+    border-color: hsl(220 18% 18%);
+    box-shadow: 0 4px 24px -4px hsl(0 0% 0% / 0.2);
+  }
+
+  .dark .premium-card:hover {
+    box-shadow: 0 8px 32px -4px hsl(0 0% 0% / 0.3);
+    border-color: hsl(220 18% 22%);
+  }
+
+  /* Accent highlight bar */
+  .accent-bar-left {
+    position: relative;
+  }
+
+  .accent-bar-left::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 8px;
+    bottom: 8px;
+    width: 3px;
+    border-radius: 2px;
+    background: linear-gradient(180deg, hsl(28 85% 56%), hsl(28 85% 48%));
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .accent-bar-left:hover::before,
+  .accent-bar-left[data-active="true"]::before {
+    opacity: 1;
+  }
+
+  /* Emerald gradient for savings pages */
+  .emerald-gradient {
+    background: linear-gradient(135deg, hsl(160 45% 20%) 0%, hsl(160 50% 28%) 40%, hsl(155 45% 24%) 100%);
+  }
+
+  /* Premium skeleton shimmer */
+  .skeleton-premium {
+    background: linear-gradient(90deg,
+      hsl(220 14% 93%) 0%,
+      hsl(220 14% 96%) 40%,
+      hsl(220 14% 93%) 80%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s ease-in-out infinite;
+  }
+
+  .dark .skeleton-premium {
+    background: linear-gradient(90deg,
+      hsl(220 14% 14%) 0%,
+      hsl(220 14% 18%) 40%,
+      hsl(220 14% 14%) 80%
+    );
+    background-size: 200% 100%;
+  }
+
+  /* Subtle dot pattern overlay */
+  .dot-pattern {
+    background-image: radial-gradient(hsl(220 25% 10% / 0.04) 1px, transparent 1px);
+    background-size: 20px 20px;
+  }
+
+  .dark .dot-pattern {
+    background-image: radial-gradient(hsl(0 0% 100% / 0.03) 1px, transparent 1px);
   }
 }
 
