@@ -7,6 +7,7 @@ import { FileText, Clock, ListChecks, AlertCircle, User, Layers, Ruler, Building
 import { useEffect } from "react";
 import { Link } from "wouter";
 import { PageNavigation } from "@/components/page-navigation";
+import { ScrollReveal } from "@/components/scroll-reveal";
 
 export default function ProposalSummary() {
   const { proposal, trackEvent, token } = useProposal();
@@ -41,7 +42,9 @@ export default function ProposalSummary() {
           { label: "Timeline", value: proposal.timelineEstimate?.replace("from contract signing, ", "") || "3-4 weeks", icon: Clock },
         ].map((metric) => (
           <div key={metric.label} className="glass-card rounded-xl p-4 text-center">
-            <metric.icon className="w-4 h-4 text-accent mx-auto mb-2" />
+            <div className="w-8 h-8 rounded-lg copper-gradient flex items-center justify-center mx-auto mb-2 shadow-sm">
+              <metric.icon className="w-4 h-4 text-white" />
+            </div>
             <p className="text-sm font-bold text-foreground leading-tight">{metric.value}</p>
             <p className="text-[10px] text-muted-foreground mt-1 uppercase tracking-wider">{metric.label}</p>
           </div>
@@ -49,10 +52,15 @@ export default function ProposalSummary() {
       </div>
 
       {/* ── Project Overview Card ── */}
-      <Card className="glass-card border-0 overflow-hidden">
+      <Card className="glass-card border-0 overflow-hidden relative">
+        {/* Decorative accent line */}
+        <div className="absolute top-0 left-0 right-0 h-[2px] copper-gradient" />
         <div className="p-5 border-b border-border/50">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-foreground">Project Overview</h3>
+            <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-accent inline-block" />
+              Project Overview
+            </h3>
             <Badge variant="outline" className="text-[10px] border-accent/30 text-accent">
               {proposal.proposalNumber}
             </Badge>
@@ -89,10 +97,12 @@ export default function ProposalSummary() {
       </Card>
 
       {/* ── Roof Areas ── */}
+      <ScrollReveal delay={100}>
       {roofAreas.length > 0 && (
         <Card className="glass-card border-0 overflow-hidden">
           <div className="p-5 border-b border-border/50">
-            <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+            <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-accent inline-block" />
               <ListChecks className="w-4 h-4 text-accent" /> Roof Areas
             </h3>
           </div>
@@ -126,21 +136,28 @@ export default function ProposalSummary() {
           </CardContent>
         </Card>
       )}
+      </ScrollReveal>
 
       {/* ── Scope Summary ── */}
+      <ScrollReveal delay={200}>
       <Card className="glass-card border-0">
         <div className="p-5 border-b border-border/50">
-          <h3 className="text-sm font-semibold text-foreground">Scope of Work</h3>
+          <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-accent inline-block" />
+            Scope of Work
+          </h3>
         </div>
         <CardContent className="p-5">
           <p className="text-sm leading-relaxed text-foreground/80">{proposal.scopeSummary}</p>
         </CardContent>
       </Card>
+      </ScrollReveal>
 
       {/* ── Expandable Details ── */}
+      <ScrollReveal delay={300}>
       <Accordion type="multiple" className="space-y-2">
         {proposal.exclusions && (
-          <AccordionItem value="exclusions" className="glass-card border-0 rounded-xl px-5 overflow-hidden">
+          <AccordionItem value="exclusions" className="glass-card border-0 rounded-xl px-5 overflow-hidden transition-all duration-300">
             <AccordionTrigger className="text-sm font-medium py-4 hover:no-underline">
               <span className="flex items-center gap-2"><AlertCircle className="w-4 h-4 text-muted-foreground" /> Exclusions & Notes</span>
             </AccordionTrigger>
@@ -148,7 +165,7 @@ export default function ProposalSummary() {
           </AccordionItem>
         )}
         {addOns.length > 0 && (
-          <AccordionItem value="addons" className="glass-card border-0 rounded-xl px-5 overflow-hidden">
+          <AccordionItem value="addons" className="glass-card border-0 rounded-xl px-5 overflow-hidden transition-all duration-300">
             <AccordionTrigger className="text-sm font-medium py-4 hover:no-underline">Optional Add-Ons</AccordionTrigger>
             <AccordionContent className="pb-5">
               <div className="space-y-2">
@@ -179,6 +196,7 @@ export default function ProposalSummary() {
           <ArrowRight className="w-4 h-4 text-muted-foreground/40 group-hover:text-primary group-hover:translate-x-1 transition-all" />
         </div>
       </Link>
+      </ScrollReveal>
       <PageNavigation />
     </div>
   );

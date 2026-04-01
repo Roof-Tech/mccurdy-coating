@@ -11,6 +11,7 @@ import {
   Phone, Clock, Award,
 } from "lucide-react";
 import { PageNavigation } from "@/components/page-navigation";
+import { ScrollReveal } from "@/components/scroll-reveal";
 
 export default function Welcome() {
   const { proposal, isLoading, token } = useProposal();
@@ -112,6 +113,11 @@ export default function Welcome() {
         </div>
       </div>
 
+      {/* ── Premium Divider ── */}
+      <div className="px-4">
+        <div className="premium-divider mx-auto" style={{ width: '80%' }} />
+      </div>
+
       {/* ── Property & System Summary ── */}
       <div className="px-4 space-y-4">
         <div className="glass-card rounded-xl p-5 animate-fade-in-up" style={{ animationDelay: '0.1s', animationFillMode: 'backwards' }}>
@@ -134,7 +140,9 @@ export default function Welcome() {
 
         {/* ── Estimator Message ── */}
         {proposal.welcomeMessage && (
-          <div className="glass-card rounded-xl p-6 animate-fade-in-up" style={{ animationDelay: '0.2s', animationFillMode: 'backwards' }}>
+          <div className="glass-card rounded-xl p-6 animate-fade-in-up relative overflow-hidden" style={{ animationDelay: '0.2s', animationFillMode: 'backwards' }}>
+            {/* Quotation mark watermark */}
+            <span className="absolute top-2 right-4 text-7xl font-serif text-muted-foreground/[0.06] select-none pointer-events-none leading-none">&ldquo;</span>
             <div className="flex gap-4">
               <div className="w-10 h-10 rounded-full copper-gradient flex items-center justify-center flex-shrink-0 shadow-md">
                 <span className="text-white text-sm font-bold">
@@ -155,6 +163,7 @@ export default function Welcome() {
         )}
 
         {/* ── Quick Navigation Grid ── */}
+        <ScrollReveal delay={100}>
         <div className="space-y-3 animate-fade-in-up" style={{ animationDelay: '0.3s', animationFillMode: 'backwards' }}>
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1">Quick Navigation</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
@@ -168,8 +177,8 @@ export default function Welcome() {
                 <div
                   className={`group relative rounded-xl p-4 transition-all duration-200 cursor-pointer border ${
                     item.primary
-                      ? 'bg-primary text-white border-primary hover:shadow-lg hover:shadow-primary/20 hover:-translate-y-0.5'
-                      : 'glass-card hover:shadow-md hover:-translate-y-0.5 hover:border-primary/30'
+                      ? 'bg-primary text-white border-primary hover:shadow-lg hover:shadow-primary/20 hover:-translate-y-0.5 hover:scale-[1.02]'
+                      : 'glass-card hover:shadow-md hover:-translate-y-0.5 hover:border-primary/30 hover:scale-[1.02]'
                   }`}
                   data-testid={`button-${item.label.toLowerCase().replace(/\s+/g, "-")}`}
                 >
@@ -194,23 +203,27 @@ export default function Welcome() {
             ))}
           </div>
         </div>
+        </ScrollReveal>
 
         {/* ── Trust Signals ── */}
+        <ScrollReveal delay={200}>
         <div className="grid grid-cols-3 gap-3 animate-fade-in-up" style={{ animationDelay: '0.4s', animationFillMode: 'backwards' }}>
           {[
             { icon: Shield, label: "Licensed & Insured", sublabel: "Lic #477152" },
             { icon: Award, label: "Up to 30-Year", sublabel: "ASC Warranty" },
             { icon: Clock, label: "3-4 Week", sublabel: "Timeline" },
           ].map((trust) => (
-            <div key={trust.label} className="text-center p-3 rounded-xl bg-muted/40 border border-transparent">
-              <trust.icon className="w-5 h-5 text-accent mx-auto mb-1.5" />
+            <div key={trust.label} className="text-center p-3 rounded-xl glass-card border border-border/50 dot-pattern">
+              <trust.icon className="w-5 h-5 text-accent mx-auto mb-1.5 drop-shadow-sm" />
               <p className="text-xs font-semibold text-foreground leading-tight">{trust.label}</p>
               <p className="text-[10px] text-muted-foreground">{trust.sublabel}</p>
             </div>
           ))}
         </div>
+        </ScrollReveal>
 
         {/* ── Footer ── */}
+        <ScrollReveal delay={300}>
         <div className="flex items-center justify-between pt-2 pb-2">
           <p className="text-[10px] text-muted-foreground">
             Proposal #{proposal.proposalNumber}
@@ -221,6 +234,7 @@ export default function Welcome() {
             </a>
           </div>
         </div>
+        </ScrollReveal>
         <PageNavigation />
       </div>
     </div>
