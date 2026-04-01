@@ -24,7 +24,7 @@ export default function Compliance() {
     },
     {
       value: "help", icon: Scale, title: "What McCurdy Provides",
-      content: "McCurdy Roofing provides product data sheets, CRRC listings, SRI documentation, and installation specifications that demonstrate compliance. We coordinate with your permitting process and can supply manufacturer compliance letters when needed. If your project requires energy calculations or CF-1R forms, we can connect you with the appropriate resources.",
+      content: "McCurdy Coatings provides product data sheets, CRRC listings, SRI documentation, and installation specifications that demonstrate compliance. We coordinate with your permitting process and can supply manufacturer compliance letters when needed. If your project requires energy calculations or CF-1R forms, we can connect you with the appropriate resources.",
     },
   ];
 

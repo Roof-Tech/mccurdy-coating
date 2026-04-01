@@ -1,1 +1,1 @@
-# mccurdy-coating
+# mccurdy-coatings

@@ -52,7 +52,7 @@ function CustomerProposalApp({ token }: { token: string }) {
           <div className="flex flex-col flex-1 min-w-0">
             <header className="flex items-center justify-between p-2 border-b" data-testid="header-customer">
               <SidebarTrigger data-testid="button-sidebar-toggle" />
-              <span className="text-xs text-muted-foreground pr-2">McCurdy Roofing</span>
+              <span className="text-xs text-muted-foreground pr-2">McCurdy Coatings</span>
             </header>
             <main className="flex-1 overflow-y-auto">
               <Switch>
@@ -142,7 +142,7 @@ function LandingPage() {
             </button>
           </a>
         </div>
-        <p className="text-xs text-muted-foreground pt-2">McCurdy Roofing Inc. &middot; License #477152 &middot; 650-952-0233</p>
+        <p className="text-xs text-muted-foreground pt-2">McCurdy Coatings Inc. &middot; License #477152 &middot; 650-952-0233</p>
       </div>
     </div>
   );

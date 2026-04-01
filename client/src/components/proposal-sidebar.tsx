@@ -44,7 +44,7 @@ export function ProposalSidebar() {
         <div className="flex items-center gap-3">
           <McCurdyLogo className="w-9 h-9 text-sidebar-primary" />
           <div className="flex flex-col">
-            <span className="text-sm font-semibold text-sidebar-foreground leading-tight">McCurdy Roofing</span>
+            <span className="text-sm font-semibold text-sidebar-foreground leading-tight">McCurdy Coatings</span>
             <span className="text-xs text-sidebar-foreground/60 leading-tight">Investment Proposal</span>
           </div>
         </div>
@@ -80,7 +80,7 @@ export function ProposalSidebar() {
       </SidebarContent>
       <SidebarFooter className="p-3 border-t border-sidebar-border">
         <div className="text-[11px] text-sidebar-foreground/40 text-center">
-          McCurdy Roofing Inc. &middot; Lic #477152
+          McCurdy Coatings Inc. &middot; Lic #477152
         </div>
         <PerplexityAttribution />
       </SidebarFooter>

@@ -186,7 +186,7 @@ export default function SavingsIncentives() {
           <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400" />
         </div>
         <p className="text-xs text-foreground/75 leading-relaxed">
-          The items below represent potential pathways and are not guaranteed savings. McCurdy Roofing provides documentation and guidance but does not provide tax, legal, or financial advice. Always consult your CPA or qualified professional before making financial decisions. Program availability and amounts are subject to change.
+          The items below represent potential pathways and are not guaranteed savings. McCurdy Coatings provides documentation and guidance but does not provide tax, legal, or financial advice. Always consult your CPA or qualified professional before making financial decisions. Program availability and amounts are subject to change.
         </p>
       </div>
 

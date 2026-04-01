@@ -538,7 +538,7 @@ function seedDemoData() {
         projectType: "commercial",
         status: "sent",
         accessToken: "demo-proposal-2026",
-        welcomeMessage: "Thank you for allowing McCurdy Roofing to evaluate your commercial roofing needs. After a thorough job walk and inspection of your facility, we've prepared this comprehensive roof investment proposal for your review.",
+        welcomeMessage: "Thank you for allowing McCurdy Coatings to evaluate your commercial roofing needs. After a thorough job walk and inspection of your facility, we've prepared this comprehensive roof investment proposal for your review.",
         roofAreas: JSON.stringify(["Main warehouse roof — 18,500 sq ft", "Office wing — 3,200 sq ft", "Loading dock canopy — 1,800 sq ft"]),
         systemType: "Silicone Roof Restoration System",
         scopeSummary: "Full silicone roof restoration system over existing modified bitumen membrane. Includes power washing, seam repair, reinforcement of all penetrations and transitions, primer application, and two-coat silicone coating system with 30 dry mil minimum total build.",
@@ -581,10 +581,10 @@ function seedDemoData() {
         alternateColors: JSON.stringify(["Light Gray", "Tan", "Light Blue"]),
         colorNotes: "White provides maximum solar reflectivity (SRI 110+) and best energy savings. Meets Title 24 cool roof requirements. Gray and tan are also compliant but with slightly lower reflectivity values.",
         manufacturerWarranty: "ASC Manufacturer Warranty — tier based on dry mil build (5 to 30 years)",
-        workmanshipWarranty: "McCurdy Roofing Workmanship Warranty",
+        workmanshipWarranty: "McCurdy Coatings Workmanship Warranty",
         ndlWarranty: "NDL warranty covers 100% of material and labor costs for the full warranty term with no depreciation or dollar cap. This is the highest level of manufacturer backing available.",
         warrantyTerm: "5 to 30 years based on selected tier",
-        warrantySummary: "Your roof will be covered by an ASC manufacturer warranty matched to the mil thickness of the system installed, plus a McCurdy Roofing workmanship warranty. Regular maintenance inspections (recommended annually) help preserve full warranty coverage.",
+        warrantySummary: "Your roof will be covered by an ASC manufacturer warranty matched to the mil thickness of the system installed, plus a McCurdy Coatings workmanship warranty. Regular maintenance inspections (recommended annually) help preserve full warranty coverage.",
         warrantyMaintenance: "Annual inspection recommended. McCurdy offers a maintenance program that includes annual roof inspection, drain clearing, minor touch-up repairs, and warranty compliance documentation.",
         pricingOptions: JSON.stringify([
           {

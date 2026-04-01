@@ -36,7 +36,7 @@ export default function Welcome() {
           <CardContent className="p-8 text-center">
             <McCurdyLogo className="w-16 h-16 mx-auto text-primary mb-4" />
             <h2 className="text-lg font-semibold mb-2">Proposal Not Found</h2>
-            <p className="text-sm text-muted-foreground">This proposal link may have expired or is invalid. Please contact McCurdy Roofing at 650-952-0233.</p>
+            <p className="text-sm text-muted-foreground">This proposal link may have expired or is invalid. Please contact McCurdy Coatings at 650-952-0233.</p>
           </CardContent>
         </Card>
       </div>
@@ -142,7 +142,7 @@ export default function Welcome() {
               </div>
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-2">
-                  <p className="text-sm font-semibold text-foreground">{proposal.estimator || 'McCurdy Roofing'}</p>
+                  <p className="text-sm font-semibold text-foreground">{proposal.estimator || 'McCurdy Coatings'}</p>
                   <span className="text-xs text-muted-foreground">Estimator</span>
                 </div>
                 <p className="text-sm text-foreground/75 leading-relaxed italic" data-testid="text-welcome-message">

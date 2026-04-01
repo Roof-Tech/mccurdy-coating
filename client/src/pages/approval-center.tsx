@@ -39,7 +39,7 @@ export default function ApprovalCenter() {
         messageType: "approval",
         content: `Approved option: ${selectedOption || "Not specified"}`,
       });
-      toast({ title: "Proposal Approved", description: "Thank you! McCurdy Roofing will be in touch shortly." });
+      toast({ title: "Proposal Approved", description: "Thank you! McCurdy Coatings will be in touch shortly." });
       trackEvent("approved", { option: selectedOption });
     } catch { toast({ title: "Error", description: "Please try again or call 650-952-0233.", variant: "destructive" }); }
     setSubmitting(null);

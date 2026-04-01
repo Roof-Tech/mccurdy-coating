@@ -61,7 +61,7 @@ export function AdminSidebar() {
       </SidebarContent>
       <SidebarFooter className="p-3 border-t border-sidebar-border">
         <div className="text-[11px] text-sidebar-foreground/40 text-center">
-          McCurdy Roofing Inc. &middot; Admin Portal
+          McCurdy Coatings Inc. &middot; Admin Portal
         </div>
         <PerplexityAttribution />
       </SidebarFooter>
