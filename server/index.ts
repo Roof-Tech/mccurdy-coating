@@ -13,7 +13,9 @@ declare module "http" {
   }
 }
 
-// CORS — allow the Vercel-hosted frontend (or any configured origin) to call this API
+// CORS — allow the Vercel-hosted frontend (or any configured origin) to call this API.
+// In production FRONTEND_URL must be set; in development all origins are accepted.
+const isProduction = process.env.NODE_ENV === "production";
 const allowedOrigins = process.env.FRONTEND_URL
   ? process.env.FRONTEND_URL.split(",").map((o) => o.trim())
   : [];
@@ -21,8 +23,12 @@ const allowedOrigins = process.env.FRONTEND_URL
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow requests with no origin (e.g. server-to-server, curl)
-      if (!origin || allowedOrigins.length === 0 || allowedOrigins.includes(origin)) {
+      // Allow requests with no origin (e.g. server-to-server, curl, same-origin)
+      if (!origin) return callback(null, true);
+      // In development, allow any origin
+      if (!isProduction) return callback(null, true);
+      // In production, require a matching FRONTEND_URL
+      if (allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
         callback(new Error("Not allowed by CORS"));
