@@ -53,16 +53,23 @@ export default function AdminProposals() {
                     <p className="text-xs text-muted-foreground">{p.proposalDate} &middot; {p.estimator}</p>
                   </div>
                   <div className="flex gap-1.5 flex-shrink-0">
-                    <a href={`/#/admin/proposals/${p.id}`}>
-                      <Button variant="default" size="sm" className="text-xs h-7 gap-1" data-testid={`button-manage-${p.id}`}>
-                        <Settings2 className="w-3 h-3" /> Manage
-                      </Button>
+                    <a
+                      href={`/#/admin/proposals/${p.id}`}
+                      className="inline-flex items-center gap-1 h-7 px-3 text-xs font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+                      data-testid={`button-manage-${p.id}`}
+                    >
+                      <Settings2 className="w-3 h-3" /> Manage
                     </a>
                     <Button variant="outline" size="sm" className="text-xs h-7 gap-1" onClick={() => copyLink(p.accessToken)}>
                       <Copy className="w-3 h-3" /> Copy Link
                     </Button>
-                    <a href={`/#/view/${p.accessToken}`} target="_blank" rel="noopener noreferrer">
-                      <Button variant="outline" size="sm" className="text-xs h-7 gap-1"><ExternalLink className="w-3 h-3" /> Preview</Button>
+                    <a
+                      href={`/#/view/${p.accessToken}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 h-7 px-3 text-xs font-medium border border-border rounded-md bg-background hover:bg-accent hover:text-accent-foreground transition-colors"
+                    >
+                      <ExternalLink className="w-3 h-3" /> Preview
                     </a>
                   </div>
                 </div>

@@ -91,6 +91,7 @@ export default function SavingsIncentives() {
   const [selectedCounty, setSelectedCounty] = useState<string>("");
   const [countyData, setCountyData] = useState<CountyData | null>(null);
   const [loadingCounty, setLoadingCounty] = useState(false);
+  const [countyError, setCountyError] = useState(false);
 
   useEffect(() => { trackEvent("viewed", { page: "savings" }); }, []);
 
@@ -109,9 +110,11 @@ export default function SavingsIncentives() {
   useEffect(() => {
     if (!selectedCounty) {
       setCountyData(null);
+      setCountyError(false);
       return;
     }
     setLoadingCounty(true);
+    setCountyError(false);
     apiRequest("GET", `/api/county-incentives/${selectedCounty}`)
       .then(r => r.json())
       .then(data => {
@@ -119,7 +122,10 @@ export default function SavingsIncentives() {
         setLoadingCounty(false);
         trackEvent("viewed", { page: "savings", county: selectedCounty });
       })
-      .catch(() => setLoadingCounty(false));
+      .catch(() => {
+        setCountyError(true);
+        setLoadingCounty(false);
+      });
   }, [selectedCounty]);
 
   const groupedPrograms = countyData?.programs.reduce((acc, p) => {
@@ -236,6 +242,16 @@ export default function SavingsIncentives() {
           </div>
         )}
       </div>
+
+      {/* Error State */}
+      {countyError && !loadingCounty && (
+        <div className="glass-card rounded-xl p-8 text-center space-y-3 border border-destructive/20">
+          <div className="w-10 h-10 rounded-full bg-destructive/10 flex items-center justify-center mx-auto">
+            <AlertCircle className="w-5 h-5 text-destructive" />
+          </div>
+          <p className="text-sm text-muted-foreground">Could not load county incentive data. Please try selecting the county again.</p>
+        </div>
+      )}
 
       {/* Loading State */}
       {loadingCounty && (

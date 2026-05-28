@@ -33,11 +33,11 @@ function getYears(name: string): string {
 
 export default function PricingOptions() {
   const { proposal, trackEvent, token } = useProposal();
+  const [expandedIdx, setExpandedIdx] = useState<number | null>(null);
   useEffect(() => { trackEvent("viewed", { page: "pricing" }); }, []);
   if (!proposal) return null;
 
   const options: PricingOption[] = proposal.pricingOptions ? JSON.parse(proposal.pricingOptions) : [];
-  const [expandedIdx, setExpandedIdx] = useState<number | null>(null);
 
   // Find recommended index
   const recommendedIdx = options.findIndex(o => o.recommended);

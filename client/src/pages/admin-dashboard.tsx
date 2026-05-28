@@ -142,8 +142,13 @@ export default function AdminDashboard() {
                       </td>
                       <td className="py-2">
                         <div className="flex gap-1">
-                          <a href={`/#/view/${p.accessToken}`} target="_blank" rel="noopener noreferrer">
-                            <Button variant="outline" size="sm" className="text-xs h-7">View</Button>
+                          <a
+                            href={`/#/view/${p.accessToken}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center justify-center h-7 px-3 text-xs font-medium border border-border rounded-md bg-background hover:bg-accent hover:text-accent-foreground transition-colors"
+                          >
+                            View
                           </a>
                         </div>
                       </td>
