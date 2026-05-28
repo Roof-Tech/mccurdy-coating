@@ -32,6 +32,7 @@ import ApprovalCenter from "@/pages/approval-center";
 // Admin pages
 import AdminDashboard from "@/pages/admin-dashboard";
 import AdminProposals from "@/pages/admin-proposals";
+import AdminProposalCreate from "@/pages/admin-proposal-create";
 import AdminProposalEdit from "@/pages/admin-proposal-edit";
 import AdminMessages from "@/pages/admin-messages";
 import AdminActivity from "@/pages/admin-activity";
@@ -102,6 +103,7 @@ function AdminApp() {
             <Switch>
               <Route path="/admin" component={AdminDashboard} />
               <Route path="/admin/proposals" component={AdminProposals} />
+              <Route path="/admin/proposals/new" component={AdminProposalCreate} />
               <Route path="/admin/proposals/:id" component={AdminProposalEdit} />
               <Route path="/admin/messages" component={AdminMessages} />
               <Route path="/admin/activity" component={AdminActivity} />
