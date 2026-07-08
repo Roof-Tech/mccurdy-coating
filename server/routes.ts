@@ -2,6 +2,9 @@ import type { Express } from "express";
 import type { Server } from "http";
 import { storage } from "./storage";
 import { insertProposalSchema, insertMaterialSchema, insertProposalImageSchema, insertIncentiveSchema, insertWarrantyDocumentSchema, insertDocumentSchema, insertActivityEventSchema, insertCustomerMessageSchema } from "@shared/schema";
+import { sqliteConnection } from "./db";
+import { getCountyFromDb, getAllCountiesFromDb } from "./incentive-refresh";
+import { manualRefresh } from "./incentive-scheduler";
 import { randomBytes } from "crypto";
 import multer from "multer";
 import path from "path";
@@ -472,6 +475,9 @@ export function registerRoutes(server: Server, app: Express): void {
   app.get("/api/county-incentives/:county", (req, res) => {
     try {
       const county = req.params.county.toLowerCase().replace(/\s+/g, "-");
+      // Prefer live DB (auto-refreshed yearly). Fall back to hard-coded seed if row missing.
+      const dbData = getCountyFromDb(sqliteConnection, county);
+      if (dbData) return res.json(dbData);
       const data = getCountyIncentives(county);
       if (!data) return res.status(404).json({ error: "County not found" });
       res.json(data);
@@ -482,9 +488,32 @@ export function registerRoutes(server: Server, app: Express): void {
 
   app.get("/api/county-incentives", (_req, res) => {
     try {
+      const dbData = getAllCountiesFromDb(sqliteConnection);
+      if (dbData.length > 0) return res.json(dbData);
       res.json(getAllCountyIncentives());
     } catch (e) {
       res.status(500).json({ error: "Server error" });
+    }
+  });
+
+  app.post("/api/admin/refresh-incentives", async (req, res) => {
+    try {
+      const taxYear = req.body?.taxYear ? parseInt(req.body.taxYear, 10) : undefined;
+      const report = await manualRefresh(sqliteConnection, taxYear);
+      res.json({ success: true, report });
+    } catch (e) {
+      res.status(500).json({ error: (e as Error).message });
+    }
+  });
+
+  app.get("/api/admin/refresh-log", (_req, res) => {
+    try {
+      const rows = sqliteConnection.prepare(
+        "SELECT run_id, run_at, run_type, county_key, status, changes_json, error_message, tax_year FROM incentive_refresh_log ORDER BY run_at DESC LIMIT 100"
+      ).all();
+      res.json(rows);
+    } catch (e) {
+      res.status(500).json({ error: (e as Error).message });
     }
   });
 

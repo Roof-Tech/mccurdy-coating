@@ -1,5 +1,7 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
+import { sqliteConnection } from "./db";
+import { startIncentiveScheduler } from "./incentive-scheduler";
 import { serveStatic } from "./static";
 import { createServer } from "http";
 
@@ -61,6 +63,14 @@ app.use((req, res, next) => {
 
 (async () => {
   await registerRoutes(httpServer, app);
+
+  // Start yearly + quarterly auto-refresh of county incentives.
+  // Fires Jan 1 (full refresh) and Apr 1 / Jul 1 / Oct 1 (safety checks).
+  try {
+    startIncentiveScheduler(sqliteConnection);
+  } catch (e) {
+    console.error("[incentive-refresh] Scheduler failed to start:", e);
+  }
 
   app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
     const status = err.status || err.statusCode || 500;

@@ -10,6 +10,12 @@ services:
         value: production
       - key: DATA_DIR
         value: /var/data
+      - key: OWNER_EMAIL
+        value: mschirmer1922@gmail.com
+      - key: PERPLEXITY_API_KEY
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
     disk:
       name: mccurdy-data
       mountPath: /var/data
