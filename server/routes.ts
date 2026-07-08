@@ -496,6 +496,51 @@ export function registerRoutes(server: Server, app: Express): void {
     }
   });
 
+  // Upsert a single county's incentive data (used by scheduled task runner)
+  // Simple header-based auth. Header: X-Admin-Key: mccurdy-admin-2027
+  const ADMIN_KEY = process.env.ADMIN_KEY || "mccurdy-admin-2027";
+  app.post("/api/admin/upsert-county", (req, res) => {
+    try {
+      if (req.header("X-Admin-Key") !== ADMIN_KEY) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      const body = req.body || {};
+      const { county, climateZone, utility, programs } = body;
+      const countyKey = (body.countyKey || county || "").toString().toLowerCase().replace(/\s+/g, "-").replace(/-county$/, "");
+      if (!countyKey || !county || !Array.isArray(programs) || programs.length === 0) {
+        return res.status(400).json({ error: "Missing required fields: county, programs[]" });
+      }
+      const now = new Date().toISOString();
+      const taxYear = body.taxYear || new Date().getFullYear();
+      sqliteConnection.prepare(`
+        INSERT INTO county_incentives (county_key, county_name, climate_zone, utility, programs, tax_year, last_updated, last_audit_passed, sources_json)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(county_key) DO UPDATE SET
+          county_name = excluded.county_name,
+          climate_zone = excluded.climate_zone,
+          utility = excluded.utility,
+          programs = excluded.programs,
+          tax_year = excluded.tax_year,
+          last_updated = excluded.last_updated,
+          last_audit_passed = excluded.last_audit_passed,
+          sources_json = excluded.sources_json
+      `).run(
+        countyKey,
+        county,
+        climateZone || "",
+        utility || "",
+        JSON.stringify(programs),
+        taxYear,
+        now,
+        now,
+        JSON.stringify(body.sources || [])
+      );
+      res.json({ success: true, countyKey, programsCount: programs.length, taxYear });
+    } catch (e) {
+      res.status(500).json({ error: (e as Error).message });
+    }
+  });
+
   app.post("/api/admin/refresh-incentives", async (req, res) => {
     try {
       const taxYear = req.body?.taxYear ? parseInt(req.body.taxYear, 10) : undefined;
