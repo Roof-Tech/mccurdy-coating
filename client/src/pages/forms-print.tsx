@@ -21,6 +21,20 @@ export default function FormsPrint() {
     }).catch(() => {});
   };
 
+  const handleShareWithCPA = () => {
+    const url = window.location.href;
+    const subject = encodeURIComponent("McCurdy Roofing — Proposal for Your Review");
+    const body = encodeURIComponent(`Please review this roofing proposal:\n\n${url}\n\nThis proposal includes pricing options, tax incentives, and warranty information that may be relevant for your review.`);
+    window.location.href = `mailto:?subject=${subject}&body=${body}`;
+  };
+
+  const handleShareWithPartner = () => {
+    const url = window.location.href;
+    const subject = encodeURIComponent("McCurdy Roofing — Proposal");
+    const body = encodeURIComponent(`Here is the roofing proposal for review:\n\n${url}`);
+    window.location.href = `mailto:?subject=${subject}&body=${body}`;
+  };
+
   const records = [
     "Signed proposal/contract",
     "Proof of payment/deposit receipts",
@@ -47,8 +61,8 @@ export default function FormsPrint() {
         <CardContent className="p-5">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
-              { label: "Share with CPA", icon: Mail, action: () => toast({ title: "Coming Soon", description: "Email sharing feature coming soon." }) },
-              { label: "Share with Partner", icon: Share2, action: () => toast({ title: "Coming Soon", description: "Partner sharing feature coming soon." }) },
+              { label: "Share with CPA", icon: Mail, action: handleShareWithCPA },
+              { label: "Share with Partner", icon: Share2, action: handleShareWithPartner },
               { label: "Copy Link", icon: copiedLink ? Check : Copy, action: handleCopyLink },
               { label: "Print Page", icon: Printer, action: () => window.print() },
             ].map((btn) => (

@@ -32,12 +32,17 @@ export default function ApprovalCenter() {
       toast({ title: "Name required", description: "Please enter your name to approve.", variant: "destructive" });
       return;
     }
+    if (options.length > 0 && !selectedOption) {
+      toast({ title: "Option required", description: "Please select a pricing option before approving.", variant: "destructive" });
+      return;
+    }
     setSubmitting("approve");
     try {
       await apiRequest("POST", `/api/proposal/${token}/message`, {
         senderName: name, senderEmail: email, senderPhone: phone,
         messageType: "approval",
-        content: `Approved option: ${selectedOption || "Not specified"}`,
+        message: `Approved option: ${selectedOption || "Not specified"}`,
+        selectedOption,
       });
       toast({ title: "Proposal Approved", description: "Thank you! McCurdy Roofing will be in touch shortly." });
       trackEvent("approved", { option: selectedOption });
@@ -51,7 +56,7 @@ export default function ApprovalCenter() {
     try {
       await apiRequest("POST", `/api/proposal/${token}/message`, {
         senderName: name || "Customer", senderEmail: email,
-        messageType: "question", content: question,
+        messageType: "question", message: question,
       });
       toast({ title: "Question Sent", description: "We'll get back to you soon." });
       setQuestion("");
@@ -66,7 +71,7 @@ export default function ApprovalCenter() {
     try {
       await apiRequest("POST", `/api/proposal/${token}/message`, {
         senderName: name || "Customer", senderEmail: email,
-        messageType: "revision", content: revision,
+        messageType: "revision", message: revision,
       });
       toast({ title: "Revision Requested", description: "We'll update your proposal and send a new link." });
       setRevision("");

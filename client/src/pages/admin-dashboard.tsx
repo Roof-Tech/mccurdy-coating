@@ -6,7 +6,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { LayoutDashboard, FileText, Eye, CheckCircle, AlertCircle, Clock, MessageSquare, Plus } from "lucide-react";
-import { Link } from "wouter";
 import type { Proposal, ActivityEvent, CustomerMessage } from "@shared/schema";
 
 const statusColors: Record<string, string> = {
@@ -55,9 +54,13 @@ export default function AdminDashboard() {
     <div className="p-6 max-w-6xl mx-auto space-y-6" data-testid="page-admin-dashboard">
       <div className="flex items-center justify-between">
         <PageHeader title="Dashboard" subtitle="Proposal management overview" icon={<LayoutDashboard className="w-5 h-5" />} />
-        <Link href="/admin/proposals">
-          <Button className="gap-2" data-testid="button-new-proposal"><Plus className="w-4 h-4" /> New Proposal</Button>
-        </Link>
+        <a
+          href="/#/admin/proposals/new"
+          className="inline-flex items-center gap-2 h-9 px-4 text-sm font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+          data-testid="button-new-proposal"
+        >
+          <Plus className="w-4 h-4" /> New Proposal
+        </a>
       </div>
 
       {/* Stats */}
@@ -142,8 +145,13 @@ export default function AdminDashboard() {
                       </td>
                       <td className="py-2">
                         <div className="flex gap-1">
-                          <a href={`/#/view/${p.accessToken}`} target="_blank" rel="noopener noreferrer">
-                            <Button variant="outline" size="sm" className="text-xs h-7">View</Button>
+                          <a
+                            href={`/#/view/${p.accessToken}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center justify-center h-7 px-3 text-xs font-medium border border-border rounded-md bg-background hover:bg-accent hover:text-accent-foreground transition-colors"
+                          >
+                            View
                           </a>
                         </div>
                       </td>
