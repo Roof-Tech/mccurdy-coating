@@ -20,6 +20,8 @@ export const proposals = sqliteTable("proposals", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   proposalNumber: text("proposal_number").notNull().unique(),
   customerName: text("customer_name").notNull(),
+  customerEmail: text("customer_email"),
+  customerPhone: text("customer_phone"),
   companyName: text("company_name"),
   propertyAddress: text("property_address").notNull(),
   city: text("city"),
@@ -82,6 +84,19 @@ export const proposals = sqliteTable("proposals", {
   approvedOption: text("approved_option"),
   approvedAt: text("approved_at"),
   approvedBy: text("approved_by"),
+  // Email send tracking
+  lastSentAt: text("last_sent_at"),
+  lastSentTo: text("last_sent_to"),
+  sendCount: integer("send_count").default(0),
+  // E-signature & scheduling
+  customerSignature: text("customer_signature"), // data URL of signature
+  signedAt: text("signed_at"),
+  signedByName: text("signed_by_name"),
+  signedByTitle: text("signed_by_title"),
+  requestedStartDate: text("requested_start_date"),
+  scheduledStartDate: text("scheduled_start_date"),
+  workCompletedDate: text("work_completed_date"),
+  maintenanceRemindersEnabled: integer("maintenance_reminders_enabled").default(1),
 });
 
 export const insertProposalSchema = createInsertSchema(proposals).omit({ id: true });

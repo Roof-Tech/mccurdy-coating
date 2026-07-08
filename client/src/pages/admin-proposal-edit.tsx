@@ -527,6 +527,26 @@ export default function AdminProposalEdit() {
                   <Label className="text-xs">Company Name</Label>
                   <Input value={ed.companyName || ""} onChange={e => setField("companyName", e.target.value)} />
                 </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Customer Email</Label>
+                  <Input
+                    type="email"
+                    placeholder="customer@company.com"
+                    value={(ed as any).customerEmail || ""}
+                    onChange={e => setField("customerEmail" as any, e.target.value)}
+                    data-testid="input-customer-email"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Customer Phone</Label>
+                  <Input
+                    type="tel"
+                    placeholder="(555) 123-4567"
+                    value={(ed as any).customerPhone || ""}
+                    onChange={e => setField("customerPhone" as any, e.target.value)}
+                    data-testid="input-customer-phone"
+                  />
+                </div>
                 <div className="sm:col-span-2 space-y-1.5">
                   <Label className="text-xs">Property Address</Label>
                   <Input value={ed.propertyAddress || ""} onChange={e => setField("propertyAddress", e.target.value)} />

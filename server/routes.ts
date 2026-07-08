@@ -5,6 +5,7 @@ import { insertProposalSchema, insertMaterialSchema, insertProposalImageSchema, 
 import { sqliteConnection } from "./db";
 import { getCountyFromDb, getAllCountiesFromDb } from "./incentive-refresh";
 import { manualRefresh } from "./incentive-scheduler";
+import { sendProposalEmail, sendSignedNotificationToOwner } from "./proposal-email";
 import { randomBytes } from "crypto";
 import multer from "multer";
 import path from "path";
@@ -229,8 +230,14 @@ export function registerRoutes(server: Server, app: Express): void {
     try {
       const token = randomBytes(32).toString("hex");
       const proposalNumber = `MCC-${Date.now().toString(36).toUpperCase()}`;
-      
+      const today = new Date().toISOString().slice(0, 10);
+
       const proposal = storage.createProposal({
+        // Sensible defaults so a minimal form never crashes
+        proposalDate: today,
+        estimator: "McCurdy Coatings",
+        state: "CA",
+        projectType: "commercial",
         ...req.body,
         proposalNumber: req.body.proposalNumber || proposalNumber,
         accessToken: token,
@@ -250,6 +257,107 @@ export function registerRoutes(server: Server, app: Express): void {
       res.json(proposal);
     } catch (e: any) {
       res.status(400).json({ error: e.message || "Failed to update" });
+    }
+  });
+
+  // Send proposal to customer via email (Resend)
+  app.post("/api/admin/proposals/:id/send-email", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const proposal = storage.getProposal(id);
+      if (!proposal) return res.status(404).json({ error: "Proposal not found" });
+
+      // Allow override email in body, else use stored customerEmail
+      const toEmail: string = (req.body?.email || (proposal as any).customerEmail || "").trim();
+      if (!toEmail) return res.status(400).json({ error: "No email address provided" });
+      if (!/^\S+@\S+\.\S+$/.test(toEmail)) return res.status(400).json({ error: "Invalid email address" });
+
+      const customMessage: string | undefined = req.body?.message;
+
+      const result = await sendProposalEmail({
+        toEmail,
+        customerName: proposal.customerName,
+        companyName: proposal.companyName,
+        proposalNumber: proposal.proposalNumber,
+        accessToken: proposal.accessToken,
+        propertyAddress: proposal.propertyAddress,
+        estimator: proposal.estimator,
+        customMessage,
+      });
+
+      if (!result.ok) return res.status(502).json({ error: result.error });
+
+      // Track the send
+      const now = new Date().toISOString();
+      const currentCount = ((proposal as any).sendCount || 0) as number;
+      storage.updateProposal(id, {
+        lastSentAt: now,
+        lastSentTo: toEmail,
+        sendCount: currentCount + 1,
+        customerEmail: toEmail, // save for future sends
+        status: proposal.status === "draft" ? "sent" : proposal.status,
+      } as any);
+
+      res.json({ success: true, sentTo: toEmail, messageId: result.id });
+    } catch (e: any) {
+      console.error("[send-email] Error:", e);
+      res.status(500).json({ error: e.message || "Server error" });
+    }
+  });
+
+  // Customer signs & approves — called from customer portal
+  app.post("/api/proposals/:token/sign", async (req, res) => {
+    try {
+      const proposal = storage.getProposalByToken(req.params.token);
+      if (!proposal) return res.status(404).json({ error: "Not found" });
+
+      const { signature, signedByName, signedByTitle, approvedOption, requestedStartDate } = req.body || {};
+      if (!signature || !signedByName) {
+        return res.status(400).json({ error: "Signature and name are required" });
+      }
+
+      const now = new Date().toISOString();
+      const updated = storage.updateProposal(proposal.id, {
+        customerSignature: signature,
+        signedAt: now,
+        signedByName,
+        signedByTitle: signedByTitle || null,
+        approvedOption: approvedOption || null,
+        approvedAt: now,
+        approvedBy: signedByName,
+        requestedStartDate: requestedStartDate || null,
+        status: "approved",
+      } as any);
+
+      // Log activity
+      try {
+        storage.createActivity({
+          proposalId: proposal.id,
+          eventType: "signed",
+          eventData: JSON.stringify({ signedByName, approvedOption, requestedStartDate }),
+          ipAddress: req.ip || null,
+          userAgent: req.get("user-agent") || null,
+          createdAt: now,
+        } as any);
+      } catch {}
+
+      // Notify owner (async, don't block response)
+      sendSignedNotificationToOwner({
+        customerName: proposal.customerName,
+        companyName: proposal.companyName,
+        proposalNumber: proposal.proposalNumber,
+        signedByName,
+        signedByTitle,
+        approvedOption,
+        requestedStartDate,
+        propertyAddress: proposal.propertyAddress,
+        accessToken: proposal.accessToken,
+      }).catch(err => console.error("[sign] notify owner failed:", err));
+
+      res.json({ success: true, proposal: updated });
+    } catch (e: any) {
+      console.error("[sign] Error:", e);
+      res.status(500).json({ error: e.message || "Server error" });
     }
   });
 

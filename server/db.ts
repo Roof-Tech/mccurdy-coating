@@ -158,5 +158,32 @@ sqlite.exec(`
   );
 `);
 
+// ── Safe migrations: add columns if they don't exist ──
+function addColumnIfMissing(table: string, column: string, def: string) {
+  try {
+    const cols = sqlite.prepare(`PRAGMA table_info(${table})`).all() as Array<{ name: string }>;
+    if (!cols.find(c => c.name === column)) {
+      sqlite.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${def};`);
+      console.log(`[db] Added ${table}.${column}`);
+    }
+  } catch (e) {
+    console.warn(`[db] Migration ${table}.${column} skipped:`, e);
+  }
+}
+
+addColumnIfMissing("proposals", "customer_email", "TEXT");
+addColumnIfMissing("proposals", "customer_phone", "TEXT");
+addColumnIfMissing("proposals", "last_sent_at", "TEXT");
+addColumnIfMissing("proposals", "last_sent_to", "TEXT");
+addColumnIfMissing("proposals", "send_count", "INTEGER DEFAULT 0");
+addColumnIfMissing("proposals", "customer_signature", "TEXT");
+addColumnIfMissing("proposals", "signed_at", "TEXT");
+addColumnIfMissing("proposals", "signed_by_name", "TEXT");
+addColumnIfMissing("proposals", "signed_by_title", "TEXT");
+addColumnIfMissing("proposals", "requested_start_date", "TEXT");
+addColumnIfMissing("proposals", "scheduled_start_date", "TEXT");
+addColumnIfMissing("proposals", "work_completed_date", "TEXT");
+addColumnIfMissing("proposals", "maintenance_reminders_enabled", "INTEGER DEFAULT 1");
+
 export const db = drizzle(sqlite, { schema });
 export const sqliteConnection = sqlite;
