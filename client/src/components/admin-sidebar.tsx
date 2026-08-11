@@ -6,7 +6,7 @@ import {
 } from "@/components/ui/sidebar";
 import { McCurdyLogo } from "./mccurdy-logo";
 import {
-  LayoutDashboard, FileText, MessageSquare, Activity, Settings,
+  LayoutDashboard, FileText, MessageSquare, Activity, Settings, Users, Gift,
 } from "lucide-react";
 import { PerplexityAttribution } from "./PerplexityAttribution";
 
@@ -15,6 +15,8 @@ const adminNav = [
   { title: "Proposals", url: "/admin/proposals", icon: FileText },
   { title: "Messages", url: "/admin/messages", icon: MessageSquare },
   { title: "Activity Log", url: "/admin/activity", icon: Activity },
+  { title: "Crew", url: "/admin/crew", icon: Users },
+  { title: "Referrals", url: "/admin/referrals", icon: Gift },
 ];
 
 export function AdminSidebar() {

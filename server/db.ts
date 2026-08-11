@@ -170,6 +170,35 @@ sqlite.exec(`
     is_read INTEGER DEFAULT 0,
     created_at TEXT NOT NULL
   );
+  CREATE TABLE IF NOT EXISTS email_schedule (
+    id TEXT PRIMARY KEY, proposal_id INTEGER NOT NULL REFERENCES proposals(id), type TEXT NOT NULL,
+    scheduled_for INTEGER NOT NULL, sent_at INTEGER, status TEXT NOT NULL DEFAULT 'pending'
+  );
+  CREATE TABLE IF NOT EXISTS upgrade_addons (
+    id TEXT PRIMARY KEY, proposal_id INTEGER NOT NULL REFERENCES proposals(id), name TEXT NOT NULL,
+    description TEXT NOT NULL, price_add TEXT NOT NULL, selected INTEGER NOT NULL DEFAULT 0,
+    sort_order INTEGER NOT NULL DEFAULT 0, created_at INTEGER NOT NULL DEFAULT (unixepoch())
+  );
+  CREATE TABLE IF NOT EXISTS crew_members (
+    id TEXT PRIMARY KEY, name TEXT NOT NULL, role TEXT NOT NULL, bio TEXT NOT NULL, photo_url TEXT,
+    years_experience INTEGER NOT NULL, certifications TEXT NOT NULL DEFAULT '', sort_order INTEGER NOT NULL DEFAULT 0,
+    active INTEGER NOT NULL DEFAULT 1
+  );
+  CREATE TABLE IF NOT EXISTS project_timeline (
+    id TEXT PRIMARY KEY, proposal_id INTEGER NOT NULL REFERENCES proposals(id), phase TEXT NOT NULL,
+    photo_url TEXT NOT NULL, caption TEXT, photo_date INTEGER NOT NULL, sort_order INTEGER NOT NULL DEFAULT 0,
+    created_at INTEGER NOT NULL DEFAULT (unixepoch())
+  );
+  CREATE TABLE IF NOT EXISTS referrals (
+    id TEXT PRIMARY KEY, referrer_proposal_id INTEGER NOT NULL REFERENCES proposals(id), referrer_name TEXT NOT NULL,
+    referrer_email TEXT NOT NULL, referee_name TEXT NOT NULL, referee_email TEXT, referee_phone TEXT,
+    referee_address TEXT, status TEXT NOT NULL DEFAULT 'invited', reward_amount TEXT NOT NULL DEFAULT '$500',
+    reward_issued INTEGER NOT NULL DEFAULT 0, referral_code TEXT NOT NULL UNIQUE, created_at INTEGER NOT NULL DEFAULT (unixepoch())
+  );
+  CREATE TABLE IF NOT EXISTS reviews (
+    id TEXT PRIMARY KEY, proposal_id INTEGER NOT NULL REFERENCES proposals(id), stars INTEGER NOT NULL,
+    feedback TEXT, submitted_at INTEGER NOT NULL DEFAULT (unixepoch()), went_public INTEGER NOT NULL DEFAULT 0
+  );
 `);
 
 // ── Safe migrations: add columns if they don't exist ──
@@ -198,7 +227,27 @@ addColumnIfMissing("proposals", "requested_start_date", "TEXT");
 addColumnIfMissing("proposals", "scheduled_start_date", "TEXT");
 addColumnIfMissing("proposals", "work_completed_date", "TEXT");
 addColumnIfMissing("proposals", "maintenance_reminders_enabled", "INTEGER DEFAULT 1");
+addColumnIfMissing("proposals", "ai_roof_analysis", "TEXT");
+addColumnIfMissing("proposals", "property_age", "INTEGER");
+addColumnIfMissing("proposals", "has_hvac", "INTEGER");
+addColumnIfMissing("proposals", "is_flat_roof", "INTEGER");
+addColumnIfMissing("proposals", "appointment_date", "INTEGER");
+addColumnIfMissing("proposals", "private_notes", "TEXT");
+addColumnIfMissing("proposals", "warranty_registered_at", "INTEGER");
+addColumnIfMissing("proposals", "warranty_start_date", "INTEGER");
 addColumnIfMissing("change_orders", "sent_at", "INTEGER");
+
+
+// Seed a starter crew directory once. These profiles are editable in Admin > Crew.
+const crewCount = (sqlite.prepare("SELECT COUNT(*) AS count FROM crew_members").get() as { count: number }).count;
+if (crewCount === 0) {
+  const insertCrew = sqlite.prepare("INSERT INTO crew_members (id, name, role, bio, years_experience, certifications, sort_order, active) VALUES (?, ?, ?, ?, ?, ?, ?, 1)");
+  insertCrew.run("crew-mike", "Mike Schirmer", "Owner", "Founder of McCurdy Coatings with three decades of hands-on Bay Area roof restoration experience. Mike stays involved from inspection through closeout.", 30, "CSLB Licensed, CertainTeed Master Certified", 1);
+  insertCrew.run("crew-daniel", "Daniel Reyes", "Foreman", "Daniel leads field quality, safety, and jobsite communication for every coating installation.", 18, "OSHA 30, Silicone Systems", 2);
+  insertCrew.run("crew-andrea", "Andrea Kim", "Crew Lead", "Andrea coordinates surface preparation and detail work, with a focus on seams and penetrations.", 12, "Fall Protection, Manufacturer Trained", 3);
+  insertCrew.run("crew-jordan", "Jordan Patel", "Project Coordinator", "Jordan keeps schedules, documents, and customer updates organized from kickoff through warranty registration.", 8, "Project Coordination", 4);
+  console.log("[db] Seeded starter crew members");
+}
 
 export const db = drizzle(sqlite, { schema });
 export const sqliteConnection = sqlite;

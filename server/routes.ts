@@ -1,12 +1,15 @@
 import type { Express } from "express";
 import type { Server } from "http";
 import { storage } from "./storage";
-import { insertProposalSchema, insertMaterialSchema, insertProposalImageSchema, insertIncentiveSchema, insertWarrantyDocumentSchema, insertDocumentSchema, insertActivityEventSchema, insertCustomerMessageSchema, insertChangeOrderSchema } from "@shared/schema";
-import { sqliteConnection } from "./db";
+import { insertProposalSchema, insertMaterialSchema, insertProposalImageSchema, insertIncentiveSchema, insertWarrantyDocumentSchema, insertDocumentSchema, insertActivityEventSchema, insertCustomerMessageSchema, insertChangeOrderSchema, emailSchedule, upgradeAddons, crewMembers, projectTimeline, referrals, reviews } from "@shared/schema";
+import { sqliteConnection, db } from "./db";
 import { getCountyFromDb, getAllCountiesFromDb } from "./incentive-refresh";
 import { manualRefresh } from "./incentive-scheduler";
-import { sendProposalEmail, sendSignedNotificationToOwner, sendChangeOrderEmail, sendChangeOrderAcceptedNotificationToOwner } from "./proposal-email";
-import { randomBytes } from "crypto";
+import { sendProposalEmail, sendSignedNotificationToOwner, sendChangeOrderEmail, sendChangeOrderAcceptedNotificationToOwner, sendPrepareForVisitEmail, sendOwnerNotification, sendWarrantyConfirmation } from "./proposal-email";
+import { analyzeRoofPhotos } from "./ai-roof-analysis";
+import { getUpgradeSuggestions } from "./upgrade-engine";
+import { eq, desc } from "drizzle-orm";
+import { randomBytes, randomUUID } from "crypto";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
@@ -308,6 +311,13 @@ export function registerRoutes(server: Server, app: Express): void {
     try {
       const proposal = storage.updateProposal(parseInt(req.params.id), req.body);
       if (!proposal) return res.status(404).json({ error: "Not found" });
+      if (req.body?.workCompletedDate) {
+        const existingReview = db.select().from(emailSchedule).where(eq(emailSchedule.proposalId, proposal.id)).all().some(item => item.type === "review_request");
+        if (!existingReview) {
+          const completed = Math.floor(new Date(req.body.workCompletedDate).getTime() / 1000) || Math.floor(Date.now() / 1000);
+          db.insert(emailSchedule).values({ id: randomUUID(), proposalId: proposal.id, type: "review_request", scheduledFor: completed + 3 * 86400, status: "pending" }).run();
+        }
+      }
       res.json(proposal);
     } catch (e: any) {
       res.status(400).json({ error: e.message || "Failed to update" });
@@ -435,6 +445,12 @@ export function registerRoutes(server: Server, app: Express): void {
         customerEmail: toEmail, // save for future sends
         status: proposal.status === "draft" ? "sent" : proposal.status,
       } as any);
+      // Schedule each follow-up only once per proposal/type.
+      const sentAt = Math.floor(Date.now() / 1000);
+      for (const [type, days] of [["day1", 1], ["day3", 3], ["day7", 7], ["day14", 14]] as const) {
+        const exists = db.select().from(emailSchedule).where(eq(emailSchedule.proposalId, id)).all().some(row => row.type === type);
+        if (!exists) db.insert(emailSchedule).values({ id: randomUUID(), proposalId: id, type, scheduledFor: sentAt + days * 86400, status: "pending" }).run();
+      }
 
       res.json({ success: true, sentTo: toEmail, messageId: result.id });
     } catch (e: any) {
@@ -807,6 +823,50 @@ export function registerRoutes(server: Server, app: Express): void {
       res.status(500).json({ error: (e as Error).message });
     }
   });
+
+  // ── Mega-build routes ─────────────────────────────────────
+  app.post("/api/admin/proposals/:id/analyze-roof", async (req, res) => {
+    const proposal = storage.getProposal(Number(req.params.id));
+    if (!proposal) return res.status(404).json({ error: "Proposal not found" });
+    if (!process.env.OPENAI_API_KEY) return res.json({ ok: false, error: "AI analysis not configured. Add OPENAI_API_KEY in Render env vars." });
+    try { const result = await analyzeRoofPhotos(req.body?.imageUrls || []); storage.updateProposal(proposal.id, { aiRoofAnalysis: JSON.stringify(result) } as any); res.json({ ok: true, result }); }
+    catch (error: any) { res.json({ ok: false, error: error.message || "Unable to analyze roof photos." }); }
+  });
+  app.get("/api/admin/proposals/:id/upgrade-suggestions", (req,res) => { const p=storage.getProposal(Number(req.params.id)); if(!p) return res.status(404).json({error:"Not found"}); res.json(getUpgradeSuggestions(p)); });
+  app.get("/api/proposals/:token/upgrade-suggestions", (req,res) => { const p=storage.getProposalByToken(req.params.token); if(!p) return res.status(404).json({error:"Not found"}); res.json(getUpgradeSuggestions(p)); });
+  app.post("/api/admin/proposals/:id/send-prep-email", async (req,res) => { const p=storage.getProposal(Number(req.params.id)); if(!p) return res.status(404).json({error:"Not found"}); if(!p.customerEmail || !p.appointmentDate) return res.status(400).json({error:"Customer email and appointment date are required"}); const result=await sendPrepareForVisitEmail({to:p.customerEmail,customerName:p.customerName,appointmentDate:p.appointmentDate,ownerName:p.estimator}); res.status(result.ok?200:502).json(result); });
+  app.get("/api/admin/proposals/:id/email-schedule", (req,res) => { res.json(db.select().from(emailSchedule).where(eq(emailSchedule.proposalId,Number(req.params.id))).orderBy(desc(emailSchedule.scheduledFor)).all()); });
+  app.delete("/api/admin/email-schedule/:id", (req,res) => { db.update(emailSchedule).set({status:"cancelled"}).where(eq(emailSchedule.id,req.params.id)).run(); res.json({success:true}); });
+
+  app.get("/api/admin/proposals/:id/addons", (req,res) => res.json(db.select().from(upgradeAddons).where(eq(upgradeAddons.proposalId,Number(req.params.id))).all()));
+  app.post("/api/admin/proposals/:id/addons", (req,res) => { const item=db.insert(upgradeAddons).values({id:randomUUID(),proposalId:Number(req.params.id),name:req.body.name,description:req.body.description || "",priceAdd:req.body.priceAdd || "$0",selected:req.body.selected ? 1:0,sortOrder:req.body.sortOrder || 0}).returning().get();res.status(201).json(item); });
+  app.patch("/api/admin/addons/:id", (req,res) => { const allowed=["name","description","priceAdd","selected","sortOrder"];const data=Object.fromEntries(Object.entries(req.body || {}).filter(([k])=>allowed.includes(k)));const item=db.update(upgradeAddons).set(data as any).where(eq(upgradeAddons.id,req.params.id)).returning().get(); if(!item) return res.status(404).json({error:"Not found"});res.json(item); });
+  app.delete("/api/admin/addons/:id", (req,res) => { db.delete(upgradeAddons).where(eq(upgradeAddons.id,req.params.id)).run();res.json({success:true}); });
+  app.get("/api/proposals/:token/addons", (req,res) => {const p=storage.getProposalByToken(req.params.token);if(!p)return res.status(404).json({error:"Not found"});res.json(db.select().from(upgradeAddons).where(eq(upgradeAddons.proposalId,p.id)).all());});
+  app.post("/api/proposals/:token/addons/:addonId/toggle", (req,res) => { const p=storage.getProposalByToken(req.params.token);if(!p)return res.status(404).json({error:"Not found"});const a=db.select().from(upgradeAddons).where(eq(upgradeAddons.id,req.params.addonId)).get();if(!a || a.proposalId!==p.id)return res.status(404).json({error:"Not found"});const item=db.update(upgradeAddons).set({selected:a.selected?0:1}).where(eq(upgradeAddons.id,a.id)).returning().get();res.json(item); });
+
+  app.get("/api/admin/crew", (_req,res) => res.json(db.select().from(crewMembers).orderBy(crewMembers.sortOrder).all()));
+  app.get("/api/crew", (_req,res) => res.json(db.select().from(crewMembers).where(eq(crewMembers.active,1)).orderBy(crewMembers.sortOrder).all()));
+  app.post("/api/admin/crew", (req,res) => res.status(201).json(db.insert(crewMembers).values({id:randomUUID(),name:req.body.name,role:req.body.role,bio:req.body.bio,photoUrl:req.body.photoUrl || null,yearsExperience:Number(req.body.yearsExperience)||0,certifications:req.body.certifications||"",sortOrder:Number(req.body.sortOrder)||0,active:req.body.active === false ? 0:1}).returning().get()));
+  app.patch("/api/admin/crew/:id", (req,res) => {const row=db.update(crewMembers).set(req.body).where(eq(crewMembers.id,req.params.id)).returning().get();if(!row)return res.status(404).json({error:"Not found"});res.json(row);});
+  app.delete("/api/admin/crew/:id", (req,res) => {db.delete(crewMembers).where(eq(crewMembers.id,req.params.id)).run();res.json({success:true});});
+
+  app.get("/api/admin/proposals/:id/timeline", (req,res) => res.json(db.select().from(projectTimeline).where(eq(projectTimeline.proposalId,Number(req.params.id))).orderBy(projectTimeline.sortOrder).all()));
+  app.post("/api/admin/proposals/:id/timeline", (req,res) => res.status(201).json(db.insert(projectTimeline).values({id:randomUUID(),proposalId:Number(req.params.id),phase:req.body.phase || "before",photoUrl:req.body.photoUrl,caption:req.body.caption || null,photoDate:Number(req.body.photoDate)||Math.floor(Date.now()/1000),sortOrder:Number(req.body.sortOrder)||0}).returning().get()));
+  app.patch("/api/admin/timeline/:id", (req,res) => {const row=db.update(projectTimeline).set(req.body).where(eq(projectTimeline.id,req.params.id)).returning().get();if(!row)return res.status(404).json({error:"Not found"});res.json(row);});
+  app.delete("/api/admin/timeline/:id", (req,res) => {db.delete(projectTimeline).where(eq(projectTimeline.id,req.params.id)).run();res.json({success:true});});
+  app.get("/api/proposals/:token/timeline", (req,res) => {const p=storage.getProposalByToken(req.params.token);if(!p)return res.status(404).json({error:"Not found"});res.json(db.select().from(projectTimeline).where(eq(projectTimeline.proposalId,p.id)).orderBy(projectTimeline.sortOrder).all());});
+
+  function referralCode() { return randomBytes(6).toString("base64url").toUpperCase().slice(0,8); }
+  app.get("/api/proposals/:token/referrals", (req,res) => {const p=storage.getProposalByToken(req.params.token);if(!p)return res.status(404).json({error:"Not found"});let rows=db.select().from(referrals).where(eq(referrals.referrerProposalId,p.id)).all();if(!rows.length){const row=db.insert(referrals).values({id:randomUUID(),referrerProposalId:p.id,referrerName:p.customerName,referrerEmail:p.customerEmail || "",refereeName:"Referral link",referralCode:referralCode(),status:"invited"}).returning().get();rows=[row];}res.json(rows);});
+  app.get("/api/admin/referrals", (_req,res) => res.json(db.select().from(referrals).orderBy(desc(referrals.createdAt)).all()));
+  app.patch("/api/admin/referrals/:id", async (req,res) => {const old=db.select().from(referrals).where(eq(referrals.id,req.params.id)).get();if(!old)return res.status(404).json({error:"Not found"});const row=db.update(referrals).set(req.body).where(eq(referrals.id,old.id)).returning().get();if(req.body.status === "signed" && old.status !== "signed") await sendOwnerNotification("Referral signed", `<p>${old.refereeName} has signed a proposal referred by ${old.referrerName}.</p>`);res.json(row);});
+  app.post("/api/admin/referrals/:id/issue-reward", (req,res) => {const row=db.update(referrals).set({rewardIssued:1}).where(eq(referrals.id,req.params.id)).returning().get();if(!row)return res.status(404).json({error:"Not found"});res.json(row);});
+  app.post("/api/referrals/:code", async (req,res) => {const seed=db.select().from(referrals).where(eq(referrals.referralCode,req.params.code)).get();if(!seed)return res.status(404).json({error:"Referral link not found"});const row=db.insert(referrals).values({id:randomUUID(),referrerProposalId:seed.referrerProposalId,referrerName:seed.referrerName,referrerEmail:seed.referrerEmail,refereeName:req.body.name,refereeEmail:req.body.email || null,refereePhone:req.body.phone || null,refereeAddress:req.body.address || null,referralCode:referralCode(),status:"invited"}).returning().get();await sendOwnerNotification("New neighbor referral", `<p><b>${req.body.name}</b> was referred by ${seed.referrerName}.<br>Email: ${req.body.email || "—"}<br>Phone: ${req.body.phone || "—"}<br>Address: ${req.body.address || "—"}</p>`);res.status(201).json(row);});
+
+  app.post("/api/proposals/:token/warranty/register", async (req,res) => {const p=storage.getProposalByToken(req.params.token);if(!p)return res.status(404).json({error:"Not found"});const start=Math.floor(new Date(req.body.installDate || Date.now()).getTime()/1000);storage.updateProposal(p.id,{customerName:req.body.name || p.customerName,customerEmail:req.body.email || p.customerEmail,customerPhone:req.body.phone || p.customerPhone,propertyAddress:req.body.propertyAddress || p.propertyAddress,warrantyRegisteredAt:Math.floor(Date.now()/1000),warrantyStartDate:start} as any);for(const y of [1,3,5,10]) db.insert(emailSchedule).values({id:randomUUID(),proposalId:p.id,type:`maintenance_y${y}`,scheduledFor:start+y*365*86400,status:"pending"}).run();if(req.body.email || p.customerEmail) await sendWarrantyConfirmation({to:req.body.email || p.customerEmail!,customerName:req.body.name || p.customerName,accessToken:p.accessToken});await sendOwnerNotification("Warranty registered", `<p>${req.body.name || p.customerName} registered warranty for ${p.proposalNumber}.</p>`);res.json({success:true,warrantyStartDate:start});});
+  app.post("/api/proposals/:token/review/private-feedback", async (req,res) => {const p=storage.getProposalByToken(req.params.token);if(!p)return res.status(404).json({error:"Not found"});const row=db.insert(reviews).values({id:randomUUID(),proposalId:p.id,stars:Number(req.body.stars),feedback:req.body.feedback || null,wentPublic:0}).returning().get();await sendOwnerNotification("Private project feedback", `<p><b>${p.customerName}</b> gave ${row.stars}/5 stars.<br>${req.body.feedback || "No comments provided."}</p>`);res.status(201).json(row);});
+  app.post("/api/proposals/:token/review/public", (req,res) => {const p=storage.getProposalByToken(req.params.token);if(!p)return res.status(404).json({error:"Not found"});res.status(201).json(db.insert(reviews).values({id:randomUUID(),proposalId:p.id,stars:Number(req.body.stars),feedback:req.body.feedback || null,wentPublic:1}).returning().get());});
 
   // ── AI Roof Transformation ──
   // AI image generation requires specialized GPU services not available on this server.

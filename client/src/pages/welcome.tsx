@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { McCurdyLogo } from "@/components/mccurdy-logo";
+import { GuaranteeRibbon, TrustCredentials } from "@/components/customer-trust";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "wouter";
 import {
@@ -45,6 +46,7 @@ export default function Welcome() {
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto pb-8" data-testid="page-welcome">
+      <div className="mx-4 mt-4"><GuaranteeRibbon /></div>
       {/* ── Premium Hero Section ── */}
       <div className="relative overflow-hidden rounded-xl mx-4 mt-4 premium-gradient" style={{ minHeight: '320px' }}>
         {/* Decorative geometric shapes */}
@@ -194,6 +196,7 @@ export default function Welcome() {
           </div>
         </div>
 
+        <TrustCredentials />
         {/* ── Trust Signals ── */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 animate-fade-in-up" style={{ animationDelay: '0.4s', animationFillMode: 'backwards' }}>
           {[

@@ -98,6 +98,15 @@ export const proposals = sqliteTable("proposals", {
   scheduledStartDate: text("scheduled_start_date"),
   workCompletedDate: text("work_completed_date"),
   maintenanceRemindersEnabled: integer("maintenance_reminders_enabled").default(1),
+  // Mega-build extensions
+  aiRoofAnalysis: text("ai_roof_analysis"),
+  propertyAge: integer("property_age"),
+  hasHvac: integer("has_hvac"),
+  isFlatRoof: integer("is_flat_roof"),
+  appointmentDate: integer("appointment_date"),
+  privateNotes: text("private_notes"),
+  warrantyRegisteredAt: integer("warranty_registered_at"),
+  warrantyStartDate: integer("warranty_start_date"),
 });
 
 export const insertProposalSchema = createInsertSchema(proposals).omit({ id: true });
@@ -247,3 +256,74 @@ export const customerMessages = sqliteTable("customer_messages", {
 export const insertCustomerMessageSchema = createInsertSchema(customerMessages).omit({ id: true });
 export type InsertCustomerMessage = z.infer<typeof insertCustomerMessageSchema>;
 export type CustomerMessage = typeof customerMessages.$inferSelect;
+
+
+// ── Automated email schedule ──────────────────────────────────
+export const emailSchedule = sqliteTable("email_schedule", {
+  id: text("id").primaryKey(),
+  proposalId: integer("proposal_id").notNull().references(() => proposals.id),
+  type: text("type").notNull(),
+  scheduledFor: integer("scheduled_for").notNull(),
+  sentAt: integer("sent_at"),
+  status: text("status").notNull().default("pending"),
+});
+export const insertEmailScheduleSchema = createInsertSchema(emailSchedule).omit({ id: true, sentAt: true, status: true });
+export type InsertEmailSchedule = z.infer<typeof insertEmailScheduleSchema>;
+export type EmailSchedule = typeof emailSchedule.$inferSelect;
+
+// ── Structured proposal upgrades ───────────────────────────────
+export const upgradeAddons = sqliteTable("upgrade_addons", {
+  id: text("id").primaryKey(),
+  proposalId: integer("proposal_id").notNull().references(() => proposals.id),
+  name: text("name").notNull(),
+  description: text("description").notNull(),
+  priceAdd: text("price_add").notNull(),
+  selected: integer("selected").notNull().default(0),
+  sortOrder: integer("sort_order").notNull().default(0),
+  createdAt: integer("created_at").notNull().default(sql`(unixepoch())`),
+});
+export const insertUpgradeAddonSchema = createInsertSchema(upgradeAddons).omit({ id: true, createdAt: true });
+export type InsertUpgradeAddon = z.infer<typeof insertUpgradeAddonSchema>;
+export type UpgradeAddon = typeof upgradeAddons.$inferSelect;
+
+// ── Crew directory ─────────────────────────────────────────────
+export const crewMembers = sqliteTable("crew_members", {
+  id: text("id").primaryKey(), name: text("name").notNull(), role: text("role").notNull(),
+  bio: text("bio").notNull(), photoUrl: text("photo_url"), yearsExperience: integer("years_experience").notNull(),
+  certifications: text("certifications").notNull().default(""), sortOrder: integer("sort_order").notNull().default(0), active: integer("active").notNull().default(1),
+});
+export const insertCrewMemberSchema = createInsertSchema(crewMembers).omit({ id: true });
+export type InsertCrewMember = z.infer<typeof insertCrewMemberSchema>;
+export type CrewMember = typeof crewMembers.$inferSelect;
+
+// ── Project photo timeline ─────────────────────────────────────
+export const projectTimeline = sqliteTable("project_timeline", {
+  id: text("id").primaryKey(), proposalId: integer("proposal_id").notNull().references(() => proposals.id),
+  phase: text("phase").notNull(), photoUrl: text("photo_url").notNull(), caption: text("caption"),
+  photoDate: integer("photo_date").notNull(), sortOrder: integer("sort_order").notNull().default(0),
+  createdAt: integer("created_at").notNull().default(sql`(unixepoch())`),
+});
+export const insertProjectTimelineSchema = createInsertSchema(projectTimeline).omit({ id: true, createdAt: true });
+export type InsertProjectTimeline = z.infer<typeof insertProjectTimelineSchema>;
+export type ProjectTimeline = typeof projectTimeline.$inferSelect;
+
+// ── Referral rewards ───────────────────────────────────────────
+export const referrals = sqliteTable("referrals", {
+  id: text("id").primaryKey(), referrerProposalId: integer("referrer_proposal_id").notNull().references(() => proposals.id),
+  referrerName: text("referrer_name").notNull(), referrerEmail: text("referrer_email").notNull(), refereeName: text("referee_name").notNull(),
+  refereeEmail: text("referee_email"), refereePhone: text("referee_phone"), refereeAddress: text("referee_address"),
+  status: text("status").notNull().default("invited"), rewardAmount: text("reward_amount").notNull().default("$500"), rewardIssued: integer("reward_issued").notNull().default(0),
+  referralCode: text("referral_code").notNull().unique(), createdAt: integer("created_at").notNull().default(sql`(unixepoch())`),
+});
+export const insertReferralSchema = createInsertSchema(referrals).omit({ id: true, createdAt: true, rewardIssued: true });
+export type InsertReferral = z.infer<typeof insertReferralSchema>;
+export type Referral = typeof referrals.$inferSelect;
+
+// ── Review router responses ────────────────────────────────────
+export const reviews = sqliteTable("reviews", {
+  id: text("id").primaryKey(), proposalId: integer("proposal_id").notNull().references(() => proposals.id),
+  stars: integer("stars").notNull(), feedback: text("feedback"), submittedAt: integer("submitted_at").notNull().default(sql`(unixepoch())`), wentPublic: integer("went_public").notNull().default(0),
+});
+export const insertReviewSchema = createInsertSchema(reviews).omit({ id: true, submittedAt: true });
+export type InsertReview = z.infer<typeof insertReviewSchema>;
+export type Review = typeof reviews.$inferSelect;

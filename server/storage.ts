@@ -1,6 +1,6 @@
 import { 
   users, proposals, materials, proposalImages, incentives, 
-  warrantyDocuments, documents, changeOrders, activityEvents, customerMessages,
+  warrantyDocuments, documents, changeOrders, activityEvents, customerMessages, upgradeAddons,
   type User, type InsertUser,
   type Proposal, type InsertProposal,
   type Material, type InsertMaterial,
@@ -105,7 +105,22 @@ export class DatabaseStorage implements IStorage {
     return db.select().from(proposals).orderBy(desc(proposals.id)).all();
   }
   createProposal(proposal: InsertProposal): Proposal {
-    return db.insert(proposals).values(proposal).returning().get();
+    const created = db.insert(proposals).values(proposal).returning().get();
+    const defaults = [
+      ["Reinforcement fabric at seams", "Added fabric reinforcement at vulnerable seams and transitions.", "+$0.50/sqft"],
+      ["Extra mil thickness 30 vs 25", "Additional silicone build for increased protection.", "+$0.75/sqft"],
+      ["Reflective granule top coat", "Improves reflectivity and walkability.", "+$0.40/sqft"],
+      ["HVAC curb sealing", "Detail seal and reinforce HVAC curbs.", "$350 flat"],
+      ["Solar-ready primer", "Primer compatible with future solar planning.", "+$0.25/sqft"],
+      ["Skylight resealing", "Restore weatherproofing around each skylight.", "+$150/unit"],
+      ["Drain enhancement", "Improve drainage at low spots and roof drains.", "$250 flat"],
+      ["10-Year Premium Maintenance Plan", "Annual inspection and touch-ups for a decade.", "$2,500 flat"],
+    ];
+    for (let index = 0; index < defaults.length; index++) {
+      const [name, description, priceAdd] = defaults[index];
+      db.insert(upgradeAddons).values({ id: randomUUID(), proposalId: created.id, name, description, priceAdd, sortOrder: index, selected: 0 }).run();
+    }
+    return created;
   }
   updateProposal(id: number, data: Partial<InsertProposal>): Proposal | undefined {
     return db.update(proposals).set(data).where(eq(proposals.id, id)).returning().get();

@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { LayoutDashboard, FileText, Eye, CheckCircle, AlertCircle, Clock, MessageSquare, Plus } from "lucide-react";
+import { LayoutDashboard, FileText, Eye, CheckCircle, AlertCircle, Clock, MessageSquare, Plus, Users, Gift } from "lucide-react";
 import type { Proposal, ActivityEvent, CustomerMessage } from "@shared/schema";
 
 const statusColors: Record<string, string> = {
@@ -82,6 +82,8 @@ export default function AdminDashboard() {
           </Card>
         ))}
       </div>
+
+      <Card><CardHeader className="pb-2"><CardTitle className="text-base font-semibold">Quick Links</CardTitle></CardHeader><CardContent><div className="grid grid-cols-1 md:grid-cols-2 gap-3"><a data-testid="link-crew-management" href="/#/admin/crew" className="flex items-center gap-3 rounded border p-4 hover:bg-muted/40"><Users className="w-5 h-5 text-primary"/><span><b className="block text-sm">Crew Management</b><span className="text-xs text-muted-foreground">Manage customer-facing crew profiles</span></span></a><a data-testid="link-referrals" href="/#/admin/referrals" className="flex items-center gap-3 rounded border p-4 hover:bg-muted/40"><Gift className="w-5 h-5 text-primary"/><span><b className="block text-sm">Referrals</b><span className="text-xs text-muted-foreground">Track neighbor rewards and statuses</span></span></a></div></CardContent></Card>
 
       {/* Unread Messages */}
       {unreadMessages.length > 0 && (

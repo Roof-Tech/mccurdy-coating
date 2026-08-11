@@ -3,6 +3,7 @@ import { registerRoutes } from "./routes";
 import { sqliteConnection } from "./db";
 import { startIncentiveScheduler } from "./incentive-scheduler";
 import { serveStatic } from "./static";
+import { processScheduledEmails } from "./scheduled-jobs";
 import { createServer } from "http";
 
 const app = express();
@@ -63,6 +64,9 @@ app.use((req, res, next) => {
 
 (async () => {
   await registerRoutes(httpServer, app);
+
+  setInterval(() => { processScheduledEmails().catch(error => console.error("[scheduled-jobs]", error)); }, 15 * 60 * 1000);
+  processScheduledEmails().catch(error => console.error("[scheduled-jobs]", error));
 
   // Start yearly + quarterly auto-refresh of county incentives.
   // Fires Jan 1 (full refresh) and Apr 1 / Jul 1 / Oct 1 (safety checks).

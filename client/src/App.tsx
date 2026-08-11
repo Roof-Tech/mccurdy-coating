@@ -28,6 +28,12 @@ import FormsPrint from "@/pages/forms-print";
 import DocumentsProvided from "@/pages/documents-provided";
 import CPAQuestions from "@/pages/cpa-questions";
 import ApprovalCenter from "@/pages/approval-center";
+import MeetYourCrew from "@/pages/meet-your-crew";
+import ProjectTimeline from "@/pages/project-timeline";
+import ReferralRewards from "@/pages/referral-rewards";
+import WarrantyRegistration from "@/pages/warranty-registration";
+import ReviewRouter from "@/pages/review-router";
+import ReferralLanding from "@/pages/referral-landing";
 
 // Admin pages
 import AdminDashboard from "@/pages/admin-dashboard";
@@ -36,6 +42,8 @@ import AdminProposalCreate from "@/pages/admin-proposal-create";
 import AdminProposalEdit from "@/pages/admin-proposal-edit";
 import AdminMessages from "@/pages/admin-messages";
 import AdminActivity from "@/pages/admin-activity";
+import AdminCrew from "@/pages/admin-crew";
+import AdminReferrals from "@/pages/admin-referrals";
 
 import NotFound from "@/pages/not-found";
 
@@ -65,7 +73,11 @@ function CustomerProposalApp({ token }: { token: string }) {
                 <Route path="/view/:token/mils" component={MilsBuild} />
                 <Route path="/view/:token/colors" component={ColorOptions} />
                 <Route path="/view/:token/pricing" component={PricingOptions} />
-                <Route path="/view/:token/warranty" component={WarrantyCenter} />
+                <Route path="/view/:token/warranty" component={WarrantyRegistration} />
+                <Route path="/view/:token/crew" component={MeetYourCrew} />
+                <Route path="/view/:token/timeline" component={ProjectTimeline} />
+                <Route path="/view/:token/refer" component={ReferralRewards} />
+                <Route path="/view/:token/review" component={ReviewRouter} />
                 <Route path="/view/:token/visualizer" component={BeforeAfter} />
                 <Route path="/view/:token/savings" component={SavingsIncentives} />
                 <Route path="/view/:token/compliance" component={CompliancePage} />
@@ -107,6 +119,8 @@ function AdminApp() {
               <Route path="/admin/proposals/:id" component={AdminProposalEdit} />
               <Route path="/admin/messages" component={AdminMessages} />
               <Route path="/admin/activity" component={AdminActivity} />
+              <Route path="/admin/crew" component={AdminCrew} />
+              <Route path="/admin/referrals" component={AdminReferrals} />
               <Route component={AdminDashboard} />
             </Switch>
           </main>
@@ -152,6 +166,8 @@ function LandingPage() {
 
 function AppRouter() {
   const [location] = useHashLocation();
+  const referralMatch = window.location.pathname.match(/^\/refer\/([^/]+)/);
+  if (referralMatch) return <ReferralLanding code={referralMatch[1]} />;
 
   // Extract token from view routes
   const viewMatch = location.match(/^\/view\/([^/]+)/);

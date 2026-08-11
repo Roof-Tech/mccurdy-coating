@@ -6,6 +6,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { FileText, Clock, ListChecks, AlertCircle, User, Layers, Ruler, Building2, ArrowRight } from "lucide-react";
 import { useEffect } from "react";
 import { Link } from "wouter";
+import { TrustCredentials } from "@/components/customer-trust";
 
 export default function ProposalSummary() {
   const { proposal, trackEvent, token } = useProposal();
@@ -31,6 +32,7 @@ export default function ProposalSummary() {
         icon={<FileText className="w-5 h-5" />}
       />
 
+      <TrustCredentials />
       {/* ── Key Metrics Strip ── */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 stagger-children">
         {[

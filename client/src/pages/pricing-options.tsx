@@ -5,7 +5,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DollarSign, Check, Star, ArrowRight, Shield, Layers, Zap, CreditCard, Info } from "lucide-react";
 import { Link } from "wouter";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { GuaranteeRibbon } from "@/components/customer-trust";
+import { Slider } from "@/components/ui/slider";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 
 interface PricingOption {
   name: string;
@@ -34,6 +39,10 @@ function getYears(name: string): string {
 export default function PricingOptions() {
   const { proposal, trackEvent, token } = useProposal();
   const [expandedIdx, setExpandedIdx] = useState<number | null>(null);
+  const [term, setTerm] = useState(60);
+  const [apr, setApr] = useState(8.99);
+  const [chosenTier, setChosenTier] = useState(0);
+  const { data: addons = [], refetch: refetchAddons } = useQuery<Array<{id:string;name:string;description:string;priceAdd:string;selected:number}>>({ queryKey:["public-addons", token], queryFn:()=>fetch(`/api/proposals/${token}/addons`).then(r=>r.json()) });
   useEffect(() => { trackEvent("viewed", { page: "pricing" }); }, []);
   if (!proposal) return null;
 
@@ -41,9 +50,15 @@ export default function PricingOptions() {
 
   // Find recommended index
   const recommendedIdx = options.findIndex(o => o.recommended);
+  const roofSqft = (proposal.roofAreas ? JSON.parse(proposal.roofAreas) : []).reduce((sum:number, x:string) => sum + Number((x.match(/[\d,]+(?=\s*sq\s*ft)/i)?.[0] || "0").replace(/,/g,"")), 0);
+  const tierValue = Number((options[chosenTier]?.price || "0").match(/[\d.]+/)?.[0] || 0) * (roofSqft || 1);
+  const addonValue = addons.filter(a=>a.selected).reduce((sum,a)=> { const n=Number(a.priceAdd.match(/[\d.]+/)?.[0] || 0); return sum + (a.priceAdd.toLowerCase().includes("sqft") ? n * (roofSqft || 1) : n); },0);
+  const total = tierValue + addonValue;
+  const monthly = apr === 0 ? total / term : total * ((apr/100/12) * Math.pow(1+apr/100/12,term)) / (Math.pow(1+apr/100/12,term)-1);
 
   return (
     <div className="p-4 sm:p-6 max-w-5xl mx-auto space-y-6" data-testid="page-pricing">
+      <GuaranteeRibbon />
       <PageHeader
         title="Pricing & Options"
         subtitle="Compare ASC Roof Renewal warranty tiers — select the right level for your property"
@@ -175,6 +190,7 @@ export default function PricingOptions() {
                             isRecommended ? 'bg-accent hover:bg-accent/90 shadow-md animate-pulse-glow' : ''
                           }`}
                           data-testid={`button-select-option-${i}`}
+                          onClick={() => setChosenTier(i)}
                         >
                           Select <ArrowRight className="w-3.5 h-3.5" />
                         </Button>
@@ -203,6 +219,9 @@ export default function PricingOptions() {
           })}
         </div>
       )}
+
+      <Card><CardContent className="p-5 space-y-4"><div className="flex flex-wrap justify-between gap-2"><div><h2 className="font-semibold">Structured Upgrade Menu</h2><p className="text-sm text-muted-foreground">Choose only the additions that fit your property.</p></div><b data-testid="text-live-total">Estimated total: ${total.toLocaleString(undefined,{maximumFractionDigits:0})}</b></div><div className="space-y-2">{addons.map(addon=><label key={addon.id} className="flex items-start gap-3 rounded border p-3 cursor-pointer"><Checkbox data-testid={`checkbox-addon-${addon.id}`} checked={!!addon.selected} onCheckedChange={async()=>{await fetch(`/api/proposals/${token}/addons/${addon.id}/toggle`,{method:"POST"});refetchAddons()}}/><span className="min-w-0"><b className="text-sm block">{addon.name} <span className="text-primary">{addon.priceAdd}</span></b><span className="text-xs text-muted-foreground break-words">{addon.description}</span></span></label>)}</div></CardContent></Card>
+      <Card><CardContent className="p-5 space-y-4"><div><h2 className="font-semibold">Financing Calculator</h2><p className="text-sm text-muted-foreground">Informational estimate for your selected tier and upgrades.</p></div><div className="grid grid-cols-1 md:grid-cols-2 gap-5"><div className="space-y-2"><Label>Loan term: {term} months</Label><Slider data-testid="slider-loan-term" min={60} max={120} step={12} value={[term]} onValueChange={v=>setTerm(v[0])}/><Label>APR: {apr.toFixed(2)}%</Label><Slider data-testid="slider-apr" min={0} max={18} step={0.01} value={[apr]} onValueChange={v=>setApr(v[0])}/></div><div className="rounded bg-muted p-4"><p className="text-sm text-muted-foreground">Estimated monthly payment</p><p data-testid="text-monthly-payment" className="text-3xl font-bold">${Number.isFinite(monthly)?monthly.toLocaleString(undefined,{maximumFractionDigits:2}):"0.00"}</p><p className="text-xs text-muted-foreground">Based on ${total.toLocaleString(undefined,{maximumFractionDigits:0})} financed.</p></div></div><div className="grid grid-cols-1 md:grid-cols-3 gap-2">{[["GoGreen Financing","Energy efficiency financing options","https://gogreenfinancing.com/"],["PACE","Property tax assessment financing","https://dfpi.ca.gov/consumers/housing/pace/"],["HERO Program","Property-assessed energy financing","https://www.renovateamerica.com/"]].map(([name,desc,url])=><a key={name} href={url} target="_blank" rel="noreferrer" className="border rounded p-3"><b className="text-sm">{name}</b><p className="text-xs text-muted-foreground">{desc}</p></a>)}</div></CardContent></Card>
 
       {/* ── Payment Schedule ── */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">

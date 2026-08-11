@@ -13,3 +13,6 @@ vite.config.ts.*
 check-hash.mjs
 debug-admin.mjs
 CHANGES_SUMMARY.md
+WORK_LOG.md
+CHANGES_SUMMARY.md
+ENV_VARS.md

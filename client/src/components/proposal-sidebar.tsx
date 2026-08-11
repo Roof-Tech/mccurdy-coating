@@ -8,7 +8,7 @@ import { McCurdyLogo } from "./mccurdy-logo";
 import {
   Home, FileText, HelpCircle, Layers, BookOpen, Ruler,
   Palette, DollarSign, Shield, ImageIcon, TrendingUp,
-  Scale, Droplets, Printer, FolderOpen, Users, CheckCircle,
+  Scale, Droplets, Printer, FolderOpen, Users, CheckCircle, ImagePlus, Gift, Star,
 } from "lucide-react";
 import { PerplexityAttribution } from "./PerplexityAttribution";
 import { useProposal } from "@/lib/proposal-context";
@@ -32,10 +32,17 @@ const customerNav = [
   { title: "CPA / Team Questions", path: "/cpa-questions", icon: Users },
   { title: "Approve / Next Steps", path: "/approve", icon: CheckCircle },
 ];
+const postJobNav = [
+  { title: "Meet Your Crew", path: "/crew", icon: Users },
+  { title: "Project Timeline", path: "/timeline", icon: ImagePlus },
+  { title: "My Warranty", path: "/warranty", icon: Shield },
+  { title: "Refer a Neighbor", path: "/refer", icon: Gift },
+  { title: "Leave a Review", path: "/review", icon: Star },
+];
 
 export function ProposalSidebar() {
   const [location] = useLocation();
-  const { token } = useProposal();
+  const { token, proposal } = useProposal();
   const basePath = `/view/${token}`;
 
   return (
@@ -76,6 +83,10 @@ export function ProposalSidebar() {
               })}
             </SidebarMenu>
           </SidebarGroupContent>
+        </SidebarGroup>
+        <SidebarGroup className="border-t border-sidebar-border pt-3">
+          <SidebarGroupLabel className="text-[11px] uppercase tracking-wider text-sidebar-foreground/40 font-medium">After Your Project</SidebarGroupLabel>
+          <SidebarGroupContent><SidebarMenu>{postJobNav.filter(item => item.path !== "/review" || proposal?.status === "completed" || proposal?.status === "job_completed" || !!proposal?.workCompletedDate).map(item => { const fullPath=`${basePath}${item.path}`; return <SidebarMenuItem key={item.path}><SidebarMenuButton asChild data-active={location===fullPath} className={(location===fullPath ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium" : "")}><Link href={fullPath}><item.icon className="w-4 h-4"/><span>{item.title}</span></Link></SidebarMenuButton></SidebarMenuItem> })}</SidebarMenu></SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter className="p-3 border-t border-sidebar-border">

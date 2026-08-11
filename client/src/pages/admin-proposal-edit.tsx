@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { useState, useRef, useCallback, useEffect } from "react";
 import type { Proposal, Material, Document as DocType, WarrantyDocument, ProposalImage, ChangeOrder } from "@shared/schema";
+import { AiRoofPanel, UpgradeMenuPanel, JobPhotosPanel, EmailSchedulePanel } from "@/components/admin-mega-feature-panels";
 
 // ── Helpers ────────────────────────────────────────────────────
 
@@ -263,6 +264,11 @@ export default function AdminProposalEdit() {
       proposalDate: proposal.proposalDate || "",
       estimator: proposal.estimator || "",
       projectType: proposal.projectType || "commercial",
+      propertyAge: String(proposal.propertyAge || ""),
+      hasHvac: String(proposal.hasHvac || 0),
+      isFlatRoof: String(proposal.isFlatRoof || 0),
+      appointmentDate: proposal.appointmentDate ? new Date(proposal.appointmentDate * 1000).toISOString().slice(0,16) : "",
+      privateNotes: proposal.privateNotes || "",
       status: proposal.status || "draft",
       welcomeMessage: proposal.welcomeMessage || "",
       systemType: proposal.systemType || "",
@@ -308,6 +314,10 @@ export default function AdminProposalEdit() {
         whyRecommended: JSON.stringify((ed.whyRecommended || "").split("\n").filter(s => s.trim())),
         keyIssues: JSON.stringify((ed.keyIssues || "").split("\n").filter(s => s.trim())),
         addOns: JSON.stringify((ed.addOns || "").split("\n").filter(s => s.trim())),
+        propertyAge: ed.propertyAge ? Number(ed.propertyAge) : null,
+        hasHvac: Number(ed.hasHvac || 0),
+        isFlatRoof: Number(ed.isFlatRoof || 0),
+        appointmentDate: ed.appointmentDate ? Math.floor(new Date(ed.appointmentDate).getTime() / 1000) : null,
       });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/proposals", proposalId] });
       toast({ title: "Saved", description: "All changes saved successfully." });
@@ -566,6 +576,10 @@ export default function AdminProposalEdit() {
           <TabsTrigger value="change-orders" className="shrink-0 whitespace-nowrap gap-1.5 text-xs">
             <ClipboardPlus className="w-3.5 h-3.5" /> Change Orders
           </TabsTrigger>
+          <TabsTrigger value="upgrade-menu" className="shrink-0 whitespace-nowrap gap-1.5 text-xs"><Plus className="w-3.5 h-3.5"/> Upgrade Menu</TabsTrigger>
+          <TabsTrigger value="job-photos" className="shrink-0 whitespace-nowrap gap-1.5 text-xs"><Image className="w-3.5 h-3.5"/> Job Photos</TabsTrigger>
+          <TabsTrigger value="ai-roof" className="shrink-0 whitespace-nowrap gap-1.5 text-xs"><Sparkles className="w-3.5 h-3.5"/> AI Roof Analysis</TabsTrigger>
+          <TabsTrigger value="email-schedule" className="shrink-0 whitespace-nowrap gap-1.5 text-xs"><Mail className="w-3.5 h-3.5"/> Email Schedule</TabsTrigger>
         </TabsList>
 
         {/* ══ CONTENT TAB ══ */}
@@ -648,6 +662,16 @@ export default function AdminProposalEdit() {
                       <SelectItem value="residential">Residential</SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+                <div className="sm:col-span-2 rounded-lg border border-primary/15 bg-primary/5 p-4 space-y-3">
+                  <p className="text-sm font-semibold">Property Details</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-1.5"><Label className="text-xs">Property Age (years)</Label><Input data-testid="input-property-age" type="number" value={ed.propertyAge || ""} onChange={e => setField("propertyAge", e.target.value)} /></div>
+                    <div className="space-y-1.5"><Label className="text-xs">Appointment Date</Label><Input data-testid="input-appointment-date" type="datetime-local" value={ed.appointmentDate || ""} onChange={e => setField("appointmentDate", e.target.value)} /></div>
+                    <div className="space-y-1.5"><Label className="text-xs">HVAC Equipment</Label><Select value={ed.hasHvac || "0"} onValueChange={v => setField("hasHvac", v)}><SelectTrigger data-testid="select-has-hvac"><SelectValue/></SelectTrigger><SelectContent><SelectItem value="0">No / Unknown</SelectItem><SelectItem value="1">Yes</SelectItem></SelectContent></Select></div>
+                    <div className="space-y-1.5"><Label className="text-xs">Flat Roof</Label><Select value={ed.isFlatRoof || "0"} onValueChange={v => setField("isFlatRoof", v)}><SelectTrigger data-testid="select-flat-roof"><SelectValue/></SelectTrigger><SelectContent><SelectItem value="0">No / Unknown</SelectItem><SelectItem value="1">Yes</SelectItem></SelectContent></Select></div>
+                  </div>
+                  {ed.appointmentDate && ed.customerEmail && <Button data-testid="button-send-prep-email" variant="outline" onClick={async()=>{const r=await apiRequest("POST",`/api/admin/proposals/${proposalId}/send-prep-email`); if(!r.ok) throw new Error("Unable to send"); toast({title:"Prep-for-visit email sent"});}}><Mail className="w-4 h-4 mr-2"/>Send Prep-For-Visit Email</Button>}
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-xs">Proposal Date</Label>
@@ -1233,6 +1257,10 @@ export default function AdminProposalEdit() {
             </CardContent>
           </Card>
         </TabsContent>
+        <TabsContent value="upgrade-menu" className="mt-4"><UpgradeMenuPanel proposalId={proposalId} /></TabsContent>
+        <TabsContent value="job-photos" className="mt-4"><JobPhotosPanel proposalId={proposalId} /></TabsContent>
+        <TabsContent value="ai-roof" className="mt-4"><AiRoofPanel proposalId={proposalId} privateNotes={ed.privateNotes} /></TabsContent>
+        <TabsContent value="email-schedule" className="mt-4"><EmailSchedulePanel proposalId={proposalId} /></TabsContent>
       </Tabs>
     </div>
   );
