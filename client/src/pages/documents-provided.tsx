@@ -76,7 +76,7 @@ export default function DocumentsProvided() {
   };
 
   return (
-    <div className="p-6 max-w-5xl mx-auto space-y-6" data-testid="page-documents">
+    <div className="p-4 sm:p-6 max-w-5xl mx-auto space-y-6" data-testid="page-documents">
       <PageHeader
         title="Your Project Documents"
         subtitle="Download, save, and forward — everything organized in one place, forever"
@@ -89,7 +89,7 @@ export default function DocumentsProvided() {
           <div className="w-11 h-11 rounded-xl bg-primary/12 flex items-center justify-center flex-shrink-0">
             <Package className="w-5 h-5 text-primary" />
           </div>
-          <div className="flex-1">
+          <div className="flex-1 min-w-0">
             <h3 className="text-sm font-semibold text-foreground mb-1">Your Records Vault</h3>
             <p className="text-xs text-muted-foreground leading-relaxed">
               This portal is your permanent record. Bookmark this page for yearly maintenance reminders,
@@ -133,13 +133,13 @@ export default function DocumentsProvided() {
                   const ext = fileExtension(f.url);
                   const catLabel = categoryLabels[f.category]?.label || f.category;
                   return (
-                    <div key={f.id} className="flex items-center gap-4 px-5 py-4 hover:bg-muted/20 transition-colors" data-testid={`file-${f.id}`}>
+                    <div key={f.id} className="flex flex-wrap items-center gap-3 px-4 py-4 sm:flex-nowrap sm:gap-4 sm:px-5 hover:bg-muted/20 transition-colors" data-testid={`file-${f.id}`}>
                       <div className="w-10 h-10 rounded-lg bg-primary/8 flex items-center justify-center flex-shrink-0">
                         <Icon className="w-4 h-4 text-primary" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-foreground truncate">{f.title}</p>
-                        <div className="flex items-center gap-2 mt-0.5">
+                        <div className="flex flex-wrap items-center gap-2 mt-0.5">
                           <Badge variant="outline" className="text-[9px] py-0 h-4">{ext}</Badge>
                           <span className="text-[11px] text-muted-foreground">{catLabel}</span>
                         </div>
@@ -150,7 +150,7 @@ export default function DocumentsProvided() {
                       <Button
                         size="sm"
                         variant="outline"
-                        className="text-xs h-8 gap-1.5 flex-shrink-0"
+                        className="text-xs h-8 gap-1.5 flex-shrink-0 ml-auto sm:ml-0"
                         onClick={() => handleDownload(f.url, f.title)}
                         data-testid={`button-download-${f.id}`}
                       >

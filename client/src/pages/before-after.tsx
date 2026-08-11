@@ -39,7 +39,7 @@ export default function BeforeAfter() {
   // If no before images or no AI images at all, show placeholder
   if (beforeImages.length === 0 && !hasTransformations) {
     return (
-      <div className="p-6 max-w-4xl mx-auto space-y-6" data-testid="page-visualizer">
+      <div className="p-4 sm:p-6 max-w-4xl mx-auto space-y-6" data-testid="page-visualizer">
         <PageHeader
           title="Roof Transformation Preview"
           subtitle="See what your roof will look like with silicone coating"
@@ -70,7 +70,7 @@ export default function BeforeAfter() {
   }
 
   return (
-    <div className="p-6 max-w-4xl mx-auto space-y-6" data-testid="page-visualizer">
+    <div className="p-4 sm:p-6 max-w-4xl mx-auto space-y-6" data-testid="page-visualizer">
       <PageHeader
         title="Roof Transformation Preview"
         subtitle="Drag the slider to see the difference — powered by AI"

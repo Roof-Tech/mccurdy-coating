@@ -144,6 +144,26 @@
 }
 
 @layer base {
+  html,
+  body {
+    overflow-x: hidden;
+  }
+
+  img,
+  video {
+    max-width: 100%;
+    height: auto;
+  }
+
+  [data-testid^="page-"] p,
+  [data-testid^="page-"] h1,
+  [data-testid^="page-"] h2,
+  [data-testid^="page-"] h3,
+  [data-testid^="page-"] h4,
+  [data-testid^="page-"] li {
+    overflow-wrap: anywhere;
+  }
+
   * {
     @apply border-border;
   }

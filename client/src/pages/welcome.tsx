@@ -20,7 +20,7 @@ export default function Welcome() {
       <div className="p-6 space-y-6 max-w-4xl mx-auto">
         <Skeleton className="h-64 w-full rounded-xl" />
         <Skeleton className="h-32 w-full rounded-xl" />
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <Skeleton className="h-24 rounded-xl" />
           <Skeleton className="h-24 rounded-xl" />
           <Skeleton className="h-24 rounded-xl" />
@@ -114,16 +114,16 @@ export default function Welcome() {
       {/* ── Property & System Summary ── */}
       <div className="px-4 space-y-4">
         <div className="glass-card rounded-xl p-5 animate-fade-in-up" style={{ animationDelay: '0.1s', animationFillMode: 'backwards' }}>
-          <div className="flex items-start gap-4">
+          <div className="flex flex-col items-start gap-3 sm:flex-row sm:gap-4">
             <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
               <MapPin className="w-5 h-5 text-primary" />
             </div>
-            <div className="flex-1 min-w-0">
+            <div className="w-full flex-1 min-w-0">
               <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium mb-1">Property Location</p>
-              <p className="text-sm font-semibold text-foreground">{proposal.propertyAddress}</p>
+              <p className="text-sm font-semibold text-foreground break-words">{proposal.propertyAddress}</p>
             </div>
             {proposal.systemType && (
-              <Badge variant="outline" className="text-xs border-accent/30 text-accent bg-accent/5 flex-shrink-0">
+              <Badge variant="outline" className="max-w-full whitespace-normal break-words text-xs border-accent/30 text-accent bg-accent/5 flex-shrink-0">
                 <Shield className="w-3 h-3 mr-1" />
                 {proposal.systemType}
               </Badge>
@@ -195,7 +195,7 @@ export default function Welcome() {
         </div>
 
         {/* ── Trust Signals ── */}
-        <div className="grid grid-cols-3 gap-3 animate-fade-in-up" style={{ animationDelay: '0.4s', animationFillMode: 'backwards' }}>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 animate-fade-in-up" style={{ animationDelay: '0.4s', animationFillMode: 'backwards' }}>
           {[
             { icon: Shield, label: "Licensed & Insured", sublabel: "Lic #477152" },
             { icon: Award, label: "Up to 30-Year", sublabel: "ASC Warranty" },
@@ -210,7 +210,7 @@ export default function Welcome() {
         </div>
 
         {/* ── Footer ── */}
-        <div className="flex items-center justify-between pt-2 pb-2">
+        <div className="flex flex-wrap items-center justify-between gap-2 pt-2 pb-2">
           <p className="text-[10px] text-muted-foreground">
             Proposal #{proposal.proposalNumber}
           </p>

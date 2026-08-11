@@ -146,7 +146,7 @@ export default function SavingsIncentives() {
   })).filter(t => t.count > 0);
 
   return (
-    <div className="p-6 max-w-4xl mx-auto space-y-6" data-testid="page-savings">
+    <div className="p-4 sm:p-6 max-w-4xl mx-auto space-y-6" data-testid="page-savings">
       <PageHeader
         title="Savings, Incentives & Tax Pathways"
         subtitle="County-specific tax credits, rebates, and incentive programs for your property"
@@ -168,7 +168,7 @@ export default function SavingsIncentives() {
             <p className="text-sm text-white/85 leading-relaxed">
               Discover county-specific tax credits, utility rebates, and financing programs that can significantly reduce your coating project costs. Select your county below to see all available incentives.
             </p>
-            <div className="flex items-center gap-4 mt-3">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-3">
               <div className="flex items-center gap-1.5 text-xs text-white/70">
                 <Leaf className="w-3.5 h-3.5" />
                 <span>Energy Credits</span>
@@ -220,7 +220,7 @@ export default function SavingsIncentives() {
         </Select>
 
         {countyData && (
-          <div className="grid grid-cols-2 gap-3 pt-1">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
             <div className="glass-card rounded-lg p-3 flex items-center gap-2.5">
               <div className="w-7 h-7 rounded-md bg-orange-500/15 flex items-center justify-center">
                 <Thermometer className="w-3.5 h-3.5 text-orange-500" />
@@ -268,7 +268,7 @@ export default function SavingsIncentives() {
         <div className="space-y-5 animate-fade-in-up" style={{ animationDelay: "0.15s" }}>
           {/* Summary Strip */}
           <div className="glass-card rounded-xl p-4">
-            <div className="flex items-center justify-between mb-3">
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
               <h2 className="text-sm font-bold text-foreground flex items-center gap-2">
                 <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse-glow" />
                 {countyData.county} Programs & Incentives
@@ -315,8 +315,8 @@ export default function SavingsIncentives() {
                       className={`glass-card rounded-lg border-l-4 ${accent.border} p-4 space-y-2.5 hover:shadow-md transition-shadow duration-300`}
                       data-testid={`card-county-program-${type}-${idx}`}
                     >
-                      <div className="flex items-start justify-between gap-3">
-                        <h4 className="text-sm font-bold text-foreground leading-snug">{prog.name}</h4>
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <h4 className="min-w-0 text-sm font-bold text-foreground leading-snug break-words">{prog.name}</h4>
                         <Badge className={`text-[10px] flex-shrink-0 border-0 font-semibold ${accent.badge}`}>
                           {typeLabels[type]}
                         </Badge>
@@ -380,8 +380,8 @@ export default function SavingsIncentives() {
               const accent = typeAccents[inc.programType] || typeAccents.compliance;
               return (
                 <div key={inc.id} className={`glass-card rounded-lg border-l-4 ${accent.border} p-4 space-y-2`}>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2.5">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex min-w-0 items-center gap-2.5">
                       <div className={`w-7 h-7 rounded-lg ${accent.icon} flex items-center justify-center`}>
                         <Icon className="w-3.5 h-3.5" />
                       </div>

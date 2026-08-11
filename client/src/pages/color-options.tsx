@@ -27,7 +27,7 @@ export default function ColorOptions() {
   const alternates = proposal.alternateColors ? JSON.parse(proposal.alternateColors) : [];
 
   return (
-    <div className="p-6 max-w-4xl mx-auto space-y-6" data-testid="page-colors">
+    <div className="p-4 sm:p-6 max-w-4xl mx-auto space-y-6" data-testid="page-colors">
       <PageHeader
         title="Color Options"
         subtitle="Choose from available roof coating colors"
@@ -42,7 +42,7 @@ export default function ColorOptions() {
               <Star className="w-4 h-4 text-accent" fill="currentColor" />
               <h3 className="text-sm font-semibold text-foreground">Recommended Color</h3>
             </div>
-            <div className="flex items-center gap-5">
+            <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:gap-5">
               <div
                 className="w-24 h-24 rounded-xl shadow-lg border-2 border-white"
                 style={{ backgroundColor: getSwatchColor(proposal.recommendedColor) }}
@@ -63,7 +63,7 @@ export default function ColorOptions() {
             <h3 className="text-sm font-semibold text-foreground">Available Alternatives</h3>
           </div>
           <CardContent className="p-5">
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {alternates.map((color: string, i: number) => (
                 <div key={i} className="text-center group cursor-pointer">
                   <div

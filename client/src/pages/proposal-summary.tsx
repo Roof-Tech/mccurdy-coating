@@ -24,7 +24,7 @@ export default function ProposalSummary() {
   }, 0);
 
   return (
-    <div className="p-6 max-w-4xl mx-auto space-y-5" data-testid="page-summary">
+    <div className="p-4 sm:p-6 max-w-4xl mx-auto space-y-5" data-testid="page-summary">
       <PageHeader
         title="Proposal Summary"
         subtitle="Overview of your complete roof investment scope"
@@ -100,8 +100,8 @@ export default function ProposalSummary() {
               {roofAreas.map((area: string, i: number) => {
                 const match = area.match(/^(.+?)[\s—–-]+([\d,]+\s*sq\s*ft)$/i);
                 return (
-                  <div key={i} className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/30">
-                    <div className="flex items-center gap-3">
+                  <div key={i} className="flex flex-col gap-2 p-3 rounded-lg bg-muted/30 border border-border/30 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex min-w-0 items-center gap-3">
                       <div className="w-2 h-2 rounded-full bg-accent" />
                       <span className="text-sm font-medium text-foreground">
                         {match ? match[1].trim() : area}
@@ -116,7 +116,7 @@ export default function ProposalSummary() {
                 );
               })}
               {totalSqFt > 0 && (
-                <div className="flex items-center justify-between pt-2 border-t border-border/30">
+                <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-border/30">
                   <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Total Coverage</span>
                   <span className="text-sm font-bold text-foreground tabular-nums">{totalSqFt.toLocaleString()} sq ft</span>
                 </div>
@@ -165,8 +165,8 @@ export default function ProposalSummary() {
 
       {/* ── CTA to Pricing ── */}
       <Link href={`${basePath}/pricing`}>
-        <div className="group glass-card rounded-xl p-4 cursor-pointer hover:shadow-md hover:border-primary/30 transition-all flex items-center justify-between">
-          <div className="flex items-center gap-3">
+        <div className="group glass-card rounded-xl p-4 cursor-pointer hover:shadow-md hover:border-primary/30 transition-all flex items-center justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-3">
             <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
               <Layers className="w-4 h-4 text-primary" />
             </div>

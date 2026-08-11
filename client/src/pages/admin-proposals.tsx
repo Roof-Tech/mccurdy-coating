@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
-import { FileText, Copy, ExternalLink, Settings2, Plus, Mail, CheckCircle2, Send } from "lucide-react";
+import { FileText, Copy, ExternalLink, Settings2, Plus, Mail, CheckCircle2, Send, Paperclip } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { Proposal } from "@shared/schema";
 
@@ -146,6 +146,13 @@ export default function AdminProposals() {
                         data-testid={`button-manage-${p.id}`}
                       >
                         <Settings2 className="w-3 h-3" /> Manage
+                      </a>
+                      <a
+                        href={`/#/admin/proposals/${p.id}#files`}
+                        className="inline-flex items-center gap-1 h-7 px-3 text-xs font-medium rounded-md border border-primary/40 bg-primary/5 text-primary hover:bg-primary/10 transition-colors"
+                        data-testid={`button-attach-files-${p.id}`}
+                      >
+                        <Paperclip className="w-3 h-3" /> Attach Files
                       </a>
                       <Button variant="outline" size="sm" className="text-xs h-7 gap-1" onClick={() => copyLink(p.accessToken)}>
                         <Copy className="w-3 h-3" /> Copy Link

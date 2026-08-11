@@ -66,7 +66,7 @@ export default function CpaQuestions() {
   };
 
   return (
-    <div className="p-6 max-w-4xl mx-auto space-y-6" data-testid="page-cpa">
+    <div className="p-4 sm:p-6 max-w-4xl mx-auto space-y-6" data-testid="page-cpa">
       <PageHeader
         title="Questions for Your CPA & Team"
         subtitle="Suggested questions to help your decision-making team review this proposal"
@@ -76,8 +76,8 @@ export default function CpaQuestions() {
       <div className="space-y-4 stagger-children">
         {questionSections.map((section) => (
           <Card key={section.title} className={`glass-card border-0 overflow-hidden border-l-4 ${section.borderColor}`}>
-            <div className="p-5 border-b border-border/50 flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+            <div className="p-5 border-b border-border/50 flex flex-wrap items-center justify-between gap-2">
+              <h3 className="text-sm font-semibold text-foreground flex min-w-0 items-center gap-2">
                 <div className={`w-7 h-7 rounded-lg ${section.bgColor} flex items-center justify-center`}>
                   <section.icon className={`w-3.5 h-3.5 ${section.color}`} />
                 </div>

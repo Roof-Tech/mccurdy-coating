@@ -7,3 +7,9 @@ vite.config.ts.*
 *.db
 *.db-shm
 *.db-wal
+
+# Local QA scripts (not needed in production)
+*-qa.mjs
+check-hash.mjs
+debug-admin.mjs
+CHANGES_SUMMARY.md

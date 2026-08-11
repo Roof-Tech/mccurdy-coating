@@ -1,4 +1,5 @@
 import { sqliteTable, text, integer, real } from "drizzle-orm/sqlite-core";
+import { sql } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -185,6 +186,34 @@ export const documents = sqliteTable("documents", {
 export const insertDocumentSchema = createInsertSchema(documents).omit({ id: true });
 export type InsertDocument = z.infer<typeof insertDocumentSchema>;
 export type Document = typeof documents.$inferSelect;
+
+// ── Change Orders ───────────────────────────────────────────
+export const changeOrders = sqliteTable("change_orders", {
+  id: text("id").primaryKey(),
+  proposalId: text("proposal_id").notNull().references(() => proposals.id),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  amount: text("amount").notNull(), // Dollar amount string, e.g. "$850.00"
+  type: text("type").notNull(), // addition | credit
+  createdAt: integer("created_at").notNull().default(sql`(unixepoch())`),
+  status: text("status").notNull().default("pending"), // pending | accepted | declined
+  acceptedAt: integer("accepted_at"),
+  customerSignature: text("customer_signature"),
+  signedByName: text("signed_by_name"),
+  sentAt: integer("sent_at"),
+});
+
+export const insertChangeOrderSchema = createInsertSchema(changeOrders).omit({
+  id: true,
+  createdAt: true,
+  acceptedAt: true,
+  sentAt: true,
+  status: true,
+  customerSignature: true,
+  signedByName: true,
+});
+export type InsertChangeOrder = z.infer<typeof insertChangeOrderSchema>;
+export type ChangeOrder = typeof changeOrders.$inferSelect;
 
 // ── Activity Tracking ───────────────────────────────────────
 export const activityEvents = sqliteTable("activity_events", {

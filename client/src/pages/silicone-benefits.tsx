@@ -67,7 +67,7 @@ export default function SiliconeBenefits() {
   useEffect(() => { trackEvent("viewed", { page: "silicone-benefits" }); }, []);
 
   return (
-    <div className="p-6 max-w-4xl mx-auto space-y-6" data-testid="page-silicone-benefits">
+    <div className="p-4 sm:p-6 max-w-4xl mx-auto space-y-6" data-testid="page-silicone-benefits">
       <PageHeader
         title="Silicone Roof System Benefits"
         subtitle="Why silicone coating systems are a smart investment"

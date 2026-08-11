@@ -13,10 +13,10 @@ import { useToast } from "@/hooks/use-toast";
 import { useRoute, Link } from "wouter";
 import {
   FileText, Upload, Trash2, ArrowLeft, File, Image, FileSpreadsheet,
-  Eye, X, Sparkles, Plus, Save, Check, Copy,
+  Eye, X, Sparkles, Plus, Save, Check, Copy, Paperclip, ClipboardPlus, Mail,
 } from "lucide-react";
 import { useState, useRef, useCallback, useEffect } from "react";
-import type { Proposal, Material, Document as DocType, WarrantyDocument, ProposalImage } from "@shared/schema";
+import type { Proposal, Material, Document as DocType, WarrantyDocument, ProposalImage, ChangeOrder } from "@shared/schema";
 
 // ── Helpers ────────────────────────────────────────────────────
 
@@ -199,6 +199,10 @@ export default function AdminProposalEdit() {
   const [uploadCategory, setUploadCategory] = useState("proposal");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [activeTab, setActiveTab] = useState("content");
+  const [changeOrderForm, setChangeOrderForm] = useState({ title: "", description: "", amount: "", type: "addition" });
+  const [savingChangeOrder, setSavingChangeOrder] = useState(false);
+  const [sendingChangeOrderId, setSendingChangeOrderId] = useState<string | null>(null);
 
   // Content editing state — flat string map (JSON arrays stored as line-separated text)
   const [ed, setEd] = useState<Record<string, string>>({});
@@ -232,6 +236,17 @@ export default function AdminProposalEdit() {
     queryFn: () => apiRequest("GET", `/api/admin/proposals/${proposalId}/warranty-docs`).then(r => r.json()),
     enabled: !!proposalId,
   });
+
+  const { data: changeOrders = [] } = useQuery<ChangeOrder[]>({
+    queryKey: ["/api/admin/proposals", proposalId, "change-orders"],
+    queryFn: () => apiRequest("GET", `/api/admin/proposals/${proposalId}/change-orders`).then(r => r.json()),
+    enabled: !!proposalId,
+  });
+
+  useEffect(() => {
+    if (window.location.hash.endsWith("#files")) setActiveTab("files");
+    if (window.location.hash.endsWith("#change-orders")) setActiveTab("change-orders");
+  }, []);
 
   // ── Initialize edit state from proposal (once) ──
   useEffect(() => {
@@ -397,6 +412,47 @@ export default function AdminProposalEdit() {
     toast({ title: "Warranty document removed" });
   };
 
+  const createChangeOrder = async () => {
+    if (!changeOrderForm.title.trim() || !changeOrderForm.description.trim() || !changeOrderForm.amount.trim()) {
+      toast({ title: "Missing details", description: "Add a title, description, and amount before saving.", variant: "destructive" });
+      return;
+    }
+    setSavingChangeOrder(true);
+    try {
+      await apiRequest("POST", `/api/admin/proposals/${proposalId}/change-orders`, changeOrderForm);
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/proposals", proposalId, "change-orders"] });
+      setChangeOrderForm({ title: "", description: "", amount: "", type: "addition" });
+      toast({ title: "Change order saved", description: "It is ready to email to the customer for approval." });
+    } catch (e: any) {
+      toast({ title: "Unable to save", description: e.message || "Please try again.", variant: "destructive" });
+    }
+    setSavingChangeOrder(false);
+  };
+
+  const sendChangeOrder = async (changeOrder: ChangeOrder) => {
+    setSendingChangeOrderId(changeOrder.id);
+    try {
+      const res = await fetch(`/api/admin/change-orders/${changeOrder.id}/send`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({}) });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Unable to send change order");
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/proposals", proposalId, "change-orders"] });
+      toast({ title: "Change order emailed", description: `Sent to ${data.sentTo}.` });
+    } catch (e: any) {
+      toast({ title: "Email not sent", description: e.message || "Please add a customer email and try again.", variant: "destructive" });
+    }
+    setSendingChangeOrderId(null);
+  };
+
+  const deleteChangeOrder = async (id: string) => {
+    try {
+      await apiRequest("DELETE", `/api/admin/change-orders/${id}`);
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/proposals", proposalId, "change-orders"] });
+      toast({ title: "Change order removed" });
+    } catch (e: any) {
+      toast({ title: "Unable to remove", description: e.message || "Please try again.", variant: "destructive" });
+    }
+  };
+
   const copyLink = () => {
     if (!proposal) return;
     const url = `${window.location.origin}/#/view/${proposal.accessToken}`;
@@ -427,23 +483,23 @@ export default function AdminProposalEdit() {
   ];
 
   return (
-    <div className="p-6 max-w-6xl mx-auto space-y-5" data-testid="page-admin-proposal-edit">
+    <div className="p-4 sm:p-6 max-w-6xl mx-auto space-y-5" data-testid="page-admin-proposal-edit">
 
       {/* ── Header ── */}
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <Link href="/admin/proposals">
           <Button variant="ghost" size="sm" className="h-8 gap-1.5 text-xs" data-testid="button-back">
             <ArrowLeft className="w-3.5 h-3.5" /> Back
           </Button>
         </Link>
-        <div className="flex-1">
+        <div className="order-3 basis-full min-w-0 sm:order-none sm:basis-auto sm:flex-1">
           <PageHeader
             title={`Manage: ${proposal.customerName}`}
             subtitle={`${proposal.proposalNumber} — ${proposal.propertyAddress}`}
             icon={<FileText className="w-5 h-5" />}
           />
         </div>
-        <div className="flex gap-2">
+        <div className="ml-auto flex gap-2">
           <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs" onClick={copyLink}>
             <Copy className="w-3.5 h-3.5" /> Copy Link
           </Button>
@@ -499,18 +555,38 @@ export default function AdminProposalEdit() {
       </Card>
 
       {/* ── Tabs ── */}
-      <Tabs defaultValue="content">
-        <TabsList>
-          <TabsTrigger value="content" className="gap-1.5 text-xs">
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="max-w-full overflow-x-auto flex-nowrap justify-start">
+          <TabsTrigger value="content" className="shrink-0 whitespace-nowrap gap-1.5 text-xs">
             <FileText className="w-3.5 h-3.5" /> Content
           </TabsTrigger>
-          <TabsTrigger value="files" className="gap-1.5 text-xs">
+          <TabsTrigger value="files" className="shrink-0 whitespace-nowrap gap-1.5 text-xs">
             <Upload className="w-3.5 h-3.5" /> Files & Media
+          </TabsTrigger>
+          <TabsTrigger value="change-orders" className="shrink-0 whitespace-nowrap gap-1.5 text-xs">
+            <ClipboardPlus className="w-3.5 h-3.5" /> Change Orders
           </TabsTrigger>
         </TabsList>
 
         {/* ══ CONTENT TAB ══ */}
         <TabsContent value="content" className="space-y-4 mt-4">
+
+          <button
+            type="button"
+            onClick={() => setActiveTab("files")}
+            className="w-full text-left rounded-xl border border-primary/25 bg-primary/5 p-4 sm:p-5 transition-colors hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            data-testid="button-attach-files-cta"
+          >
+            <div className="flex items-start gap-3 min-w-0">
+              <div className="shrink-0 rounded-lg bg-primary text-primary-foreground p-2.5">
+                <Paperclip className="w-5 h-5" />
+              </div>
+              <div className="min-w-0">
+                <p className="font-semibold text-foreground">Attach Files &amp; Documents</p>
+                <p className="mt-1 text-sm text-muted-foreground break-words">Click here to add proposals, contracts, photos, or supporting documents.</p>
+              </div>
+            </div>
+          </button>
 
           {/* Customer & Property */}
           <Card>
@@ -943,7 +1019,7 @@ export default function AdminProposalEdit() {
                         )}
                       </div>
                     </div>
-                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="flex shrink-0 gap-1">
                       {doc.documentUrl && (
                         <a href={doc.documentUrl} target="_blank" rel="noopener noreferrer">
                           <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
@@ -954,7 +1030,7 @@ export default function AdminProposalEdit() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-7 w-7 p-0 text-destructive"
+                        className="h-6 w-6 p-0 text-destructive/70 hover:text-destructive"
                         onClick={() => deleteDocument(doc.id)}
                         data-testid={`button-delete-doc-${doc.id}`}
                       >
@@ -980,11 +1056,11 @@ export default function AdminProposalEdit() {
                   {images.map(img => (
                     <div key={img.id} className="relative group rounded-md overflow-hidden border" data-testid={`card-image-${img.id}`}>
                       <img src={img.imageUrl} alt={img.caption || ""} className="w-full h-32 object-cover" />
-                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center">
+                      <div className="absolute right-2 top-2">
                         <Button
                           variant="destructive"
                           size="sm"
-                          className="h-7 text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                          className="h-7 px-2 text-[11px] shadow-sm opacity-85 hover:opacity-100"
                           onClick={() => deleteImage(img.id)}
                         >
                           <Trash2 className="w-3 h-3 mr-1" /> Remove
@@ -1022,7 +1098,7 @@ export default function AdminProposalEdit() {
                         <Badge variant="outline" className="text-[9px]">{doc.documentType}</Badge>
                       )}
                     </div>
-                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="flex shrink-0 gap-1">
                       {doc.documentUrl && (
                         <a href={doc.documentUrl} target="_blank" rel="noopener noreferrer">
                           <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
@@ -1033,7 +1109,7 @@ export default function AdminProposalEdit() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-7 w-7 p-0 text-destructive"
+                        className="h-6 w-6 p-0 text-destructive/70 hover:text-destructive"
                         onClick={() => deleteWarrantyDoc(doc.id)}
                         data-testid={`button-delete-warranty-${doc.id}`}
                       >
@@ -1045,6 +1121,117 @@ export default function AdminProposalEdit() {
               </CardContent>
             </Card>
           )}
+        </TabsContent>
+
+        {/* ══ CHANGE ORDERS TAB ══ */}
+        <TabsContent value="change-orders" className="space-y-4 mt-4">
+          <Card className="border-primary/20">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                <ClipboardPlus className="w-4 h-4 text-primary" /> Add a Change Order
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm text-muted-foreground break-words">Use change orders for approved additions or credits without losing the original proposal record.</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Title</Label>
+                  <Input
+                    placeholder="Skylight repair"
+                    value={changeOrderForm.title}
+                    onChange={e => setChangeOrderForm(prev => ({ ...prev, title: e.target.value }))}
+                    data-testid="input-change-order-title"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Amount</Label>
+                  <Input
+                    placeholder="$850.00"
+                    value={changeOrderForm.amount}
+                    onChange={e => setChangeOrderForm(prev => ({ ...prev, amount: e.target.value }))}
+                    data-testid="input-change-order-amount"
+                  />
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Description</Label>
+                <Textarea
+                  className="min-h-[96px] text-sm"
+                  placeholder="Explain the work added or credited, including any material or schedule impact."
+                  value={changeOrderForm.description}
+                  onChange={e => setChangeOrderForm(prev => ({ ...prev, description: e.target.value }))}
+                  data-testid="textarea-change-order-description"
+                />
+              </div>
+              <div className="space-y-1.5 max-w-xs">
+                <Label className="text-xs">Type</Label>
+                <Select value={changeOrderForm.type} onValueChange={type => setChangeOrderForm(prev => ({ ...prev, type }))}>
+                  <SelectTrigger data-testid="select-change-order-type"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="addition">Addition</SelectItem>
+                    <SelectItem value="credit">Credit</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button onClick={createChangeOrder} disabled={savingChangeOrder} className="gap-2" data-testid="button-save-change-order">
+                <Save className="w-4 h-4" /> {savingChangeOrder ? "Saving..." : "Save Change Order"}
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-semibold">Change Order History ({changeOrders.length})</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {changeOrders.length === 0 ? (
+                <p className="py-3 text-center text-sm text-muted-foreground">No change orders have been added yet.</p>
+              ) : changeOrders.map(changeOrder => {
+                const accepted = changeOrder.status === "accepted";
+                const timestamp = accepted ? changeOrder.acceptedAt : changeOrder.createdAt;
+                return (
+                  <div key={changeOrder.id} className="rounded-lg border border-border p-3 sm:p-4 space-y-3" data-testid={`card-change-order-${changeOrder.id}`}>
+                    <div className="flex flex-wrap items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="font-medium text-sm break-words">{changeOrder.title}</p>
+                        <p className="mt-1 text-sm text-muted-foreground whitespace-pre-wrap break-words">{changeOrder.description}</p>
+                      </div>
+                      <div className="flex shrink-0 items-center gap-2">
+                        <span className={`text-sm font-semibold ${changeOrder.type === "credit" ? "text-emerald-700 dark:text-emerald-400" : "text-orange-700 dark:text-orange-400"}`}>
+                          {changeOrder.type === "credit" ? "Credit " : "Addition "}{changeOrder.amount}
+                        </span>
+                        <Badge variant={accepted ? "default" : changeOrder.status === "declined" ? "destructive" : "secondary"} className="capitalize text-[10px]">
+                          {changeOrder.status}
+                        </Badge>
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border/60 pt-3">
+                      <p className="text-xs text-muted-foreground">
+                        {timestamp ? `${accepted ? "Accepted" : "Created"} ${new Date(timestamp * 1000).toLocaleString()}` : "Created just now"}
+                        {accepted && changeOrder.signedByName ? ` by ${changeOrder.signedByName}` : ""}
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {changeOrder.status === "pending" && (
+                          <Button size="sm" variant="outline" className="h-8 gap-1.5 text-xs" onClick={() => sendChangeOrder(changeOrder)} disabled={sendingChangeOrderId === changeOrder.id} data-testid={`button-email-change-order-${changeOrder.id}`}>
+                            <Mail className="w-3.5 h-3.5" /> {sendingChangeOrderId === changeOrder.id ? "Sending..." : "Email Customer"}
+                          </Button>
+                        )}
+                        <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-destructive/70 hover:text-destructive" onClick={() => deleteChangeOrder(changeOrder.id)} data-testid={`button-delete-change-order-${changeOrder.id}`} aria-label={`Delete ${changeOrder.title}`}>
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
+                      </div>
+                    </div>
+                    {accepted && changeOrder.customerSignature && (
+                      <div className="border-t border-border/60 pt-3">
+                        <p className="text-[11px] font-medium text-muted-foreground">Customer signature</p>
+                        <img src={changeOrder.customerSignature} alt={`Signature from ${changeOrder.signedByName || "customer"}`} className="mt-1 h-12 max-w-[180px] object-contain object-left" />
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>

@@ -10,7 +10,7 @@ export default function WarrantyCenter() {
   if (!proposal) return null;
 
   return (
-    <div className="p-6 max-w-4xl mx-auto space-y-6" data-testid="page-warranty">
+    <div className="p-4 sm:p-6 max-w-4xl mx-auto space-y-6" data-testid="page-warranty">
       <PageHeader
         title="Warranty Center"
         subtitle="Your warranty coverage and what it means"

@@ -135,6 +135,20 @@ sqlite.exec(`
     description TEXT,
     sort_order INTEGER DEFAULT 0
   );
+  CREATE TABLE IF NOT EXISTS change_orders (
+    id TEXT PRIMARY KEY,
+    proposal_id TEXT NOT NULL REFERENCES proposals(id),
+    title TEXT NOT NULL,
+    description TEXT NOT NULL,
+    amount TEXT NOT NULL,
+    type TEXT NOT NULL,
+    created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+    status TEXT NOT NULL DEFAULT 'pending',
+    accepted_at INTEGER,
+    customer_signature TEXT,
+    signed_by_name TEXT,
+    sent_at INTEGER
+  );
   CREATE TABLE IF NOT EXISTS activity_events (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     proposal_id INTEGER NOT NULL,
@@ -184,6 +198,7 @@ addColumnIfMissing("proposals", "requested_start_date", "TEXT");
 addColumnIfMissing("proposals", "scheduled_start_date", "TEXT");
 addColumnIfMissing("proposals", "work_completed_date", "TEXT");
 addColumnIfMissing("proposals", "maintenance_reminders_enabled", "INTEGER DEFAULT 1");
+addColumnIfMissing("change_orders", "sent_at", "INTEGER");
 
 export const db = drizzle(sqlite, { schema });
 export const sqliteConnection = sqlite;

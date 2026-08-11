@@ -43,7 +43,7 @@ export default function PricingOptions() {
   const recommendedIdx = options.findIndex(o => o.recommended);
 
   return (
-    <div className="p-6 max-w-5xl mx-auto space-y-6" data-testid="page-pricing">
+    <div className="p-4 sm:p-6 max-w-5xl mx-auto space-y-6" data-testid="page-pricing">
       <PageHeader
         title="Pricing & Options"
         subtitle="Compare ASC Roof Renewal warranty tiers — select the right level for your property"

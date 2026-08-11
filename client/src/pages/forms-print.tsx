@@ -46,7 +46,7 @@ export default function FormsPrint() {
   ];
 
   return (
-    <div className="p-6 max-w-4xl mx-auto space-y-6" data-testid="page-forms">
+    <div className="p-4 sm:p-6 max-w-4xl mx-auto space-y-6" data-testid="page-forms">
       <PageHeader
         title="Forms & Print Center"
         subtitle="Download, print, and share proposal documents"

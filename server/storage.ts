@@ -1,6 +1,6 @@
 import { 
   users, proposals, materials, proposalImages, incentives, 
-  warrantyDocuments, documents, activityEvents, customerMessages,
+  warrantyDocuments, documents, changeOrders, activityEvents, customerMessages,
   type User, type InsertUser,
   type Proposal, type InsertProposal,
   type Material, type InsertMaterial,
@@ -8,11 +8,13 @@ import {
   type Incentive, type InsertIncentive,
   type WarrantyDocument, type InsertWarrantyDocument,
   type Document, type InsertDocument,
+  type ChangeOrder, type InsertChangeOrder,
   type ActivityEvent, type InsertActivityEvent,
   type CustomerMessage, type InsertCustomerMessage,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and } from "drizzle-orm";
+import { randomUUID } from "crypto";
 
 export interface IStorage {
   // Users
@@ -57,6 +59,13 @@ export interface IStorage {
   getDocumentsByProposal(proposalId: number | null): Document[];
   createDocument(doc: InsertDocument): Document;
   deleteDocument(id: number): void;
+
+  // Change Orders
+  getChangeOrder(id: string): ChangeOrder | undefined;
+  getChangeOrdersByProposal(proposalId: string): ChangeOrder[];
+  createChangeOrder(data: InsertChangeOrder): ChangeOrder;
+  updateChangeOrder(id: string, data: Partial<ChangeOrder>): ChangeOrder | undefined;
+  deleteChangeOrder(id: string): void;
   
   // Activity Tracking
   getActivitiesByProposal(proposalId: number): ActivityEvent[];
@@ -176,6 +185,23 @@ export class DatabaseStorage implements IStorage {
   }
   deleteDocument(id: number): void {
     db.delete(documents).where(eq(documents.id, id)).run();
+  }
+
+  // Change Orders
+  getChangeOrder(id: string): ChangeOrder | undefined {
+    return db.select().from(changeOrders).where(eq(changeOrders.id, id)).get();
+  }
+  getChangeOrdersByProposal(proposalId: string): ChangeOrder[] {
+    return db.select().from(changeOrders).where(eq(changeOrders.proposalId, proposalId)).orderBy(desc(changeOrders.createdAt)).all();
+  }
+  createChangeOrder(data: InsertChangeOrder): ChangeOrder {
+    return db.insert(changeOrders).values({ ...data, id: randomUUID() }).returning().get();
+  }
+  updateChangeOrder(id: string, data: Partial<ChangeOrder>): ChangeOrder | undefined {
+    return db.update(changeOrders).set(data).where(eq(changeOrders.id, id)).returning().get();
+  }
+  deleteChangeOrder(id: string): void {
+    db.delete(changeOrders).where(eq(changeOrders.id, id)).run();
   }
 
   // Activity Tracking

@@ -1,11 +1,11 @@
 import type { Express } from "express";
 import type { Server } from "http";
 import { storage } from "./storage";
-import { insertProposalSchema, insertMaterialSchema, insertProposalImageSchema, insertIncentiveSchema, insertWarrantyDocumentSchema, insertDocumentSchema, insertActivityEventSchema, insertCustomerMessageSchema } from "@shared/schema";
+import { insertProposalSchema, insertMaterialSchema, insertProposalImageSchema, insertIncentiveSchema, insertWarrantyDocumentSchema, insertDocumentSchema, insertActivityEventSchema, insertCustomerMessageSchema, insertChangeOrderSchema } from "@shared/schema";
 import { sqliteConnection } from "./db";
 import { getCountyFromDb, getAllCountiesFromDb } from "./incentive-refresh";
 import { manualRefresh } from "./incentive-scheduler";
-import { sendProposalEmail, sendSignedNotificationToOwner } from "./proposal-email";
+import { sendProposalEmail, sendSignedNotificationToOwner, sendChangeOrderEmail, sendChangeOrderAcceptedNotificationToOwner } from "./proposal-email";
 import { randomBytes } from "crypto";
 import multer from "multer";
 import path from "path";
@@ -138,6 +138,60 @@ export function registerRoutes(server: Server, app: Express): void {
     }
   });
 
+  // Get change orders for a customer proposal
+  app.get("/api/proposals/:token/change-orders", (req, res) => {
+    try {
+      const proposal = storage.getProposalByToken(req.params.token);
+      if (!proposal) return res.status(404).json({ error: "Not found" });
+      res.json(storage.getChangeOrdersByProposal(String(proposal.id)));
+    } catch (e) {
+      res.status(500).json({ error: "Server error" });
+    }
+  });
+
+  // Customer accepts a pending change order with an e-signature
+  app.post("/api/proposals/:token/change-orders/:coId/accept", async (req, res) => {
+    try {
+      const proposal = storage.getProposalByToken(req.params.token);
+      if (!proposal) return res.status(404).json({ error: "Not found" });
+      const changeOrder = storage.getChangeOrder(req.params.coId);
+      if (!changeOrder || changeOrder.proposalId !== String(proposal.id)) {
+        return res.status(404).json({ error: "Change order not found" });
+      }
+      if (changeOrder.status !== "pending") {
+        return res.status(400).json({ error: "This change order is no longer awaiting approval" });
+      }
+
+      const { signedByName, customerSignature } = req.body || {};
+      if (!signedByName || !customerSignature) {
+        return res.status(400).json({ error: "Name and signature are required" });
+      }
+      const acceptedAt = Math.floor(Date.now() / 1000);
+      const updated = storage.updateChangeOrder(changeOrder.id, {
+        status: "accepted",
+        acceptedAt,
+        signedByName,
+        customerSignature,
+      });
+      storage.createActivity({
+        proposalId: proposal.id,
+        eventType: "change_order_accepted",
+        eventData: JSON.stringify({ changeOrderId: changeOrder.id, title: changeOrder.title, signedByName }),
+        ipAddress: req.ip || null,
+        userAgent: req.get("user-agent") || null,
+        createdAt: new Date().toISOString(),
+      } as any);
+      sendChangeOrderAcceptedNotificationToOwner({
+        changeOrder: { ...changeOrder, signedByName },
+        proposal,
+      }).catch(err => console.error("[change-order] owner notification failed:", err));
+      res.json({ success: true, changeOrder: updated });
+    } catch (e: any) {
+      console.error("[change-order] acceptance error:", e);
+      res.status(500).json({ error: e.message || "Server error" });
+    }
+  });
+
   // Track activity event (customer-facing)
   app.post("/api/proposal/:token/track", (req, res) => {
     try {
@@ -257,6 +311,90 @@ export function registerRoutes(server: Server, app: Express): void {
       res.json(proposal);
     } catch (e: any) {
       res.status(400).json({ error: e.message || "Failed to update" });
+    }
+  });
+
+  // ── Change Orders CRUD ──
+  app.get("/api/admin/proposals/:id/change-orders", (req, res) => {
+    try {
+      const proposal = storage.getProposal(parseInt(req.params.id));
+      if (!proposal) return res.status(404).json({ error: "Proposal not found" });
+      res.json(storage.getChangeOrdersByProposal(String(proposal.id)));
+    } catch (e) {
+      res.status(500).json({ error: "Server error" });
+    }
+  });
+
+  app.post("/api/admin/proposals/:id/change-orders", (req, res) => {
+    try {
+      const proposal = storage.getProposal(parseInt(req.params.id));
+      if (!proposal) return res.status(404).json({ error: "Proposal not found" });
+      const parsed = insertChangeOrderSchema.parse({ ...req.body, proposalId: String(proposal.id) });
+      const changeOrder = storage.createChangeOrder(parsed);
+      storage.createActivity({
+        proposalId: proposal.id,
+        eventType: "change_order_created",
+        eventData: JSON.stringify({ changeOrderId: changeOrder.id, title: changeOrder.title, amount: changeOrder.amount, type: changeOrder.type }),
+        ipAddress: req.ip || null,
+        userAgent: req.get("user-agent") || null,
+        createdAt: new Date().toISOString(),
+      } as any);
+      res.status(201).json(changeOrder);
+    } catch (e: any) {
+      res.status(400).json({ error: e.message || "Unable to create change order" });
+    }
+  });
+
+  app.patch("/api/admin/change-orders/:coId", (req, res) => {
+    try {
+      const existing = storage.getChangeOrder(req.params.coId);
+      if (!existing) return res.status(404).json({ error: "Change order not found" });
+      const allowed = ["title", "description", "amount", "type", "status"] as const;
+      const updates = Object.fromEntries(
+        Object.entries(req.body || {}).filter(([key]) => allowed.includes(key as typeof allowed[number])),
+      );
+      const changeOrder = storage.updateChangeOrder(existing.id, updates as any);
+      res.json(changeOrder);
+    } catch (e: any) {
+      res.status(400).json({ error: e.message || "Unable to update change order" });
+    }
+  });
+
+  app.delete("/api/admin/change-orders/:coId", (req, res) => {
+    try {
+      const existing = storage.getChangeOrder(req.params.coId);
+      if (!existing) return res.status(404).json({ error: "Change order not found" });
+      storage.deleteChangeOrder(existing.id);
+      res.json({ success: true });
+    } catch (e) {
+      res.status(500).json({ error: "Server error" });
+    }
+  });
+
+  app.post("/api/admin/change-orders/:coId/send", async (req, res) => {
+    try {
+      const changeOrder = storage.getChangeOrder(req.params.coId);
+      if (!changeOrder) return res.status(404).json({ error: "Change order not found" });
+      const proposal = storage.getProposal(parseInt(changeOrder.proposalId));
+      if (!proposal) return res.status(404).json({ error: "Proposal not found" });
+      const to = String(req.body?.email || proposal.customerEmail || proposal.lastSentTo || "").trim();
+      if (!/^\S+@\S+\.\S+$/.test(to)) return res.status(400).json({ error: "A valid customer email is required" });
+      const result = await sendChangeOrderEmail({ to, changeOrder, proposal, ownerName: proposal.estimator || "Mike Schirmer" });
+      if (!result.ok) return res.status(502).json({ error: result.error || "Unable to send email" });
+      const sentAt = Math.floor(Date.now() / 1000);
+      const updated = storage.updateChangeOrder(changeOrder.id, { sentAt });
+      storage.createActivity({
+        proposalId: proposal.id,
+        eventType: "change_order_sent",
+        eventData: JSON.stringify({ changeOrderId: changeOrder.id, sentTo: to }),
+        ipAddress: req.ip || null,
+        userAgent: req.get("user-agent") || null,
+        createdAt: new Date().toISOString(),
+      } as any);
+      res.json({ success: true, sentTo: to, changeOrder: updated, messageId: result.id });
+    } catch (e: any) {
+      console.error("[change-order] send error:", e);
+      res.status(500).json({ error: e.message || "Server error" });
     }
   });
 

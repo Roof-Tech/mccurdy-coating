@@ -59,7 +59,7 @@ export default function MaterialsLibrary() {
   ];
 
   return (
-    <div className="p-6 max-w-4xl mx-auto space-y-6" data-testid="page-materials">
+    <div className="p-4 sm:p-6 max-w-4xl mx-auto space-y-6" data-testid="page-materials">
       <PageHeader
         title="Materials Library"
         subtitle="Every material included in your roof system"
@@ -68,7 +68,7 @@ export default function MaterialsLibrary() {
 
       {/* Summary Strip */}
       <div className="glass-card rounded-xl p-4 animate-fade-in">
-        <div className="flex items-center justify-between mb-3">
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
           <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
             <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse-glow" />
             System Components
@@ -93,12 +93,12 @@ export default function MaterialsLibrary() {
           return (
             <AccordionItem key={mat.id || i} value={`mat-${i}`} className={`glass-card border-0 border-l-4 ${colorClass.split(" ").pop()} rounded-xl px-5 overflow-hidden`}>
               <AccordionTrigger className="text-sm font-medium py-4 hover:no-underline">
-                <span className="flex items-center gap-3">
+                <span className="flex min-w-0 items-center gap-3">
                   <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${badgeColorParts}`}>
                     <Icon className="w-4 h-4" />
                   </div>
-                  <span className="flex items-center gap-2 text-left">
-                    <span className="font-bold">{displayName}</span>
+                  <span className="flex min-w-0 flex-wrap items-center gap-2 text-left">
+                    <span className="font-bold break-words">{displayName}</span>
                     <Badge variant="secondary" className="text-[10px] font-normal">{getCategoryLabel(category)}</Badge>
                   </span>
                 </span>
@@ -127,7 +127,7 @@ export default function MaterialsLibrary() {
                     <Layers className="w-3 h-3" /> Coverage: {mat.coverage}
                   </div>
                 )}
-                <div className="flex gap-2 pt-1">
+                <div className="flex flex-wrap gap-2 pt-1">
                   {mat.dataSheetUrl && (
                     <a href={mat.dataSheetUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors">
                       <FileText className="w-3 h-3" /> Data Sheet

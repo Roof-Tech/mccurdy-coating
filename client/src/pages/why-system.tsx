@@ -16,7 +16,7 @@ export default function WhySystem() {
   const issues = proposal.keyIssues ? JSON.parse(proposal.keyIssues) : [];
 
   return (
-    <div className="p-6 max-w-4xl mx-auto space-y-6" data-testid="page-why-system">
+    <div className="p-4 sm:p-6 max-w-4xl mx-auto space-y-6" data-testid="page-why-system">
       <PageHeader
         title="Why This System Was Chosen"
         subtitle="The logic behind our recommendation for your property"

@@ -17,7 +17,7 @@ export default function MilsBuild() {
   ];
 
   return (
-    <div className="p-6 max-w-4xl mx-auto space-y-6" data-testid="page-mils">
+    <div className="p-4 sm:p-6 max-w-4xl mx-auto space-y-6" data-testid="page-mils">
       <PageHeader
         title="Mil Thickness & System Build"
         subtitle="Understanding coating thickness and what it means for your roof"
@@ -32,7 +32,7 @@ export default function MilsBuild() {
         <CardContent className="p-5 space-y-4">
           {layers.map((layer, i) => (
             <div key={i}>
-              <div className="flex items-center justify-between mb-1.5">
+              <div className="flex flex-wrap items-center justify-between gap-2 mb-1.5">
                 <span className="text-sm font-semibold text-foreground">{layer.name}</span>
                 <span className="text-xs font-bold text-accent">{layer.mils}</span>
               </div>
@@ -69,7 +69,7 @@ export default function MilsBuild() {
       )}
 
       {/* Layer count */}
-      <div className="glass-card rounded-xl p-4 flex items-center justify-between">
+      <div className="glass-card rounded-xl p-4 flex flex-wrap items-center justify-between gap-3">
         <span className="text-sm text-muted-foreground">Number of Coats/Layers</span>
         <Badge variant="secondary" className="text-sm font-bold">{proposal.layerCount || 3}</Badge>
       </div>

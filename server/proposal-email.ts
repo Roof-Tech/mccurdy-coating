@@ -156,6 +156,101 @@ function escapeHtml(s: string): string {
   return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 
+// ── Change order emails ─────────────────────────────────────
+export async function sendChangeOrderEmail(args: {
+  to: string;
+  changeOrder: { title: string; description: string; amount: string; type: string };
+  proposal: { customerName: string; proposalNumber: string; propertyAddress?: string | null; accessToken: string };
+  ownerName?: string | null;
+}): Promise<{ ok: boolean; error?: string; id?: string }> {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) {
+    console.warn("[proposal-email] RESEND_API_KEY not set — cannot send change order");
+    return { ok: false, error: "Email service not configured. Set RESEND_API_KEY in Render env vars." };
+  }
+
+  const typeLabel = args.changeOrder.type === "credit" ? "Credit" : "Addition";
+  const approvalLink = `${APP_BASE_URL}/#/view/${args.proposal.accessToken}/approve#change-orders`;
+  const subject = `Change Order Requires Approval — ${args.proposal.proposalNumber}`;
+  const html = `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#f5f5f0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif">
+<div style="max-width:640px;margin:0 auto;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.06)">
+  <div style="background:linear-gradient(135deg,#01696F,#0C4E54);padding:30px 28px;text-align:center">
+    <div style="color:#fff;font-size:24px;font-weight:700">McCurdy Coatings</div>
+    <div style="color:rgba(255,255,255,.86);font-size:13px;margin-top:4px">Change Order for Your Roof Project</div>
+  </div>
+  <div style="padding:32px 28px;color:#1a1a1a;line-height:1.6;font-size:15px">
+    <p style="margin:0 0 12px;font-size:17px;color:#0f172a">Hi ${escapeHtml(args.proposal.customerName)},</p>
+    <p style="margin:0 0 20px">We have prepared a change order for your project. Please review the details and sign to approve it.</p>
+    <div style="border:1px solid #dbe4e7;border-radius:10px;overflow:hidden;margin:22px 0">
+      <div style="background:${args.changeOrder.type === "credit" ? "#eaf7ef" : "#fff5e8"};padding:14px 18px;color:${args.changeOrder.type === "credit" ? "#176b3a" : "#9a4d00"};font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em">${typeLabel} Change Order</div>
+      <div style="padding:20px">
+        <div style="font-size:18px;font-weight:700;color:#0f172a">${escapeHtml(args.changeOrder.title)}</div>
+        <p style="margin:10px 0 16px;color:#475569;white-space:pre-wrap">${escapeHtml(args.changeOrder.description)}</p>
+        <div style="font-size:21px;font-weight:700;color:${args.changeOrder.type === "credit" ? "#15803d" : "#c2410c"}">${escapeHtml(args.changeOrder.type === "credit" ? "Credit: " : "Addition: ")}${escapeHtml(args.changeOrder.amount)}</div>
+      </div>
+    </div>
+    <div style="text-align:center;margin:30px 0">
+      <a href="${approvalLink}" style="display:inline-block;background:#01696F;color:#fff;text-decoration:none;padding:14px 28px;border-radius:8px;font-weight:700;font-size:16px;margin:4px">View &amp; Sign Change Order</a><br>
+      <a href="https://calendly.com/mccurdycoatings" style="display:inline-block;background:#fff;color:#01696F;text-decoration:none;padding:11px 22px;border:2px solid #01696F;border-radius:8px;font-weight:600;font-size:14px;margin:12px 4px 4px">Book a Call</a>
+    </div>
+    <p style="margin:20px 0 0;font-size:14px;color:#475569">Questions? Reply to this email or book a time with ${escapeHtml(args.ownerName || "Mike Schirmer")}.</p>
+  </div>
+  <div style="background:#f5f5f0;padding:18px 28px;border-top:1px solid #e5e5e0;font-size:12px;color:#64748b;text-align:center;line-height:1.6">
+    McCurdy Roofing Inc &middot; Proposal ${escapeHtml(args.proposal.proposalNumber)}${args.proposal.propertyAddress ? ` &middot; ${escapeHtml(args.proposal.propertyAddress)}` : ""}
+  </div>
+</div></body></html>`;
+
+  try {
+    const res = await fetch(RESEND_API, {
+      method: "POST",
+      headers: { "Authorization": `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        from: FROM_ADDRESS,
+        to: [args.to],
+        bcc: [OWNER_EMAIL],
+        reply_to: OWNER_EMAIL,
+        subject,
+        html,
+        text: `Hi ${args.proposal.customerName},\n\nA ${typeLabel.toLowerCase()} change order requires your approval.\n\n${args.changeOrder.title}\n${args.changeOrder.description}\n${typeLabel}: ${args.changeOrder.amount}\n\nView and sign: ${approvalLink}\n\nBook a call: https://calendly.com/mccurdycoatings`,
+      }),
+    });
+    const data: any = await res.json().catch(() => ({}));
+    if (!res.ok) return { ok: false, error: data?.message || `Resend returned ${res.status}` };
+    console.log(`[proposal-email] Change order sent to ${args.to} (id: ${data.id})`);
+    return { ok: true, id: data.id };
+  } catch (err: any) {
+    console.error("[proposal-email] Change order send failed:", err);
+    return { ok: false, error: err.message || "Send failed" };
+  }
+}
+
+export async function sendChangeOrderAcceptedNotificationToOwner(args: {
+  changeOrder: { title: string; description: string; amount: string; type: string; signedByName?: string | null };
+  proposal: { customerName: string; companyName?: string | null; proposalNumber: string; accessToken: string };
+}): Promise<void> {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) return;
+  const html = `<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:600px;margin:0 auto;padding:24px">
+    <div style="background:#176b3a;color:#fff;padding:20px;border-radius:8px 8px 0 0"><h2 style="margin:0;font-size:20px">Change Order Accepted</h2></div>
+    <div style="border:1px solid #e2e8f0;border-top:none;padding:24px;border-radius:0 0 8px 8px;line-height:1.65">
+      <p style="margin-top:0"><strong>${escapeHtml(args.proposal.customerName)}</strong>${args.proposal.companyName ? ` (${escapeHtml(args.proposal.companyName)})` : ""} accepted a change order for proposal <strong>${escapeHtml(args.proposal.proposalNumber)}</strong>.</p>
+      <p><strong>${escapeHtml(args.changeOrder.title)}</strong><br>${escapeHtml(args.changeOrder.description)}<br><strong>${escapeHtml(args.changeOrder.type === "credit" ? "Credit" : "Addition")}: ${escapeHtml(args.changeOrder.amount)}</strong></p>
+      <p>Signed by: <strong>${escapeHtml(args.changeOrder.signedByName || "Customer")}</strong></p>
+      <div style="margin-top:20px;text-align:center"><a href="${APP_BASE_URL}/#/admin/proposals" style="background:#01696F;color:#fff;padding:12px 24px;text-decoration:none;border-radius:6px;font-weight:600">Open Admin Dashboard</a></div>
+    </div>
+  </div>`;
+  try {
+    await fetch(RESEND_API, {
+      method: "POST",
+      headers: { "Authorization": `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ from: FROM_ADDRESS, to: [OWNER_EMAIL], subject: `ACCEPTED: Change order for ${args.proposal.proposalNumber}`, html }),
+    });
+    console.log(`[proposal-email] Change order acceptance notification sent to ${OWNER_EMAIL}`);
+  } catch (err) {
+    console.error("[proposal-email] Change order acceptance notification failed:", err);
+  }
+}
+
 // ── Notify owner when customer signs ──
 export async function sendSignedNotificationToOwner(args: {
   customerName: string;

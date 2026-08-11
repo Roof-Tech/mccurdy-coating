@@ -30,7 +30,7 @@ export default function RoofSystem() {
   ];
 
   return (
-    <div className="p-6 max-w-4xl mx-auto space-y-6" data-testid="page-roof-system">
+    <div className="p-4 sm:p-6 max-w-4xl mx-auto space-y-6" data-testid="page-roof-system">
       <PageHeader
         title="Roof System Details"
         subtitle="Complete system overview and component breakdown"
@@ -47,12 +47,12 @@ export default function RoofSystem() {
         <CardContent className="p-0">
           <div className="divide-y divide-border/30">
             {components.map((comp, i) => (
-              <div key={i} className="flex items-center justify-between px-5 py-3.5 hover:bg-muted/20 transition-colors">
-                <div className="flex items-center gap-3">
+              <div key={i} className="flex flex-col gap-2 px-5 py-3.5 hover:bg-muted/20 transition-colors sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex min-w-0 items-center gap-3">
                   <comp.icon className="w-4 h-4 text-muted-foreground/50" />
                   <span className="text-sm text-muted-foreground">{comp.label}</span>
                 </div>
-                <span className="text-sm font-medium text-foreground text-right max-w-[60%]">{comp.value}</span>
+                <span className="text-sm font-medium text-foreground break-words sm:max-w-[60%] sm:text-right">{comp.value}</span>
               </div>
             ))}
           </div>
@@ -68,7 +68,7 @@ export default function RoofSystem() {
           <div className="space-y-2 stagger-children">
             {stackLayers.map((layer, i) => (
               <div key={i} className="relative">
-                <div className={`${layer.color} rounded-lg px-4 py-3 flex items-center justify-between`}>
+                <div className={`${layer.color} rounded-lg px-4 py-3 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between`}>
                   <span className="text-xs font-semibold text-white">{layer.name}</span>
                   {layer.detail && (
                     <span className="text-[10px] text-white/80 bg-white/15 rounded-full px-2.5 py-0.5">{layer.detail}</span>

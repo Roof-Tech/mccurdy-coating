@@ -5,10 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { CheckCircle, Phone, MessageCircle, Send, RefreshCw, Shield, ArrowRight, PenTool, Eraser, CalendarDays } from "lucide-react";
+import { CheckCircle, Phone, MessageCircle, Send, RefreshCw, Shield, ArrowRight, PenTool, Eraser, CalendarDays, ClipboardCheck } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { apiRequest } from "@/lib/queryClient";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import type { ChangeOrder } from "@shared/schema";
 
 // ── Signature Pad Component ──
 function SignaturePad({ onChange }: { onChange: (dataUrl: string | null) => void }) {
@@ -108,6 +111,7 @@ function SignaturePad({ onChange }: { onChange: (dataUrl: string | null) => void
 export default function ApprovalCenter() {
   const { proposal, trackEvent, token } = useProposal();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   useEffect(() => { trackEvent("viewed", { page: "approve" }); }, []);
 
   const [name, setName] = useState("");
@@ -121,6 +125,13 @@ export default function ApprovalCenter() {
   const [revision, setRevision] = useState("");
   const [submitting, setSubmitting] = useState<string | null>(null);
   const [signed, setSigned] = useState(false);
+  const [changeOrderSignatures, setChangeOrderSignatures] = useState<Record<string, string | null>>({});
+
+  const { data: changeOrders = [] } = useQuery<ChangeOrder[]>({
+    queryKey: ["/api/proposals", token, "change-orders"],
+    queryFn: () => apiRequest("GET", `/api/proposals/${token}/change-orders`).then(r => r.json()),
+    enabled: !!token,
+  });
 
   if (!proposal) return null;
 
@@ -206,8 +217,36 @@ export default function ApprovalCenter() {
     setSubmitting(null);
   };
 
+  const handleChangeOrderAcceptance = async (changeOrder: ChangeOrder) => {
+    const customerSignature = changeOrderSignatures[changeOrder.id];
+    if (!name.trim()) {
+      toast({ title: "Name required", description: "Enter your full legal name before accepting a change order.", variant: "destructive" });
+      return;
+    }
+    if (!customerSignature) {
+      toast({ title: "Signature required", description: "Please sign the change order before accepting.", variant: "destructive" });
+      return;
+    }
+    setSubmitting(`change-order-${changeOrder.id}`);
+    try {
+      const res = await fetch(`/api/proposals/${token}/change-orders/${changeOrder.id}/accept`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ signedByName: name.trim(), customerSignature }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Unable to accept change order");
+      queryClient.invalidateQueries({ queryKey: ["/api/proposals", token, "change-orders"] });
+      toast({ title: "Change Order Accepted", description: "McCurdy Roofing has been notified and your signed acceptance is recorded." });
+      trackEvent("change_order_accepted", { changeOrderId: changeOrder.id, title: changeOrder.title });
+    } catch (e: any) {
+      toast({ title: "Unable to accept", description: e.message || "Please try again or call 650-952-0233.", variant: "destructive" });
+    }
+    setSubmitting(null);
+  };
+
   return (
-    <div className="p-6 max-w-4xl mx-auto space-y-6" data-testid="page-approve">
+    <div className="p-4 sm:p-6 max-w-4xl mx-auto space-y-6" data-testid="page-approve">
       <PageHeader
         title="Approve / Next Steps"
         subtitle="Ready to move forward? Choose your next action."
@@ -240,6 +279,83 @@ export default function ApprovalCenter() {
           </div>
         </CardContent>
       </Card>
+
+      {/* ── Change Orders ── */}
+      {changeOrders.length > 0 && (
+        <Card id="change-orders" className="glass-card border-0 overflow-hidden border-t-4 border-t-orange-500 scroll-mt-4">
+          <CardContent className="p-5 space-y-4">
+            {changeOrders.some(changeOrder => changeOrder.status === "pending") && (
+              <div className="rounded-lg border border-orange-200 bg-orange-50 px-4 py-3 text-orange-950 dark:border-orange-900 dark:bg-orange-950/30 dark:text-orange-100">
+                <div className="flex items-start gap-2">
+                  <ClipboardCheck className="mt-0.5 h-5 w-5 shrink-0 text-orange-600 dark:text-orange-400" />
+                  <div>
+                    <p className="text-sm font-semibold">New Change Orders Require Your Approval</p>
+                    <p className="mt-0.5 text-xs leading-relaxed text-orange-800 dark:text-orange-200">Review each item below and add your electronic signature to approve it.</p>
+                  </div>
+                </div>
+              </div>
+            )}
+            <div className="flex items-center gap-2">
+              <div className="w-9 h-9 rounded-lg bg-orange-500/10 flex items-center justify-center">
+                <ClipboardCheck className="w-4 h-4 text-orange-600" />
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-foreground">Change Orders</h3>
+                <p className="text-[11px] text-muted-foreground">Project additions and credits requiring your review.</p>
+              </div>
+            </div>
+
+            {changeOrders.map(changeOrder => {
+              const pending = changeOrder.status === "pending";
+              return (
+                <div key={changeOrder.id} className={`rounded-lg border p-4 ${pending ? "border-border bg-background" : "border-border/70 bg-muted/20"}`} data-testid={`customer-change-order-${changeOrder.id}`}>
+                  <div className="flex flex-wrap items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="font-semibold text-sm break-words">{changeOrder.title}</p>
+                      {pending && <p className="mt-1 text-sm text-muted-foreground whitespace-pre-wrap break-words">{changeOrder.description}</p>}
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className={`font-semibold text-sm ${changeOrder.type === "credit" ? "text-emerald-700 dark:text-emerald-400" : "text-orange-700 dark:text-orange-400"}`}>
+                        {changeOrder.type === "credit" ? "Credit " : "Addition "}{changeOrder.amount}
+                      </span>
+                      <Badge variant={changeOrder.status === "accepted" ? "default" : changeOrder.status === "declined" ? "destructive" : "secondary"} className="capitalize text-[10px]">
+                        {changeOrder.status}
+                      </Badge>
+                    </div>
+                  </div>
+
+                  {pending ? (
+                    <div className="mt-4 border-t border-border/70 pt-4 space-y-3">
+                      <div>
+                        <label className="text-xs font-medium text-foreground mb-1.5 block">Your Signature <span className="text-destructive">*</span></label>
+                        <SignaturePad onChange={signature => setChangeOrderSignatures(prev => ({ ...prev, [changeOrder.id]: signature }))} />
+                      </div>
+                      <div className="rounded-md bg-muted/40 border border-border/50 p-3 text-[11px] leading-relaxed text-muted-foreground">
+                        By signing, I, <strong className="text-foreground">{name || "[your name]"}</strong>, approve this {changeOrder.type === "credit" ? "credit" : "addition"} change order for the amount shown above.
+                      </div>
+                      <Button
+                        className="w-full h-10 bg-orange-600 hover:bg-orange-700 text-white gap-2 font-semibold"
+                        onClick={() => handleChangeOrderAcceptance(changeOrder)}
+                        disabled={submitting === `change-order-${changeOrder.id}`}
+                        data-testid={`button-accept-change-order-${changeOrder.id}`}
+                      >
+                        <CheckCircle className="w-4 h-4" />
+                        {submitting === `change-order-${changeOrder.id}` ? "Submitting Signature..." : "I Accept This Change Order"}
+                      </Button>
+                    </div>
+                  ) : (
+                    <p className="mt-2 text-xs text-muted-foreground">
+                      {changeOrder.status === "accepted" && changeOrder.signedByName
+                        ? `Accepted by ${changeOrder.signedByName}${changeOrder.acceptedAt ? ` on ${new Date(changeOrder.acceptedAt * 1000).toLocaleDateString()}` : ""}.`
+                        : "No action is required for this change order."}
+                    </p>
+                  )}
+                </div>
+              );
+            })}
+          </CardContent>
+        </Card>
+      )}
 
       {/* ── Sign & Approve (full width) ── */}
       <Card className="glass-card border-0 overflow-hidden border-t-4 border-t-green-500">
