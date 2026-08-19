@@ -1,14 +1,26 @@
 import { Link, useLocation } from "wouter";
 import {
-  Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent,
-  SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem,
-  SidebarHeader, SidebarFooter,
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarHeader,
+  SidebarFooter,
 } from "@/components/ui/sidebar";
 import { McCurdyLogo } from "./mccurdy-logo";
 import {
-  LayoutDashboard, FileText, MessageSquare, Activity, Settings, Users, Gift,
+  LayoutDashboard,
+  FileText,
+  MessageSquare,
+  Activity,
+  Settings,
+  Users,
+  Gift,
 } from "lucide-react";
-import { PerplexityAttribution } from "./PerplexityAttribution";
 
 const adminNav = [
   { title: "Dashboard", url: "/admin", icon: LayoutDashboard },
@@ -17,6 +29,8 @@ const adminNav = [
   { title: "Activity Log", url: "/admin/activity", icon: Activity },
   { title: "Crew", url: "/admin/crew", icon: Users },
   { title: "Referrals", url: "/admin/referrals", icon: Gift },
+  { title: "Financing", url: "/admin/financing", icon: Settings },
+  { title: "Scheduling", url: "/admin/scheduling", icon: Settings },
 ];
 
 export function AdminSidebar() {
@@ -28,8 +42,12 @@ export function AdminSidebar() {
         <div className="flex items-center gap-3">
           <McCurdyLogo className="w-9 h-9 text-sidebar-primary" />
           <div className="flex flex-col">
-            <span className="text-sm font-semibold text-sidebar-foreground leading-tight">McCurdy Admin</span>
-            <span className="text-xs text-sidebar-foreground/60 leading-tight">Proposal Manager</span>
+            <span className="text-sm font-semibold text-sidebar-foreground leading-tight">
+              McCurdy Coatings — Admin
+            </span>
+            <span className="text-xs text-sidebar-foreground/60 leading-tight">
+              Proposal Manager
+            </span>
           </div>
         </div>
       </SidebarHeader>
@@ -41,13 +59,19 @@ export function AdminSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {adminNav.map((item) => {
-                const isActive = location === item.url || (item.url !== "/admin" && location.startsWith(item.url));
+                const isActive =
+                  location === item.url ||
+                  (item.url !== "/admin" && location.startsWith(item.url));
                 return (
                   <SidebarMenuItem key={item.url}>
                     <SidebarMenuButton
                       asChild
                       data-active={isActive}
-                      className={isActive ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium" : ""}
+                      className={
+                        isActive
+                          ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                          : ""
+                      }
                     >
                       <Link href={item.url}>
                         <item.icon className="w-4 h-4" />
@@ -63,9 +87,8 @@ export function AdminSidebar() {
       </SidebarContent>
       <SidebarFooter className="p-3 border-t border-sidebar-border">
         <div className="text-xs text-sidebar-foreground/40 text-center">
-          McCurdy Roofing Inc. &middot; Admin Portal
+          © McCurdy Roofing Inc. · License #477152 · Family-Owned Since 1992
         </div>
-        <PerplexityAttribution />
       </SidebarFooter>
     </Sidebar>
   );

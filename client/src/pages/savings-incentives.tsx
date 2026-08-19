@@ -67,6 +67,7 @@ interface CountyProgram {
   link: string;
   amount?: string;
   notes?: string;
+  verified?: string;
 }
 
 interface CountyData {
@@ -115,7 +116,7 @@ export default function SavingsIncentives() {
     }
     setLoadingCounty(true);
     setCountyError(false);
-    apiRequest("GET", `/api/county-incentives/${selectedCounty}`)
+    apiRequest("GET", `/api/county-incentives/${selectedCounty}?propertyType=${encodeURIComponent(proposal?.propertyType || proposal?.projectType || "commercial")}&utilityTerritory=${encodeURIComponent(proposal?.utilityTerritory || "")}`)
       .then(r => r.json())
       .then(data => {
         setCountyData(data);
@@ -331,6 +332,7 @@ export default function SavingsIncentives() {
                       {prog.notes && (
                         <p className="text-xs text-muted-foreground italic border-l-2 border-muted/50 pl-2.5 py-0.5">{prog.notes}</p>
                       )}
+                      {prog.verified && <p className="text-xs text-muted-foreground">Verified: {new Date(`${prog.verified}T12:00:00`).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}</p>}
                       <a
                         href={prog.link}
                         target="_blank"
@@ -403,7 +405,7 @@ export default function SavingsIncentives() {
                     )}
                     {inc.lastVerifiedDate && (
                       <span className="text-xs text-muted-foreground bg-muted/30 px-2 py-0.5 rounded-full">
-                        Verified: {inc.lastVerifiedDate}
+                        Verified: {typeof inc.lastVerifiedDate === "number" ? new Date(inc.lastVerifiedDate * 1000).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }) : inc.lastVerifiedDate}
                       </span>
                     )}
                   </div>

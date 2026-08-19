@@ -8,44 +8,64 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { ProposalSidebar } from "@/components/proposal-sidebar";
 import { AdminSidebar } from "@/components/admin-sidebar";
 import { ProposalProvider } from "@/lib/proposal-context";
-import { useState, useEffect } from "react";
+import { Suspense, lazy } from "react";
 
 // Customer pages
 import Welcome from "@/pages/welcome";
 import ProposalSummary from "@/pages/proposal-summary";
-import WhySystem from "@/pages/why-system";
-import RoofSystem from "@/pages/roof-system";
-import MaterialsLibrary from "@/pages/materials-library";
-import MilsBuild from "@/pages/mils-build";
-import ColorOptions from "@/pages/color-options";
+const WhySystem = lazy(() => import("@/pages/why-system"));
+const RoofSystem = lazy(() => import("@/pages/roof-system"));
+const MaterialsLibrary = lazy(() => import("@/pages/materials-library"));
+const MilsBuild = lazy(() => import("@/pages/mils-build"));
+const ColorOptions = lazy(() => import("@/pages/color-options"));
 import PricingOptions from "@/pages/pricing-options";
-import WarrantyCenter from "@/pages/warranty-center";
-import BeforeAfter from "@/pages/before-after";
-import SavingsIncentives from "@/pages/savings-incentives";
-import CompliancePage from "@/pages/compliance";
-import SiliconeBenefits from "@/pages/silicone-benefits";
-import FormsPrint from "@/pages/forms-print";
-import DocumentsProvided from "@/pages/documents-provided";
-import CPAQuestions from "@/pages/cpa-questions";
+const WarrantyCenter = lazy(() => import("@/pages/warranty-center"));
+const BeforeAfter = lazy(() => import("@/pages/before-after"));
+const SavingsIncentives = lazy(() => import("@/pages/savings-incentives"));
+const CompliancePage = lazy(() => import("@/pages/compliance"));
+const SiliconeBenefits = lazy(() => import("@/pages/silicone-benefits"));
+const FormsPrint = lazy(() => import("@/pages/forms-print"));
+const DocumentsProvided = lazy(() => import("@/pages/documents-provided"));
+const CPAQuestions = lazy(() => import("@/pages/cpa-questions"));
 import ApprovalCenter from "@/pages/approval-center";
-import MeetYourCrew from "@/pages/meet-your-crew";
-import ProjectTimeline from "@/pages/project-timeline";
-import ReferralRewards from "@/pages/referral-rewards";
-import WarrantyRegistration from "@/pages/warranty-registration";
-import ReviewRouter from "@/pages/review-router";
-import ReferralLanding from "@/pages/referral-landing";
+const MeetYourCrew = lazy(() => import("@/pages/meet-your-crew"));
+const ProjectTimeline = lazy(() => import("@/pages/project-timeline"));
+const ReferralRewards = lazy(() => import("@/pages/referral-rewards"));
+const WarrantyRegistration = lazy(
+  () => import("@/pages/warranty-registration"),
+);
+const ReviewRouter = lazy(() => import("@/pages/review-router"));
+const ReferralLanding = lazy(() => import("@/pages/referral-landing"));
 
 // Admin pages
-import AdminDashboard from "@/pages/admin-dashboard";
-import AdminProposals from "@/pages/admin-proposals";
-import AdminProposalCreate from "@/pages/admin-proposal-create";
-import AdminProposalEdit from "@/pages/admin-proposal-edit";
-import AdminMessages from "@/pages/admin-messages";
-import AdminActivity from "@/pages/admin-activity";
-import AdminCrew from "@/pages/admin-crew";
-import AdminReferrals from "@/pages/admin-referrals";
+const AdminDashboard = lazy(() => import("@/pages/admin-dashboard"));
+const AdminProposals = lazy(() => import("@/pages/admin-proposals"));
+const AdminProposalCreate = lazy(() => import("@/pages/admin-proposal-create"));
+const AdminProposalEdit = lazy(() => import("@/pages/admin-proposal-edit"));
+const AdminMessages = lazy(() => import("@/pages/admin-messages"));
+const AdminActivity = lazy(() => import("@/pages/admin-activity"));
+const AdminCrew = lazy(() => import("@/pages/admin-crew"));
+const AdminReferrals = lazy(() => import("@/pages/admin-referrals"));
 
+const Messages = lazy(() => import("@/pages/messages"));
+const Invoices = lazy(() => import("@/pages/invoices"));
+const Preferences = lazy(() => import("@/pages/preferences"));
+const AdminFinancing = lazy(() => import("@/pages/admin-financing"));
+const AdminScheduling = lazy(() => import("@/pages/admin-scheduling"));
+const FieldCapture = lazy(() => import("@/pages/admin-field-capture"));
 import NotFound from "@/pages/not-found";
+
+function LoadingSpinner() {
+  return (
+    <div
+      className="p-6 text-sm text-muted-foreground"
+      role="status"
+      data-testid="loading-page"
+    >
+      Loading…
+    </div>
+  );
+}
 
 function CustomerProposalApp({ token }: { token: string }) {
   const sidebarStyle = {
@@ -59,32 +79,70 @@ function CustomerProposalApp({ token }: { token: string }) {
         <div className="flex h-screen w-full">
           <ProposalSidebar />
           <div className="flex flex-col flex-1 min-w-0">
-            <header className="flex items-center justify-between p-2 border-b" data-testid="header-customer">
+            <header
+              className="flex items-center justify-between p-2 border-b"
+              data-testid="header-customer"
+            >
               <SidebarTrigger data-testid="button-sidebar-toggle" />
-              <span className="text-xs text-muted-foreground pr-2">McCurdy Roofing</span>
+              <span className="text-xs text-muted-foreground pr-2">
+                McCurdy Roofing
+              </span>
             </header>
-            <main className="flex-1 overflow-y-auto">
+            <main id="main-content" className="flex-1 overflow-y-auto">
               <Switch>
                 <Route path="/view/:token" component={Welcome} />
-                <Route path="/view/:token/summary" component={ProposalSummary} />
+                <Route
+                  path="/view/:token/summary"
+                  component={ProposalSummary}
+                />
                 <Route path="/view/:token/why" component={WhySystem} />
                 <Route path="/view/:token/system" component={RoofSystem} />
-                <Route path="/view/:token/materials" component={MaterialsLibrary} />
+                <Route
+                  path="/view/:token/materials"
+                  component={MaterialsLibrary}
+                />
                 <Route path="/view/:token/mils" component={MilsBuild} />
                 <Route path="/view/:token/colors" component={ColorOptions} />
                 <Route path="/view/:token/pricing" component={PricingOptions} />
-                <Route path="/view/:token/warranty" component={WarrantyRegistration} />
+                <Route
+                  path="/view/:token/warranty"
+                  component={WarrantyRegistration}
+                />
                 <Route path="/view/:token/crew" component={MeetYourCrew} />
-                <Route path="/view/:token/timeline" component={ProjectTimeline} />
+                <Route
+                  path="/view/:token/timeline"
+                  component={ProjectTimeline}
+                />
                 <Route path="/view/:token/refer" component={ReferralRewards} />
                 <Route path="/view/:token/review" component={ReviewRouter} />
+                <Route path="/view/:token/messages" component={Messages} />
+                <Route path="/view/:token/invoices" component={Invoices} />
+                <Route
+                  path="/view/:token/preferences"
+                  component={Preferences}
+                />
                 <Route path="/view/:token/visualizer" component={BeforeAfter} />
-                <Route path="/view/:token/savings" component={SavingsIncentives} />
-                <Route path="/view/:token/compliance" component={CompliancePage} />
-                <Route path="/view/:token/silicone" component={SiliconeBenefits} />
+                <Route
+                  path="/view/:token/savings"
+                  component={SavingsIncentives}
+                />
+                <Route
+                  path="/view/:token/compliance"
+                  component={CompliancePage}
+                />
+                <Route
+                  path="/view/:token/silicone"
+                  component={SiliconeBenefits}
+                />
                 <Route path="/view/:token/forms" component={FormsPrint} />
-                <Route path="/view/:token/documents" component={DocumentsProvided} />
-                <Route path="/view/:token/cpa-questions" component={CPAQuestions} />
+                <Route
+                  path="/view/:token/documents"
+                  component={DocumentsProvided}
+                />
+                <Route
+                  path="/view/:token/cpa-questions"
+                  component={CPAQuestions}
+                />
                 <Route path="/view/:token/approve" component={ApprovalCenter} />
                 <Route component={Welcome} />
               </Switch>
@@ -107,20 +165,37 @@ function AdminApp() {
       <div className="flex h-screen w-full">
         <AdminSidebar />
         <div className="flex flex-col flex-1 min-w-0">
-          <header className="flex items-center justify-between p-2 border-b" data-testid="header-admin">
+          <header
+            className="flex items-center justify-between p-2 border-b"
+            data-testid="header-admin"
+          >
             <SidebarTrigger data-testid="button-admin-sidebar-toggle" />
-            <span className="text-xs text-muted-foreground pr-2">Admin Portal</span>
+            <span className="text-xs text-muted-foreground pr-2">
+              Admin Portal
+            </span>
           </header>
-          <main className="flex-1 overflow-y-auto">
+          <main id="main-content" className="flex-1 overflow-y-auto">
             <Switch>
               <Route path="/admin" component={AdminDashboard} />
               <Route path="/admin/proposals" component={AdminProposals} />
-              <Route path="/admin/proposals/new" component={AdminProposalCreate} />
-              <Route path="/admin/proposals/:id" component={AdminProposalEdit} />
+              <Route
+                path="/admin/proposals/new"
+                component={AdminProposalCreate}
+              />
+              <Route
+                path="/admin/proposals/:id/field-capture"
+                component={FieldCapture}
+              />
+              <Route
+                path="/admin/proposals/:id"
+                component={AdminProposalEdit}
+              />
               <Route path="/admin/messages" component={AdminMessages} />
               <Route path="/admin/activity" component={AdminActivity} />
               <Route path="/admin/crew" component={AdminCrew} />
               <Route path="/admin/referrals" component={AdminReferrals} />
+              <Route path="/admin/financing" component={AdminFinancing} />
+              <Route path="/admin/scheduling" component={AdminScheduling} />
               <Route component={AdminDashboard} />
             </Switch>
           </main>
@@ -135,30 +210,67 @@ function LandingPage() {
     <div className="flex items-center justify-center min-h-screen bg-background">
       <div className="text-center space-y-4 p-8 max-w-md">
         <div className="w-16 h-16 mx-auto mb-2 text-primary">
-          <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M20 4L2 20h6v14h24V20h6L20 4z" fill="currentColor" opacity="0.15" />
-            <path d="M20 6L4 20h5v13h22V20h5L20 6z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" fill="none" />
-            <path d="M14 22v8M20 18v12M26 22v8" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
-            <path d="M14 22l3-4 3 4 3-4 3 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+          <svg
+            viewBox="0 0 40 40"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M20 4L2 20h6v14h24V20h6L20 4z"
+              fill="currentColor"
+              opacity="0.15"
+            />
+            <path
+              d="M20 6L4 20h5v13h22V20h5L20 6z"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinejoin="round"
+              fill="none"
+            />
+            <path
+              d="M14 22v8M20 18v12M26 22v8"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+            />
+            <path
+              d="M14 22l3-4 3 4 3-4 3 4"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              fill="none"
+            />
           </svg>
         </div>
-        <h1 className="text-xl font-bold" data-testid="text-landing-title">McCurdy Roof Investment Proposal</h1>
+        <h1 className="text-xl font-bold" data-testid="text-landing-title">
+          McCurdy Coatings
+        </h1>
         <p className="text-sm text-muted-foreground">
-          Welcome to the McCurdy Proposal Platform. If you have a proposal link, please use it to access your personalized proposal.
+          Welcome to the McCurdy Proposal Platform. If you have a proposal link,
+          please use it to access your personalized proposal.
         </p>
         <div className="space-y-2">
           <a href="/#/view/demo-proposal-2026" className="block">
-            <button className="w-full px-4 py-2.5 bg-primary text-primary-foreground rounded-md text-sm font-medium" data-testid="button-demo">
+            <button
+              className="w-full px-4 py-2.5 bg-primary text-primary-foreground rounded-md text-sm font-medium"
+              data-testid="button-demo"
+            >
               View Demo Proposal
             </button>
           </a>
           <a href="/#/admin" className="block">
-            <button className="w-full px-4 py-2.5 border border-border rounded-md text-sm text-foreground" data-testid="button-admin">
+            <button
+              className="w-full px-4 py-2.5 border border-border rounded-md text-sm text-foreground"
+              data-testid="button-admin"
+            >
               Admin Portal
             </button>
           </a>
         </div>
-        <p className="text-xs text-muted-foreground pt-2">McCurdy Roofing Inc. &middot; License #477152 &middot; 650-952-0233</p>
+        <p className="text-xs text-muted-foreground pt-2">
+          McCurdy Roofing Inc. &middot; License #477152 &middot; 650-952-0233
+        </p>
       </div>
     </div>
   );
@@ -171,7 +283,7 @@ function AppRouter() {
 
   // Extract token from view routes
   const viewMatch = location.match(/^\/view\/([^/]+)/);
-  
+
   if (viewMatch) {
     return <CustomerProposalApp token={viewMatch[1]} />;
   }
@@ -188,7 +300,15 @@ export default function App() {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Router hook={useHashLocation}>
-          <AppRouter />
+          <a
+            href="#main-content"
+            className="sr-only focus:not-sr-only focus:absolute focus:left-3 focus:top-3 focus:z-50 focus:bg-background focus:p-3"
+          >
+            Skip to main content
+          </a>
+          <Suspense fallback={<LoadingSpinner />}>
+            <AppRouter />
+          </Suspense>
         </Router>
         <Toaster />
       </TooltipProvider>

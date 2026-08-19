@@ -24,6 +24,9 @@ export default function ProposalSummary() {
     return total + (match ? parseInt(match[1].replace(',', '')) : 0);
   }, 0);
 
+  const displayedSqft = proposal.verifiedSqft || (proposal.aiAnalysisApprovedAt ? totalSqFt : totalSqFt);
+  const measurementLabel = proposal.verifiedSqft ? "Verified by measurement" : proposal.aiAnalysisApprovedAt ? "Verified by McCurdy" : null;
+
   return (
     <div className="p-4 sm:p-6 max-w-4xl mx-auto space-y-5" data-testid="page-summary">
       <PageHeader
@@ -37,14 +40,14 @@ export default function ProposalSummary() {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 stagger-children">
         {[
           { label: "Project Type", value: proposal.projectType ? proposal.projectType.charAt(0).toUpperCase() + proposal.projectType.slice(1) : "Commercial", icon: Building2 },
-          { label: "Total Roof Area", value: totalSqFt > 0 ? `${totalSqFt.toLocaleString()} sq ft` : "—", icon: Ruler },
+          { label: "Total Roof Area", value: displayedSqft > 0 ? `${displayedSqft.toLocaleString()} sq ft` : "—", icon: Ruler },
           { label: "System", value: "ASC Silicone", icon: Layers },
           { label: "Timeline", value: proposal.timelineEstimate?.replace("from contract signing, ", "") || "3-4 weeks", icon: Clock },
         ].map((metric) => (
           <div key={metric.label} className="glass-card rounded-xl p-4 text-center">
             <metric.icon className="w-4 h-4 text-accent mx-auto mb-2" />
             <p className="text-sm font-bold text-foreground leading-tight">{metric.value}</p>
-            <p className="text-sm text-muted-foreground mt-1 uppercase tracking-wider">{metric.label}</p>
+            <p className="text-sm text-muted-foreground mt-1 uppercase tracking-wider">{metric.label}</p>{metric.label === "Total Roof Area" && measurementLabel ? <Badge className="mt-1 text-xs">{measurementLabel}</Badge> : null}
           </div>
         ))}
       </div>
@@ -117,10 +120,10 @@ export default function ProposalSummary() {
                   </div>
                 );
               })}
-              {totalSqFt > 0 && (
+              {displayedSqft > 0 && (
                 <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-border/30">
                   <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Total Coverage</span>
-                  <span className="text-sm font-bold text-foreground tabular-nums">{totalSqFt.toLocaleString()} sq ft</span>
+                  <span className="text-sm font-bold text-foreground tabular-nums">{displayedSqft.toLocaleString()} sq ft</span>
                 </div>
               )}
             </div>

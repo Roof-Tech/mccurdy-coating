@@ -140,7 +140,7 @@ export default function DocumentsProvided() {
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-foreground truncate">{f.title}</p>
                         <div className="flex flex-wrap items-center gap-2 mt-0.5">
-                          <Badge variant="outline" className="text-[9px] py-0 h-4">{ext}</Badge>
+                          <Badge variant="outline" className="text-xs py-0 h-4">{ext}</Badge>
                           <span className="text-xs text-muted-foreground">{catLabel}</span>
                         </div>
                         {f.description && (
@@ -185,7 +185,7 @@ export default function DocumentsProvided() {
                           rel="noopener noreferrer"
                           className="group relative aspect-square rounded-lg overflow-hidden bg-muted/40 hover:ring-2 hover:ring-primary/40 transition-all"
                         >
-                          <img src={img.imageUrl} alt={img.caption || "Before"} className="w-full h-full object-cover" loading="lazy" />
+                          <img src={img.imageUrl} alt={img.caption || "Before"} className="w-full h-full object-cover" loading="lazy"  decoding="async"/>
                           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
                             <Download className="w-5 h-5 text-white" />
                           </div>
@@ -206,7 +206,7 @@ export default function DocumentsProvided() {
                           rel="noopener noreferrer"
                           className="group relative aspect-square rounded-lg overflow-hidden bg-muted/40 hover:ring-2 hover:ring-primary/40 transition-all"
                         >
-                          <img src={img.imageUrl} alt={img.caption || "After"} className="w-full h-full object-cover" loading="lazy" />
+                          <img src={img.imageUrl} alt={img.caption || "After"} className="w-full h-full object-cover" loading="lazy"  decoding="async"/>
                           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
                             <Download className="w-5 h-5 text-white" />
                           </div>

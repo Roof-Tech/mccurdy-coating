@@ -12,11 +12,11 @@ export default function Compliance() {
   const sections = [
     {
       value: "what", icon: HelpCircle, title: "What is Title 24?",
-      content: "Title 24 is California's Building Energy Efficiency Standards. Part 6 includes requirements for roof reflectivity (solar reflectance) and thermal emittance on commercial and certain residential buildings. When you replace or significantly alter a roof, the new surface often must meet minimum cool-roof values to comply with state energy codes.",
+      content: "The 2025 California Energy Code (effective January 1, 2026) is California's Building Energy Efficiency Standards. Part 6 includes requirements for roof reflectivity (solar reflectance) and thermal emittance on commercial and certain residential buildings. When you replace or significantly alter a roof, the new surface often must meet minimum cool-roof values to comply with state energy codes.",
     },
     {
       value: "when", icon: Building2, title: "When Does It Matter?",
-      content: "Title 24 cool-roof requirements typically apply when more than 50% of the roof surface is being replaced or recovered on a commercial building. Climate zone, building type, and roof slope all factor into the specific requirements. The proposed ASC white silicone system exceeds all Title 24 cool-roof minimums for California climate zones.",
+      content: "Title 24 cool-roof requirements typically apply when more than 50% of the roof surface is being replaced or recovered on a commercial building. Climate zone, building type, and roof slope all factor into the specific requirements. Requirements vary by climate zone. McCurdy silicone coatings meet or exceed cool-roof requirements for Climate Zones 1-16 for low-slope roofs per Section 110.8(i).",
     },
     {
       value: "docs", icon: FileCheck, title: "What Documents Are Involved?",
@@ -53,6 +53,6 @@ export default function Compliance() {
           </AccordionItem>
         ))}
       </Accordion>
-    </div>
+    <p className="text-sm"><a className="text-primary underline" target="_blank" rel="noreferrer" href="https://www.energy.ca.gov/programs-and-topics/programs/building-energy-efficiency-standards">Read the California Energy Code</a></p></div>
   );
 }

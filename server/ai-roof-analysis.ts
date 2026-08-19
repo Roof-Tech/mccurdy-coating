@@ -7,9 +7,12 @@ export type AnalysisResult = {
   visibleIssues: string[];
   recommendedUpgrades: Array<{ title: string; reason: string }>;
   overallSummary: string;
+  confidence: Record<"materialType" | "sqft" | "condition" | "issues" | "upgrades", "high" | "medium" | "low">;
+  model: string;
+  analyzedAt: number;
 };
 
-const prompt = "You are a 30-year veteran commercial roofing inspector for McCurdy Coatings, a Bay Area silicone roof coating specialist. Analyze the roof photos provided. Return a JSON object with fields: materialType (BUR/TPO/EPDM/Modified Bitumen/PVC/Metal/Shingle/Unknown), estimatedSqft (number, best guess from photo perspective), conditionRating (Poor/Fair/Good/Excellent), visibleIssues (array of short strings), recommendedUpgrades (array of {title, reason}), overallSummary (2-3 sentences).";
+const prompt = "You are a 30-year veteran commercial roofing inspector for McCurdy Coatings, a Bay Area silicone roof coating specialist. Analyze the roof photos provided. Return a JSON object with fields: materialType (BUR/TPO/EPDM/Modified Bitumen/PVC/Metal/Shingle/Unknown), estimatedSqft (number, best guess from photo perspective), conditionRating (Poor/Fair/Good/Excellent), visibleIssues (array of short strings), recommendedUpgrades (array of {title, reason}), overallSummary (2-3 sentences), and confidence ({materialType, sqft, condition, issues, upgrades}, each high/medium/low). For each field return a confidence: high/medium/low based on photo clarity and visibility.";
 
 export async function analyzeRoofPhotos(imageUrls: string[]): Promise<AnalysisResult> {
   if (!process.env.OPENAI_API_KEY) throw new Error("AI_NOT_CONFIGURED");
@@ -26,5 +29,8 @@ export async function analyzeRoofPhotos(imageUrls: string[]): Promise<AnalysisRe
     conditionRating: parsed.conditionRating || "Fair", visibleIssues: Array.isArray(parsed.visibleIssues) ? parsed.visibleIssues : [],
     recommendedUpgrades: Array.isArray(parsed.recommendedUpgrades) ? parsed.recommendedUpgrades : [],
     overallSummary: parsed.overallSummary || "No summary returned.",
+    confidence: { materialType: parsed.confidence?.materialType || "medium", sqft: parsed.confidence?.sqft || "medium", condition: parsed.confidence?.condition || "medium", issues: parsed.confidence?.issues || "medium", upgrades: parsed.confidence?.upgrades || "medium" },
+    model: "gpt-4o",
+    analyzedAt: Math.floor(Date.now() / 1000),
   };
 }

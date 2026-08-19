@@ -24,6 +24,7 @@ export default function AdminProposals() {
   const [sendMessage, setSendMessage] = useState("");
   const [sending, setSending] = useState(false);
 
+  const { data: allMessages = [] } = useQuery<any[]>({ queryKey: ["/api/admin/messages"], queryFn: () => apiRequest("GET", "/api/admin/messages").then(r => r.json()) });
   const { data: proposals = [] } = useQuery<Proposal[]>({
     queryKey: ["/api/admin/proposals"],
     queryFn: () => apiRequest("GET", "/api/admin/proposals").then(r => r.json()),
@@ -104,6 +105,7 @@ export default function AdminProposals() {
           {proposals.map((p) => {
             const anyP = p as any;
             const sent = anyP.sendCount > 0;
+            const unreadCount = allMessages.filter(m => m.proposalId === p.id && m.sender === "customer" && !m.readByRecipient).length;
             return (
               <Card key={p.id} data-testid={`card-proposal-${p.id}`}>
                 <CardContent className="p-4">
@@ -117,6 +119,7 @@ export default function AdminProposals() {
                             <CheckCircle2 className="w-2.5 h-2.5" /> Sent {anyP.sendCount}x
                           </Badge>
                         )}
+                        {unreadCount > 0 && <Badge className="text-xs">{unreadCount} unread message{unreadCount === 1 ? "" : "s"}</Badge>}
                         {anyP.signedAt && (
                           <Badge className="text-xs gap-1 bg-emerald-600 hover:bg-emerald-600">
                             <CheckCircle2 className="w-2.5 h-2.5" /> Signed

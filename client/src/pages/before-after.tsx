@@ -163,7 +163,7 @@ export default function BeforeAfter() {
                     src={img.imageUrl}
                     alt={img.caption || `Photo ${idx + 1}`}
                     className="w-20 h-14 object-cover"
-                  />
+                   loading="lazy" decoding="async"/>
                 </button>
               ))}
             </div>
@@ -190,10 +190,10 @@ export default function BeforeAfter() {
                     src={img.imageUrl}
                     alt={img.caption || "AI Preview"}
                     className="w-full aspect-[4/3] object-cover"
-                  />
+                   loading="lazy" decoding="async"/>
                   <CardContent className="p-3">
                     <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="text-[9px]">
+                      <Badge variant="outline" className="text-xs">
                         {selectedColor === "white" ? "White" : "Gray"} Silicone
                       </Badge>
                       {img.caption && (
@@ -247,9 +247,9 @@ export default function BeforeAfter() {
             {beforeImages.map((img) => (
               <Card key={img.id}>
                 <CardContent className="p-0">
-                  <img src={img.imageUrl} alt={img.caption || "Before"} className="w-full h-48 object-cover rounded-t-md" />
+                  <img src={img.imageUrl} alt={img.caption || "Before"} className="w-full h-48 object-cover rounded-t-md"  loading="lazy" decoding="async"/>
                   <div className="p-3 flex items-center gap-2">
-                    <Badge variant="outline" className="text-[9px]">Before</Badge>
+                    <Badge variant="outline" className="text-xs">Before</Badge>
                     {img.caption && <span className="text-xs text-muted-foreground truncate">{img.caption}</span>}
                   </div>
                 </CardContent>

@@ -90,7 +90,7 @@ export function ImageComparisonSlider({
         className="w-full h-full object-cover block"
         style={{ aspectRatio: "4/3" }}
         draggable={false}
-        onLoad={() => setImagesLoaded(prev => ({ ...prev, after: true }))}
+        loading="lazy" decoding="async" onLoad={() => setImagesLoaded(prev => ({ ...prev, after: true }))}
       />
 
       {/* Before image (clipped) */}
@@ -104,7 +104,7 @@ export function ImageComparisonSlider({
           className="h-full object-cover block"
           style={{ aspectRatio: "4/3", width: containerRef.current?.offsetWidth || "100%" }}
           draggable={false}
-          onLoad={() => setImagesLoaded(prev => ({ ...prev, before: true }))}
+          loading="lazy" decoding="async" onLoad={() => setImagesLoaded(prev => ({ ...prev, before: true }))}
         />
       </div>
 

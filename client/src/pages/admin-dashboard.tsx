@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { LayoutDashboard, FileText, Eye, CheckCircle, AlertCircle, Clock, MessageSquare, Plus, Users, Gift } from "lucide-react";
-import type { Proposal, ActivityEvent, CustomerMessage } from "@shared/schema";
+import type { Proposal, ActivityEvent } from "@shared/schema";
 
 const statusColors: Record<string, string> = {
   draft: "bg-muted text-muted-foreground",
@@ -22,7 +22,7 @@ export default function AdminDashboard() {
     queryKey: ["/api/admin/proposals"],
     queryFn: () => apiRequest("GET", "/api/admin/proposals").then(r => r.json()),
   });
-  const { data: messages = [] } = useQuery<CustomerMessage[]>({
+  const { data: messages = [] } = useQuery<any[]>({
     queryKey: ["/api/admin/messages"],
     queryFn: () => apiRequest("GET", "/api/admin/messages").then(r => r.json()),
   });
@@ -31,7 +31,8 @@ export default function AdminDashboard() {
     queryFn: () => apiRequest("GET", "/api/admin/activities").then(r => r.json()),
   });
 
-  const unreadMessages = messages.filter(m => !m.isRead);
+  const unreadMessages = messages.filter(m => m.sender === "customer" && !m.readByRecipient);
+  const { data: staleIncentives = [] } = useQuery<any[]>({ queryKey: ["/api/admin/incentives/stale"], queryFn: () => apiRequest("GET", "/api/admin/incentives/stale").then(r => r.json()) });
   const statCounts = {
     total: proposals.length,
     sent: proposals.filter(p => p.status === "sent").length,
@@ -85,7 +86,8 @@ export default function AdminDashboard() {
         ))}
       </div>
 
-      <Card><CardHeader className="pb-2"><CardTitle className="text-base font-semibold">Quick Links</CardTitle></CardHeader><CardContent><div className="grid grid-cols-1 md:grid-cols-2 gap-3"><a data-testid="link-crew-management" href="/#/admin/crew" className="flex items-center gap-3 rounded border p-4 hover:bg-muted/40"><Users className="w-5 h-5 text-primary"/><span><b className="block text-sm">Crew Management</b><span className="text-sm text-muted-foreground">Manage customer-facing crew profiles</span></span></a><a data-testid="link-referrals" href="/#/admin/referrals" className="flex items-center gap-3 rounded border p-4 hover:bg-muted/40"><Gift className="w-5 h-5 text-primary"/><span><b className="block text-sm">Referrals</b><span className="text-sm text-muted-foreground">Track neighbor rewards and statuses</span></span></a></div></CardContent></Card>
+      <Card><CardHeader className="pb-2"><CardTitle className="text-base font-semibold">Quick Links</CardTitle></CardHeader><CardContent><div className="grid grid-cols-1 md:grid-cols-2 gap-3"><a data-testid="link-crew-management" href="/#/admin/crew" className="flex items-center gap-3 rounded border p-4 hover:bg-muted/40"><Users className="w-5 h-5 text-primary"/><span><b className="block text-sm">Crew Management</b><span className="text-sm text-muted-foreground">Manage customer-facing crew profiles</span></span></a><a data-testid="link-referrals" href="/#/admin/referrals" className="flex items-center gap-3 rounded border p-4 hover:bg-muted/40"><Gift className="w-5 h-5 text-primary"/><span><b className="block text-sm">Referrals</b><span className="text-sm text-muted-foreground">Track neighbor rewards and statuses</span></span></a><a data-testid="link-financing-admin" href="/#/admin/financing" className="flex items-center gap-3 rounded border p-4 hover:bg-muted/40"><FileText className="w-5 h-5 text-primary"/><span><b className="block text-sm">Financing Applications</b><span className="text-sm text-muted-foreground">Review customer intake and statuses</span></span></a><a data-testid="link-scheduling-admin" href="/#/admin/scheduling" className="flex items-center gap-3 rounded border p-4 hover:bg-muted/40"><Clock className="w-5 h-5 text-primary"/><span><b className="block text-sm">Smart Scheduling</b><span className="text-sm text-muted-foreground">Capacity and weather outlook</span></span></a></div></CardContent></Card>
+      {staleIncentives.length > 0 && <Card className="border-amber-400"><CardContent className="p-4"><div className="flex items-center gap-2"><AlertCircle className="w-4 h-4 text-amber-600"/><b className="text-sm">Stale Incentives ({staleIncentives.length})</b></div><p className="mt-1 text-sm text-muted-foreground">{staleIncentives.slice(0,3).map((i:any)=>i.programName).join(" · ")}</p></CardContent></Card>}
 
       {/* Unread Messages */}
       {unreadMessages.length > 0 && (
@@ -100,8 +102,8 @@ export default function AdminDashboard() {
               {unreadMessages.slice(0, 5).map((msg) => (
                 <li key={msg.id} className="flex items-start justify-between text-sm border-b border-border/50 pb-2 last:border-0">
                   <div>
-                    <Badge variant="outline" className="text-sm mr-2">{msg.messageType}</Badge>
-                    <span className="text-foreground/80">{msg.message.slice(0, 80)}...</span>
+                    <Badge variant="outline" className="text-sm mr-2">Customer</Badge>
+                    <span className="text-foreground/80">{msg.body.slice(0, 80)}...</span>
                   </div>
                   <span className="text-sm text-muted-foreground whitespace-nowrap ml-2">{msg.senderName}</span>
                 </li>

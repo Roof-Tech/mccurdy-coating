@@ -53,6 +53,8 @@ const authLimiter = rateLimit({
 app.use("/api", apiLimiter);
 app.use("/api/admin/upload", uploadLimiter);
 app.use("/api/proposal/:token/message", authLimiter);
+app.use("/api/proposals/:token/messages", authLimiter);
+app.use("/api/proposals/:token/financing/apply", authLimiter);
 app.use("/api/proposals/:token/sign", authLimiter);
 app.use("/api/proposals/:token/review", authLimiter);
 app.use("/api/proposals/:token/warranty/register", authLimiter);
@@ -86,8 +88,17 @@ app.use((req, res, next) => {
 (async () => {
   await registerRoutes(httpServer, app);
 
-  setInterval(() => { processScheduledEmails().catch(error => console.error("[scheduled-jobs]", error)); }, 15 * 60 * 1000);
-  processScheduledEmails().catch(error => console.error("[scheduled-jobs]", error));
+  setInterval(
+    () => {
+      processScheduledEmails().catch((error) =>
+        console.error("[scheduled-jobs]", error),
+      );
+    },
+    15 * 60 * 1000,
+  );
+  processScheduledEmails().catch((error) =>
+    console.error("[scheduled-jobs]", error),
+  );
 
   // Start yearly + quarterly auto-refresh of county incentives.
   // Fires Jan 1 (full refresh) and Apr 1 / Jul 1 / Oct 1 (safety checks).
@@ -101,7 +112,17 @@ app.use((req, res, next) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
 
-    console.error("Internal Server Error:", err);
+    console.error(
+      JSON.stringify({
+        timestamp: new Date().toISOString(),
+        event: "request_error",
+        method: _req.method,
+        path: _req.path,
+        status,
+        message,
+        stack: err.stack,
+      }),
+    );
 
     if (res.headersSent) {
       return next(err);

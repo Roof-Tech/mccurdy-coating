@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import { useState, useRef, useCallback, useEffect } from "react";
 import type { Proposal, Material, Document as DocType, WarrantyDocument, ProposalImage, ChangeOrder } from "@shared/schema";
-import { AiRoofPanel, UpgradeMenuPanel, JobPhotosPanel, EmailSchedulePanel } from "@/components/admin-mega-feature-panels";
+import { AiRoofPanel, UpgradeMenuPanel, JobPhotosPanel, EmailSchedulePanel, ProposalMessagesPanel } from "@/components/admin-mega-feature-panels";
 
 // ── Helpers ────────────────────────────────────────────────────
 
@@ -104,7 +104,7 @@ function PricingTierCard({
           />
           <span className="font-medium text-foreground">Mark as Recommended</span>
           {opt.recommended && (
-            <Badge className="text-[9px] h-4 bg-accent text-white border-0">★ Recommended</Badge>
+            <Badge className="text-xs h-4 bg-accent text-white border-0">★ Recommended</Badge>
           )}
         </label>
         <Button
@@ -171,7 +171,7 @@ function AITransformSection({ images }: { images: ProposalImage[] }) {
         <Sparkles className="w-4 h-4 text-amber-600" />
         <h4 className="text-sm font-semibold text-foreground">AI Roof Transformation</h4>
         {totalAi > 0 && (
-          <Badge className="text-[9px] h-4 bg-green-100 text-green-800 border-green-300">
+          <Badge className="text-xs h-4 bg-green-100 text-green-800 border-green-300">
             {totalAi} preview{totalAi > 1 ? "s" : ""} ready
           </Badge>
         )}
@@ -264,6 +264,10 @@ export default function AdminProposalEdit() {
       proposalDate: proposal.proposalDate || "",
       estimator: proposal.estimator || "",
       projectType: proposal.projectType || "commercial",
+      propertyType: proposal.propertyType || proposal.projectType || "commercial",
+      verifiedSqft: String(proposal.verifiedSqft || ""),
+      sqftMeasurementSource: proposal.sqftMeasurementSource || "ai_estimate",
+      measurementNotes: proposal.measurementNotes || "",
       propertyAge: String(proposal.propertyAge || ""),
       hasHvac: String(proposal.hasHvac || 0),
       isFlatRoof: String(proposal.isFlatRoof || 0),
@@ -315,6 +319,9 @@ export default function AdminProposalEdit() {
         keyIssues: JSON.stringify((ed.keyIssues || "").split("\n").filter(s => s.trim())),
         addOns: JSON.stringify((ed.addOns || "").split("\n").filter(s => s.trim())),
         propertyAge: ed.propertyAge ? Number(ed.propertyAge) : null,
+        verifiedSqft: ed.verifiedSqft ? Number(ed.verifiedSqft) : null,
+        sqftMeasurementSource: ed.sqftMeasurementSource || null,
+        measurementNotes: ed.measurementNotes || null,
         hasHvac: Number(ed.hasHvac || 0),
         isFlatRoof: Number(ed.isFlatRoof || 0),
         appointmentDate: ed.appointmentDate ? Math.floor(new Date(ed.appointmentDate).getTime() / 1000) : null,
@@ -579,6 +586,7 @@ export default function AdminProposalEdit() {
           <TabsTrigger value="upgrade-menu" className="shrink-0 whitespace-nowrap gap-1.5 text-sm"><Plus className="w-3.5 h-3.5"/> Upgrade Menu</TabsTrigger>
           <TabsTrigger value="job-photos" className="shrink-0 whitespace-nowrap gap-1.5 text-sm"><Image className="w-3.5 h-3.5"/> Job Photos</TabsTrigger>
           <TabsTrigger value="ai-roof" className="shrink-0 whitespace-nowrap gap-1.5 text-sm"><Sparkles className="w-3.5 h-3.5"/> AI Roof Analysis</TabsTrigger>
+          <TabsTrigger value="messages" className="shrink-0 whitespace-nowrap gap-1.5 text-sm"><Mail className="w-3.5 h-3.5"/> Messages</TabsTrigger>
           <TabsTrigger value="email-schedule" className="shrink-0 whitespace-nowrap gap-1.5 text-sm"><Mail className="w-3.5 h-3.5"/> Email Schedule</TabsTrigger>
         </TabsList>
 
@@ -655,11 +663,12 @@ export default function AdminProposalEdit() {
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-sm">Project Type</Label>
-                  <Select value={ed.projectType || "commercial"} onValueChange={v => setField("projectType", v)}>
+                  <Select value={ed.projectType || "commercial"} onValueChange={v => { setField("projectType", v); setField("propertyType", v); }}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="commercial">Commercial</SelectItem>
                       <SelectItem value="residential">Residential</SelectItem>
+                      <SelectItem value="multifamily">Multifamily</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -670,6 +679,10 @@ export default function AdminProposalEdit() {
                     <div className="space-y-1.5"><Label className="text-sm">Appointment Date</Label><Input data-testid="input-appointment-date" type="datetime-local" value={ed.appointmentDate || ""} onChange={e => setField("appointmentDate", e.target.value)} /></div>
                     <div className="space-y-1.5"><Label className="text-sm">HVAC Equipment</Label><Select value={ed.hasHvac || "0"} onValueChange={v => setField("hasHvac", v)}><SelectTrigger data-testid="select-has-hvac"><SelectValue/></SelectTrigger><SelectContent><SelectItem value="0">No / Unknown</SelectItem><SelectItem value="1">Yes</SelectItem></SelectContent></Select></div>
                     <div className="space-y-1.5"><Label className="text-sm">Flat Roof</Label><Select value={ed.isFlatRoof || "0"} onValueChange={v => setField("isFlatRoof", v)}><SelectTrigger data-testid="select-flat-roof"><SelectValue/></SelectTrigger><SelectContent><SelectItem value="0">No / Unknown</SelectItem><SelectItem value="1">Yes</SelectItem></SelectContent></Select></div>
+                    <div className="space-y-1.5"><Label className="text-sm">Verified Sq Ft</Label><Input data-testid="input-verified-sqft" type="number" min="0" value={ed.verifiedSqft || ""} onChange={e => setField("verifiedSqft", e.target.value)} /></div>
+                    <div className="space-y-1.5"><Label className="text-sm">Measurement Source</Label><Select value={ed.sqftMeasurementSource || "ai_estimate"} onValueChange={v => setField("sqftMeasurementSource", v)}><SelectTrigger data-testid="select-measurement-source"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="ai_estimate">AI estimate</SelectItem><SelectItem value="manual_measurement">Manual measurement</SelectItem><SelectItem value="aerial_report">Aerial report</SelectItem><SelectItem value="blueprint">Blueprint</SelectItem></SelectContent></Select></div>
+                    <div className="sm:col-span-2 space-y-1.5"><Label className="text-sm">Measurement Notes</Label><Textarea data-testid="textarea-measurement-notes" value={ed.measurementNotes || ""} onChange={e => setField("measurementNotes", e.target.value)} placeholder="Measurement details, report reference, or exclusions" /></div>
+                    <div className="sm:col-span-2"><Label className="text-sm">Upload Aerial Report</Label><Input data-testid="input-upload-aerial-report" className="mt-1" type="file" accept=".pdf,image/*" onChange={e => { const file=e.target.files?.[0]; if(file) { setField("sqftMeasurementSource", "aerial_report"); handleUpload(file, "aerial_report"); } e.currentTarget.value=""; }} /></div>
                   </div>
                   {ed.appointmentDate && ed.customerEmail && <Button data-testid="button-send-prep-email" variant="outline" onClick={async()=>{const r=await apiRequest("POST",`/api/admin/proposals/${proposalId}/send-prep-email`); if(!r.ok) throw new Error("Unable to send"); toast({title:"Prep-for-visit email sent"});}}><Mail className="w-4 h-4 mr-2"/>Send Prep-For-Visit Email</Button>}
                 </div>
@@ -1037,7 +1050,7 @@ export default function AdminProposalEdit() {
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium truncate">{doc.title}</p>
                       <div className="flex items-center gap-2">
-                        <Badge variant="outline" className="text-[9px]">{doc.category}</Badge>
+                        <Badge variant="outline" className="text-xs">{doc.category}</Badge>
                         {doc.description && (
                           <span className="text-sm text-muted-foreground truncate">{doc.description}</span>
                         )}
@@ -1079,7 +1092,7 @@ export default function AdminProposalEdit() {
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   {images.map(img => (
                     <div key={img.id} className="relative group rounded-md overflow-hidden border" data-testid={`card-image-${img.id}`}>
-                      <img src={img.imageUrl} alt={img.caption || ""} className="w-full h-32 object-cover" />
+                      <img src={img.imageUrl} alt={img.caption || ""} className="w-full h-32 object-cover"  loading="lazy" decoding="async"/>
                       <div className="absolute right-2 top-2">
                         <Button
                           variant="destructive"
@@ -1091,7 +1104,7 @@ export default function AdminProposalEdit() {
                         </Button>
                       </div>
                       <div className="p-2">
-                        <Badge variant="outline" className="text-[9px]">{img.imageType}</Badge>
+                        <Badge variant="outline" className="text-xs">{img.imageType}</Badge>
                         {img.caption && (
                           <span className="text-sm text-muted-foreground ml-1">{img.caption}</span>
                         )}
@@ -1119,7 +1132,7 @@ export default function AdminProposalEdit() {
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium truncate">{doc.title}</p>
                       {doc.documentType && (
-                        <Badge variant="outline" className="text-[9px]">{doc.documentType}</Badge>
+                        <Badge variant="outline" className="text-xs">{doc.documentType}</Badge>
                       )}
                     </div>
                     <div className="flex shrink-0 gap-1">
@@ -1248,7 +1261,7 @@ export default function AdminProposalEdit() {
                     {accepted && changeOrder.customerSignature && (
                       <div className="border-t border-border/60 pt-3">
                         <p className="text-sm font-medium text-muted-foreground">Customer signature</p>
-                        <img src={changeOrder.customerSignature} alt={`Signature from ${changeOrder.signedByName || "customer"}`} className="mt-1 h-12 max-w-[180px] object-contain object-left" />
+                        <img src={changeOrder.customerSignature} alt={`Signature from ${changeOrder.signedByName || "customer"}`} className="mt-1 h-12 max-w-[180px] object-contain object-left"  loading="lazy" decoding="async"/>
                       </div>
                     )}
                   </div>
@@ -1260,6 +1273,7 @@ export default function AdminProposalEdit() {
         <TabsContent value="upgrade-menu" className="mt-4"><UpgradeMenuPanel proposalId={proposalId} /></TabsContent>
         <TabsContent value="job-photos" className="mt-4"><JobPhotosPanel proposalId={proposalId} /></TabsContent>
         <TabsContent value="ai-roof" className="mt-4"><AiRoofPanel proposalId={proposalId} privateNotes={ed.privateNotes} /></TabsContent>
+        <TabsContent value="messages" className="mt-4"><ProposalMessagesPanel proposalId={proposalId} /></TabsContent>
         <TabsContent value="email-schedule" className="mt-4"><EmailSchedulePanel proposalId={proposalId} /></TabsContent>
       </Tabs>
     </div>

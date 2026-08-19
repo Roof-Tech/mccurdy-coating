@@ -133,6 +133,8 @@ export default function Welcome() {
           </div>
         </div>
 
+        {proposal.appointmentDate && <div className="glass-card rounded-xl p-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between" data-testid="card-upcoming-appointment"><div className="flex gap-3"><Calendar className="w-5 h-5 text-primary mt-0.5"/><div><p className="text-sm font-semibold">Upcoming appointment</p><p className="text-sm text-muted-foreground">{new Date(proposal.appointmentDate * 1000).toLocaleString()}</p></div></div><a data-testid="button-add-appointment-calendar" className="inline-flex min-h-10 items-center justify-center rounded-md bg-primary px-3 text-sm text-primary-foreground" href={`/api/proposals/${token}/appointment.ics`}>Add to Calendar</a></div>}
+
         {/* ── Estimator Message ── */}
         {proposal.welcomeMessage && (
           <div className="glass-card rounded-xl p-6 animate-fade-in-up" style={{ animationDelay: '0.2s', animationFillMode: 'backwards' }}>

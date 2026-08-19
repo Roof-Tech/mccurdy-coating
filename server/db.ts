@@ -199,13 +199,21 @@ sqlite.exec(`
     id TEXT PRIMARY KEY, proposal_id INTEGER NOT NULL REFERENCES proposals(id), stars INTEGER NOT NULL,
     feedback TEXT, submitted_at INTEGER NOT NULL DEFAULT (unixepoch()), went_public INTEGER NOT NULL DEFAULT 0
   );
+  CREATE TABLE IF NOT EXISTS messages (id TEXT PRIMARY KEY, proposal_id INTEGER NOT NULL REFERENCES proposals(id), sender TEXT NOT NULL, body TEXT NOT NULL, sender_name TEXT NOT NULL, created_at INTEGER NOT NULL DEFAULT (unixepoch()), read_by_recipient INTEGER NOT NULL DEFAULT 0);
+  CREATE TABLE IF NOT EXISTS financing_applications (id TEXT PRIMARY KEY, proposal_id INTEGER NOT NULL REFERENCES proposals(id), applicant_name TEXT NOT NULL, email TEXT NOT NULL, phone TEXT NOT NULL, employment_status TEXT NOT NULL, annual_income TEXT NOT NULL, preferred_term INTEGER NOT NULL, preferred_provider TEXT NOT NULL, submitted_at INTEGER NOT NULL DEFAULT (unixepoch()), status TEXT NOT NULL DEFAULT 'received');
+  CREATE TABLE IF NOT EXISTS invoices (id TEXT PRIMARY KEY, proposal_id INTEGER NOT NULL REFERENCES proposals(id), amount TEXT NOT NULL, description TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'draft', due_date INTEGER, created_at INTEGER NOT NULL DEFAULT (unixepoch()), sent_at INTEGER, paid_at INTEGER);
+  CREATE TABLE IF NOT EXISTS customer_preferences (proposal_id INTEGER PRIMARY KEY REFERENCES proposals(id), email_reminders INTEGER NOT NULL DEFAULT 1, storm_alerts INTEGER NOT NULL DEFAULT 1, seasonal_checkins INTEGER NOT NULL DEFAULT 1, review_prompts INTEGER NOT NULL DEFAULT 1);
+  CREATE TABLE IF NOT EXISTS crew_checklists (id TEXT PRIMARY KEY, proposal_id INTEGER NOT NULL REFERENCES proposals(id), phase TEXT NOT NULL, completed INTEGER NOT NULL DEFAULT 0, completed_at INTEGER);
+  CREATE TABLE IF NOT EXISTS crew_schedule (id TEXT PRIMARY KEY, crew_member_id TEXT NOT NULL, date TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'available', proposal_id INTEGER);
 `);
 
 // ── Safe migrations: add columns if they don't exist ──
 function addColumnIfMissing(table: string, column: string, def: string) {
   try {
-    const cols = sqlite.prepare(`PRAGMA table_info(${table})`).all() as Array<{ name: string }>;
-    if (!cols.find(c => c.name === column)) {
+    const cols = sqlite.prepare(`PRAGMA table_info(${table})`).all() as Array<{
+      name: string;
+    }>;
+    if (!cols.find((c) => c.name === column)) {
       sqlite.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${def};`);
       console.log(`[db] Added ${table}.${column}`);
     }
@@ -226,7 +234,11 @@ addColumnIfMissing("proposals", "signed_by_title", "TEXT");
 addColumnIfMissing("proposals", "requested_start_date", "TEXT");
 addColumnIfMissing("proposals", "scheduled_start_date", "TEXT");
 addColumnIfMissing("proposals", "work_completed_date", "TEXT");
-addColumnIfMissing("proposals", "maintenance_reminders_enabled", "INTEGER DEFAULT 1");
+addColumnIfMissing(
+  "proposals",
+  "maintenance_reminders_enabled",
+  "INTEGER DEFAULT 1",
+);
 addColumnIfMissing("proposals", "ai_roof_analysis", "TEXT");
 addColumnIfMissing("proposals", "property_age", "INTEGER");
 addColumnIfMissing("proposals", "has_hvac", "INTEGER");
@@ -236,16 +248,74 @@ addColumnIfMissing("proposals", "private_notes", "TEXT");
 addColumnIfMissing("proposals", "warranty_registered_at", "INTEGER");
 addColumnIfMissing("proposals", "warranty_start_date", "INTEGER");
 addColumnIfMissing("change_orders", "sent_at", "INTEGER");
-
+addColumnIfMissing(
+  "proposals",
+  "property_type",
+  "TEXT NOT NULL DEFAULT 'commercial'",
+);
+addColumnIfMissing("proposals", "verified_sqft", "INTEGER");
+addColumnIfMissing("proposals", "sqft_measurement_source", "TEXT");
+addColumnIfMissing("proposals", "measurement_notes", "TEXT");
+addColumnIfMissing("proposals", "ai_analysis_reviewed_by", "TEXT");
+addColumnIfMissing("proposals", "ai_analysis_approved_at", "INTEGER");
+addColumnIfMissing("incentives", "expiry_date", "INTEGER");
+addColumnIfMissing(
+  "incentives",
+  "verification_status",
+  "TEXT NOT NULL DEFAULT 'current'",
+);
+addColumnIfMissing(
+  "incentives",
+  "applicable_to",
+  "TEXT NOT NULL DEFAULT 'commercial,residential'",
+);
 
 // Seed a starter crew directory once. These profiles are editable in Admin > Crew.
-const crewCount = (sqlite.prepare("SELECT COUNT(*) AS count FROM crew_members").get() as { count: number }).count;
+const crewCount = (
+  sqlite.prepare("SELECT COUNT(*) AS count FROM crew_members").get() as {
+    count: number;
+  }
+).count;
 if (crewCount === 0) {
-  const insertCrew = sqlite.prepare("INSERT INTO crew_members (id, name, role, bio, years_experience, certifications, sort_order, active) VALUES (?, ?, ?, ?, ?, ?, ?, 1)");
-  insertCrew.run("crew-mike", "Mike Schirmer", "Owner", "Founder of McCurdy Coatings with three decades of hands-on Bay Area roof restoration experience. Mike stays involved from inspection through closeout.", 30, "CSLB Licensed, CertainTeed Master Certified", 1);
-  insertCrew.run("crew-daniel", "Daniel Reyes", "Foreman", "Daniel leads field quality, safety, and jobsite communication for every coating installation.", 18, "OSHA 30, Silicone Systems", 2);
-  insertCrew.run("crew-andrea", "Andrea Kim", "Crew Lead", "Andrea coordinates surface preparation and detail work, with a focus on seams and penetrations.", 12, "Fall Protection, Manufacturer Trained", 3);
-  insertCrew.run("crew-jordan", "Jordan Patel", "Project Coordinator", "Jordan keeps schedules, documents, and customer updates organized from kickoff through warranty registration.", 8, "Project Coordination", 4);
+  const insertCrew = sqlite.prepare(
+    "INSERT INTO crew_members (id, name, role, bio, years_experience, certifications, sort_order, active) VALUES (?, ?, ?, ?, ?, ?, ?, 1)",
+  );
+  insertCrew.run(
+    "crew-mike",
+    "Mike Schirmer",
+    "Owner",
+    "Founder of McCurdy Coatings with three decades of hands-on Bay Area roof restoration experience. Mike stays involved from inspection through closeout.",
+    30,
+    "CSLB Licensed, CertainTeed Master Certified",
+    1,
+  );
+  insertCrew.run(
+    "crew-daniel",
+    "Daniel Reyes",
+    "Foreman",
+    "Daniel leads field quality, safety, and jobsite communication for every coating installation.",
+    18,
+    "OSHA 30, Silicone Systems",
+    2,
+  );
+  insertCrew.run(
+    "crew-andrea",
+    "Andrea Kim",
+    "Crew Lead",
+    "Andrea coordinates surface preparation and detail work, with a focus on seams and penetrations.",
+    12,
+    "Fall Protection, Manufacturer Trained",
+    3,
+  );
+  insertCrew.run(
+    "crew-jordan",
+    "Jordan Patel",
+    "Project Coordinator",
+    "Jordan keeps schedules, documents, and customer updates organized from kickoff through warranty registration.",
+    8,
+    "Project Coordination",
+    4,
+  );
   console.log("[db] Seeded starter crew members");
 }
 
