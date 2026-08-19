@@ -73,7 +73,7 @@ export default function MaterialsLibrary() {
             <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse-glow" />
             System Components
           </h3>
-          <Badge className="bg-primary/15 text-primary border-0 text-[10px] font-bold">
+          <Badge className="bg-primary/15 text-primary border-0 text-xs font-bold">
             {materialsList.length} materials
           </Badge>
         </div>
@@ -99,7 +99,7 @@ export default function MaterialsLibrary() {
                   </div>
                   <span className="flex min-w-0 flex-wrap items-center gap-2 text-left">
                     <span className="font-bold break-words">{displayName}</span>
-                    <Badge variant="secondary" className="text-[10px] font-normal">{getCategoryLabel(category)}</Badge>
+                    <Badge variant="secondary" className="text-xs font-normal">{getCategoryLabel(category)}</Badge>
                   </span>
                 </span>
               </AccordionTrigger>
@@ -112,13 +112,13 @@ export default function MaterialsLibrary() {
                 )}
                 {(mat.usedFor || mat.description) && (
                   <div>
-                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium mb-1">Purpose</p>
+                    <p className="text-xs uppercase tracking-wider text-muted-foreground font-medium mb-1">Purpose</p>
                     <p className="text-xs text-foreground/80 leading-relaxed">{mat.usedFor || mat.description}</p>
                   </div>
                 )}
                 {mat.technicalSummary && (
                   <div>
-                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium mb-1">Technical Details</p>
+                    <p className="text-xs uppercase tracking-wider text-muted-foreground font-medium mb-1">Technical Details</p>
                     <p className="text-xs text-foreground/70 leading-relaxed">{mat.technicalSummary}</p>
                   </div>
                 )}
@@ -140,7 +140,7 @@ export default function MaterialsLibrary() {
                   )}
                 </div>
                 {mat.notes && (
-                  <p className="text-[11px] text-muted-foreground italic border-l-2 border-muted/50 pl-2.5">{mat.notes}</p>
+                  <p className="text-xs text-muted-foreground italic border-l-2 border-muted/50 pl-2.5">{mat.notes}</p>
                 )}
               </AccordionContent>
             </AccordionItem>

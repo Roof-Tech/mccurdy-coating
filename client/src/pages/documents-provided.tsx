@@ -98,8 +98,8 @@ export default function DocumentsProvided() {
             </p>
             {proposal && (
               <div className="mt-3 flex items-center gap-2 flex-wrap">
-                <Badge variant="outline" className="text-[10px] font-mono">{proposal.proposalNumber}</Badge>
-                <Badge variant="outline" className="text-[10px]">{allFiles.length + afterPhotos.length + beforePhotos.length} files available</Badge>
+                <Badge variant="outline" className="text-xs font-mono">{proposal.proposalNumber}</Badge>
+                <Badge variant="outline" className="text-xs">{allFiles.length + afterPhotos.length + beforePhotos.length} files available</Badge>
               </div>
             )}
           </div>
@@ -141,10 +141,10 @@ export default function DocumentsProvided() {
                         <p className="text-sm font-medium text-foreground truncate">{f.title}</p>
                         <div className="flex flex-wrap items-center gap-2 mt-0.5">
                           <Badge variant="outline" className="text-[9px] py-0 h-4">{ext}</Badge>
-                          <span className="text-[11px] text-muted-foreground">{catLabel}</span>
+                          <span className="text-xs text-muted-foreground">{catLabel}</span>
                         </div>
                         {f.description && (
-                          <p className="text-[11px] text-muted-foreground mt-1 truncate">{f.description}</p>
+                          <p className="text-xs text-muted-foreground mt-1 truncate">{f.description}</p>
                         )}
                       </div>
                       <Button

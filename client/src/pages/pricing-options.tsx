@@ -114,7 +114,7 @@ export default function PricingOptions() {
                 {/* Recommended badge */}
                 {isRecommended && (
                   <div className="absolute -top-3 left-5 z-10">
-                    <Badge className="bg-accent hover:bg-accent text-white border-0 text-[10px] gap-1 shadow-md px-3 py-0.5">
+                    <Badge className="bg-accent hover:bg-accent text-white border-0 text-xs gap-1 shadow-md px-3 py-0.5">
                       <Star className="w-3 h-3" fill="currentColor" /> Most Recommended
                     </Badge>
                   </div>
@@ -153,7 +153,7 @@ export default function PricingOptions() {
                       <p className="text-xs text-muted-foreground leading-relaxed">{opt.description}</p>
                       <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2">
                         {opt.features.slice(0, 4).map((f, j) => (
-                          <span key={j} className="flex items-center gap-1 text-[11px] text-foreground/75">
+                          <span key={j} className="flex items-center gap-1 text-xs text-foreground/75">
                             <Check className={`w-3 h-3 flex-shrink-0 ${isRecommended ? 'text-accent' : 'text-primary/60'}`} />
                             {f}
                           </span>
@@ -161,7 +161,7 @@ export default function PricingOptions() {
                         {opt.features.length > 4 && (
                           <button
                             onClick={() => setExpandedIdx(isExpanded ? null : i)}
-                            className="text-[11px] text-primary hover:underline"
+                            className="text-xs text-primary hover:underline"
                           >
                             +{opt.features.length - 4} more
                           </button>
@@ -172,7 +172,7 @@ export default function PricingOptions() {
                       {isExpanded && opt.features.length > 4 && (
                         <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1 animate-fade-in">
                           {opt.features.slice(4).map((f, j) => (
-                            <span key={j} className="flex items-center gap-1 text-[11px] text-foreground/75">
+                            <span key={j} className="flex items-center gap-1 text-xs text-foreground/75">
                               <Check className={`w-3 h-3 flex-shrink-0 ${isRecommended ? 'text-accent' : 'text-primary/60'}`} />
                               {f}
                             </span>
@@ -235,21 +235,21 @@ export default function PricingOptions() {
               <div className="w-8 h-8 rounded-lg bg-green-500/10 flex items-center justify-center text-green-600 text-xs font-bold">$0</div>
               <div>
                 <p className="text-xs font-semibold text-foreground">No Deposit Required</p>
-                <p className="text-[10px] text-muted-foreground">Work begins without upfront cost</p>
+                <p className="text-xs text-muted-foreground">Work begins without upfront cost</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary text-xs font-bold">50%</div>
               <div>
                 <p className="text-xs font-semibold text-foreground">Upon Cleaning & Sealing Complete</p>
-                <p className="text-[10px] text-muted-foreground">Materials loaded, surfaces prepped</p>
+                <p className="text-xs text-muted-foreground">Materials loaded, surfaces prepped</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center text-accent text-xs font-bold">50%</div>
               <div>
                 <p className="text-xs font-semibold text-foreground">Upon Job Completion</p>
-                <p className="text-[10px] text-muted-foreground">Unless otherwise noted in revision</p>
+                <p className="text-xs text-muted-foreground">Unless otherwise noted in revision</p>
               </div>
             </div>
           </div>

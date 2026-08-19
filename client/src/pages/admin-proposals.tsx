@@ -111,14 +111,14 @@ export default function AdminProposals() {
                     <div className="space-y-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-mono text-xs text-muted-foreground">{p.proposalNumber}</span>
-                        <Badge variant={statusVariant(p.status)} className="text-[10px] capitalize">{p.status.replace("_", " ")}</Badge>
+                        <Badge variant={statusVariant(p.status)} className="text-xs capitalize">{p.status.replace("_", " ")}</Badge>
                         {sent && (
-                          <Badge variant="outline" className="text-[10px] gap-1">
+                          <Badge variant="outline" className="text-xs gap-1">
                             <CheckCircle2 className="w-2.5 h-2.5" /> Sent {anyP.sendCount}x
                           </Badge>
                         )}
                         {anyP.signedAt && (
-                          <Badge className="text-[10px] gap-1 bg-emerald-600 hover:bg-emerald-600">
+                          <Badge className="text-xs gap-1 bg-emerald-600 hover:bg-emerald-600">
                             <CheckCircle2 className="w-2.5 h-2.5" /> Signed
                           </Badge>
                         )}
@@ -219,7 +219,7 @@ export default function AdminProposals() {
                   onChange={e => setSendMessage(e.target.value)}
                   data-testid="input-send-message"
                 />
-                <p className="text-[11px] text-muted-foreground">Shown in the email above the proposal link.</p>
+                <p className="text-xs text-muted-foreground">Shown in the email above the proposal link.</p>
               </div>
 
               <div className="rounded-md border border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-900 p-3 text-xs text-amber-900 dark:text-amber-200">

@@ -94,7 +94,7 @@ function SignaturePad({ onChange }: { onChange: (dataUrl: string | null) => void
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <div className="text-center">
               <PenTool className="w-6 h-6 text-muted-foreground/40 mx-auto mb-1" />
-              <p className="text-xs text-muted-foreground">Sign here with your finger or mouse</p>
+              <p className="text-sm text-muted-foreground">Sign here with your finger or mouse</p>
             </div>
           </div>
         )}
@@ -261,19 +261,19 @@ export default function ApprovalCenter() {
         <CardContent className="p-5">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="text-xs font-medium text-foreground mb-1.5 block">Name <span className="text-destructive">*</span></label>
+              <label className="text-sm font-medium text-foreground mb-1.5 block">Name <span className="text-destructive">*</span></label>
               <Input placeholder="Your full name" value={name} onChange={e => setName(e.target.value)} data-testid="input-name" />
             </div>
             <div>
-              <label className="text-xs font-medium text-foreground mb-1.5 block">Email</label>
+              <label className="text-sm font-medium text-foreground mb-1.5 block">Email</label>
               <Input type="email" placeholder="your@email.com" value={email} onChange={e => setEmail(e.target.value)} data-testid="input-email" />
             </div>
             <div>
-              <label className="text-xs font-medium text-foreground mb-1.5 block">Phone</label>
+              <label className="text-sm font-medium text-foreground mb-1.5 block">Phone</label>
               <Input placeholder="(555) 000-0000" value={phone} onChange={e => setPhone(e.target.value)} data-testid="input-phone" />
             </div>
             <div>
-              <label className="text-xs font-medium text-foreground mb-1.5 block">Title (optional)</label>
+              <label className="text-sm font-medium text-foreground mb-1.5 block">Title (optional)</label>
               <Input placeholder="Owner, Facilities Manager, etc." value={title} onChange={e => setTitle(e.target.value)} data-testid="input-title" />
             </div>
           </div>
@@ -290,7 +290,7 @@ export default function ApprovalCenter() {
                   <ClipboardCheck className="mt-0.5 h-5 w-5 shrink-0 text-orange-600 dark:text-orange-400" />
                   <div>
                     <p className="text-sm font-semibold">New Change Orders Require Your Approval</p>
-                    <p className="mt-0.5 text-xs leading-relaxed text-orange-800 dark:text-orange-200">Review each item below and add your electronic signature to approve it.</p>
+                    <p className="mt-0.5 text-sm leading-relaxed text-orange-800 dark:text-orange-200">Review each item below and add your electronic signature to approve it.</p>
                   </div>
                 </div>
               </div>
@@ -301,7 +301,7 @@ export default function ApprovalCenter() {
               </div>
               <div>
                 <h3 className="text-sm font-semibold text-foreground">Change Orders</h3>
-                <p className="text-[11px] text-muted-foreground">Project additions and credits requiring your review.</p>
+                <p className="text-sm text-muted-foreground">Project additions and credits requiring your review.</p>
               </div>
             </div>
 
@@ -318,7 +318,7 @@ export default function ApprovalCenter() {
                       <span className={`font-semibold text-sm ${changeOrder.type === "credit" ? "text-emerald-700 dark:text-emerald-400" : "text-orange-700 dark:text-orange-400"}`}>
                         {changeOrder.type === "credit" ? "Credit " : "Addition "}{changeOrder.amount}
                       </span>
-                      <Badge variant={changeOrder.status === "accepted" ? "default" : changeOrder.status === "declined" ? "destructive" : "secondary"} className="capitalize text-[10px]">
+                      <Badge variant={changeOrder.status === "accepted" ? "default" : changeOrder.status === "declined" ? "destructive" : "secondary"} className="capitalize text-xs">
                         {changeOrder.status}
                       </Badge>
                     </div>
@@ -327,10 +327,10 @@ export default function ApprovalCenter() {
                   {pending ? (
                     <div className="mt-4 border-t border-border/70 pt-4 space-y-3">
                       <div>
-                        <label className="text-xs font-medium text-foreground mb-1.5 block">Your Signature <span className="text-destructive">*</span></label>
+                        <label className="text-sm font-medium text-foreground mb-1.5 block">Your Signature <span className="text-destructive">*</span></label>
                         <SignaturePad onChange={signature => setChangeOrderSignatures(prev => ({ ...prev, [changeOrder.id]: signature }))} />
                       </div>
-                      <div className="rounded-md bg-muted/40 border border-border/50 p-3 text-[11px] leading-relaxed text-muted-foreground">
+                      <div className="rounded-md bg-muted/40 border border-border/50 p-3 text-sm leading-relaxed text-muted-foreground">
                         By signing, I, <strong className="text-foreground">{name || "[your name]"}</strong>, approve this {changeOrder.type === "credit" ? "credit" : "addition"} change order for the amount shown above.
                       </div>
                       <Button
@@ -344,7 +344,7 @@ export default function ApprovalCenter() {
                       </Button>
                     </div>
                   ) : (
-                    <p className="mt-2 text-xs text-muted-foreground">
+                    <p className="mt-2 text-sm text-muted-foreground">
                       {changeOrder.status === "accepted" && changeOrder.signedByName
                         ? `Accepted by ${changeOrder.signedByName}${changeOrder.acceptedAt ? ` on ${new Date(changeOrder.acceptedAt * 1000).toLocaleDateString()}` : ""}.`
                         : "No action is required for this change order."}
@@ -366,7 +366,7 @@ export default function ApprovalCenter() {
             </div>
             <div>
               <h3 className="text-sm font-semibold text-foreground">Sign &amp; Approve Proposal</h3>
-              <p className="text-[11px] text-muted-foreground">Your electronic signature is legally binding under the E-SIGN Act.</p>
+              <p className="text-sm text-muted-foreground">Your electronic signature is legally binding under the E-SIGN Act.</p>
             </div>
           </div>
 
@@ -374,13 +374,13 @@ export default function ApprovalCenter() {
             <div className="rounded-lg bg-green-500/10 border border-green-500/30 p-5 text-center">
               <CheckCircle className="w-8 h-8 text-green-600 mx-auto mb-2" />
               <p className="text-sm font-semibold text-foreground">Signed &amp; Approved</p>
-              <p className="text-xs text-muted-foreground mt-1">McCurdy Roofing was notified. Expect a call within one business day.</p>
+              <p className="text-sm text-muted-foreground mt-1">McCurdy Roofing was notified. Expect a call within one business day.</p>
             </div>
           ) : (
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-xs font-medium text-foreground mb-1.5 block">
+                  <label className="text-sm font-medium text-foreground mb-1.5 block">
                     Select Option {options.length > 0 && <span className="text-destructive">*</span>}
                   </label>
                   <Select value={selectedOption} onValueChange={setSelectedOption}>
@@ -395,7 +395,7 @@ export default function ApprovalCenter() {
                   </Select>
                 </div>
                 <div>
-                  <label className="text-xs font-medium text-foreground mb-1.5 block flex items-center gap-1.5">
+                  <label className="text-sm font-medium text-foreground mb-1.5 block flex items-center gap-1.5">
                     <CalendarDays className="w-3.5 h-3.5" /> Schedule Your Start Date
                   </label>
                   <a
@@ -409,18 +409,18 @@ export default function ApprovalCenter() {
                     <CalendarDays className="w-4 h-4" />
                     Book Start Date on Calendar
                   </a>
-                  <p className="text-[10px] text-muted-foreground mt-1">Opens our live calendar — pick a time that works for you</p>
+                  <p className="text-sm text-muted-foreground mt-1">Opens our live calendar — pick a time that works for you</p>
                 </div>
               </div>
 
               <div>
-                <label className="text-xs font-medium text-foreground mb-1.5 block">
+                <label className="text-sm font-medium text-foreground mb-1.5 block">
                   Your Signature <span className="text-destructive">*</span>
                 </label>
                 <SignaturePad onChange={setSignature} />
               </div>
 
-              <div className="rounded-md bg-muted/40 border border-border/50 p-3 text-[11px] text-muted-foreground leading-relaxed">
+              <div className="rounded-md bg-muted/40 border border-border/50 p-3 text-sm text-muted-foreground leading-relaxed">
                 By signing above, I, <strong className="text-foreground">{name || "[your name]"}</strong>, authorize McCurdy Roofing Inc. to perform the work described in this proposal at the pricing selected. I understand this is a legally binding electronic signature. A copy of this signed approval will be emailed to me and stored in my customer portal permanently.
               </div>
 
@@ -513,14 +513,14 @@ export default function ApprovalCenter() {
                 <Phone className="w-4 h-4 text-accent" />
                 <div>
                   <p className="text-sm font-medium text-foreground">Call 650-952-0233</p>
-                  <p className="text-[10px] text-muted-foreground">Talk directly with our team</p>
+                  <p className="text-sm text-muted-foreground">Talk directly with our team</p>
                 </div>
               </a>
               <a href="sms:6508085469" className="flex items-center gap-3 p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
                 <MessageCircle className="w-4 h-4 text-accent" />
                 <div>
                   <p className="text-sm font-medium text-foreground">Text 650-808-5469</p>
-                  <p className="text-[10px] text-muted-foreground">Quick text for fast response</p>
+                  <p className="text-sm text-muted-foreground">Quick text for fast response</p>
                 </div>
               </a>
               <a
@@ -533,7 +533,7 @@ export default function ApprovalCenter() {
                 <CalendarDays className="w-4 h-4 text-green-700" />
                 <div>
                   <p className="text-sm font-medium text-green-800">Book a Call</p>
-                  <p className="text-[10px] text-green-700/80">Pick a time on our live calendar</p>
+                  <p className="text-sm text-green-700/80">Pick a time on our live calendar</p>
                 </div>
               </a>
             </div>

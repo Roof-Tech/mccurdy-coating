@@ -51,15 +51,17 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="p-6 max-w-6xl mx-auto space-y-6" data-testid="page-admin-dashboard">
-      <div className="flex items-center justify-between">
+    <div className="p-4 md:p-6 max-w-6xl mx-auto space-y-6" data-testid="page-admin-dashboard">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <PageHeader title="Dashboard" subtitle="Proposal management overview" icon={<LayoutDashboard className="w-5 h-5" />} />
         <a
           href="/#/admin/proposals/new"
-          className="inline-flex items-center gap-2 h-9 px-4 text-sm font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+          className="inline-flex min-w-fit whitespace-nowrap items-center gap-2 h-9 px-3 md:px-4 text-sm font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
           data-testid="button-new-proposal"
         >
-          <Plus className="w-4 h-4" /> New Proposal
+          <Plus className="w-4 h-4" />
+          <span className="hidden sm:inline">New Proposal</span>
+          <span className="sm:hidden">New</span>
         </a>
       </div>
 
@@ -77,13 +79,13 @@ export default function AdminDashboard() {
                 <stat.icon className={`w-5 h-5 ${stat.color}`} />
                 <span className="text-2xl font-bold">{stat.value}</span>
               </div>
-              <p className="text-xs text-muted-foreground mt-1">{stat.label}</p>
+              <p className="text-sm text-muted-foreground mt-1">{stat.label}</p>
             </CardContent>
           </Card>
         ))}
       </div>
 
-      <Card><CardHeader className="pb-2"><CardTitle className="text-base font-semibold">Quick Links</CardTitle></CardHeader><CardContent><div className="grid grid-cols-1 md:grid-cols-2 gap-3"><a data-testid="link-crew-management" href="/#/admin/crew" className="flex items-center gap-3 rounded border p-4 hover:bg-muted/40"><Users className="w-5 h-5 text-primary"/><span><b className="block text-sm">Crew Management</b><span className="text-xs text-muted-foreground">Manage customer-facing crew profiles</span></span></a><a data-testid="link-referrals" href="/#/admin/referrals" className="flex items-center gap-3 rounded border p-4 hover:bg-muted/40"><Gift className="w-5 h-5 text-primary"/><span><b className="block text-sm">Referrals</b><span className="text-xs text-muted-foreground">Track neighbor rewards and statuses</span></span></a></div></CardContent></Card>
+      <Card><CardHeader className="pb-2"><CardTitle className="text-base font-semibold">Quick Links</CardTitle></CardHeader><CardContent><div className="grid grid-cols-1 md:grid-cols-2 gap-3"><a data-testid="link-crew-management" href="/#/admin/crew" className="flex items-center gap-3 rounded border p-4 hover:bg-muted/40"><Users className="w-5 h-5 text-primary"/><span><b className="block text-sm">Crew Management</b><span className="text-sm text-muted-foreground">Manage customer-facing crew profiles</span></span></a><a data-testid="link-referrals" href="/#/admin/referrals" className="flex items-center gap-3 rounded border p-4 hover:bg-muted/40"><Gift className="w-5 h-5 text-primary"/><span><b className="block text-sm">Referrals</b><span className="text-sm text-muted-foreground">Track neighbor rewards and statuses</span></span></a></div></CardContent></Card>
 
       {/* Unread Messages */}
       {unreadMessages.length > 0 && (
@@ -98,10 +100,10 @@ export default function AdminDashboard() {
               {unreadMessages.slice(0, 5).map((msg) => (
                 <li key={msg.id} className="flex items-start justify-between text-sm border-b border-border/50 pb-2 last:border-0">
                   <div>
-                    <Badge variant="outline" className="text-[10px] mr-2">{msg.messageType}</Badge>
+                    <Badge variant="outline" className="text-sm mr-2">{msg.messageType}</Badge>
                     <span className="text-foreground/80">{msg.message.slice(0, 80)}...</span>
                   </div>
-                  <span className="text-[10px] text-muted-foreground whitespace-nowrap ml-2">{msg.senderName}</span>
+                  <span className="text-sm text-muted-foreground whitespace-nowrap ml-2">{msg.senderName}</span>
                 </li>
               ))}
             </ul>
@@ -118,7 +120,7 @@ export default function AdminDashboard() {
           {proposals.length === 0 ? (
             <div className="text-center py-8 text-sm text-muted-foreground">
               <p>No proposals yet. Seed demo data or create a new proposal.</p>
-              <Button variant="outline" className="mt-3 text-xs" onClick={() => {
+              <Button variant="outline" className="mt-3 text-sm" onClick={() => {
                 apiRequest("POST", "/api/admin/seed-demo").then(() => window.location.reload());
               }} data-testid="button-seed-demo">
                 Seed Demo Proposal
@@ -129,11 +131,11 @@ export default function AdminDashboard() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b text-left">
-                    <th className="pb-2 font-medium text-muted-foreground text-xs">Proposal #</th>
-                    <th className="pb-2 font-medium text-muted-foreground text-xs">Customer</th>
-                    <th className="pb-2 font-medium text-muted-foreground text-xs">Date</th>
-                    <th className="pb-2 font-medium text-muted-foreground text-xs">Status</th>
-                    <th className="pb-2 font-medium text-muted-foreground text-xs">Actions</th>
+                    <th className="pb-2 font-medium text-muted-foreground text-sm">Proposal #</th>
+                    <th className="pb-2 font-medium text-muted-foreground text-sm">Customer</th>
+                    <th className="pb-2 font-medium text-muted-foreground text-sm">Date</th>
+                    <th className="pb-2 font-medium text-muted-foreground text-sm">Status</th>
+                    <th className="pb-2 font-medium text-muted-foreground text-sm">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -143,7 +145,7 @@ export default function AdminDashboard() {
                       <td className="py-2">{p.customerName}</td>
                       <td className="py-2 text-xs text-muted-foreground">{p.proposalDate}</td>
                       <td className="py-2">
-                        <Badge className={`text-[10px] ${statusColors[p.status] || ""}`}>{p.status.replace("_", " ")}</Badge>
+                        <Badge className={`text-sm ${statusColors[p.status] || ""}`}>{p.status.replace("_", " ")}</Badge>
                       </td>
                       <td className="py-2">
                         <div className="flex gap-1">
@@ -151,7 +153,7 @@ export default function AdminDashboard() {
                             href={`/#/view/${p.accessToken}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center justify-center h-7 px-3 text-xs font-medium border border-border rounded-md bg-background hover:bg-accent hover:text-accent-foreground transition-colors"
+                            className="inline-flex items-center justify-center h-7 px-3 text-sm font-medium border border-border rounded-md bg-background hover:bg-accent hover:text-accent-foreground transition-colors"
                           >
                             View
                           </a>
@@ -173,9 +175,9 @@ export default function AdminDashboard() {
           <CardContent>
             <ul className="space-y-2">
               {activities.slice(0, 10).map((act) => (
-                <li key={act.id} className="flex items-center justify-between text-xs border-b border-border/30 pb-1.5 last:border-0">
+                <li key={act.id} className="flex items-center justify-between text-sm border-b border-border/30 pb-1.5 last:border-0">
                   <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="text-[10px]">{act.eventType}</Badge>
+                    <Badge variant="outline" className="text-sm">{act.eventType}</Badge>
                     <span className="text-muted-foreground">Proposal #{act.proposalId}</span>
                   </div>
                   <span className="text-muted-foreground">{new Date(act.createdAt).toLocaleString()}</span>

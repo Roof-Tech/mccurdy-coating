@@ -79,7 +79,7 @@ export default function WarrantyCenter() {
               </div>
               <div>
                 <h3 className="text-sm font-semibold text-foreground">NDL Coverage</h3>
-                <p className="text-[10px] text-accent uppercase tracking-wider">No Dollar Limit</p>
+                <p className="text-xs text-accent uppercase tracking-wider">No Dollar Limit</p>
               </div>
             </div>
             <p className="text-sm text-foreground/75 leading-relaxed">{proposal.ndlWarranty}</p>

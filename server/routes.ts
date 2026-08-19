@@ -1,4 +1,4 @@
-import type { Express } from "express";
+import type { Express, NextFunction, Request, Response } from "express";
 import type { Server } from "http";
 import { storage } from "./storage";
 import { insertProposalSchema, insertMaterialSchema, insertProposalImageSchema, insertIncentiveSchema, insertWarrantyDocumentSchema, insertDocumentSchema, insertActivityEventSchema, insertCustomerMessageSchema, insertChangeOrderSchema, emailSchedule, upgradeAddons, crewMembers, projectTimeline, referrals, reviews } from "@shared/schema";
@@ -13,7 +13,28 @@ import { randomBytes, randomUUID } from "crypto";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
+import {
+  toAdminProposal,
+  toPublicActivity,
+  toPublicAddon,
+  toPublicChangeOrder,
+  toPublicProposal,
+  toPublicReferral,
+  toPublicTimelineItem,
+} from "./dto";
 // spawn import removed — AI generation is handled externally
+
+function requireAdmin(req: Request, res: Response, next: NextFunction) {
+  const ADMIN_KEY = process.env.ADMIN_KEY;
+  if (!ADMIN_KEY) {
+    return res.status(500).json({ error: "Server misconfigured: ADMIN_KEY not set" });
+  }
+  const provided = req.header("X-Admin-Key");
+  if (!provided || provided !== ADMIN_KEY) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+  next();
+}
 
 // File upload configuration — use persistent disk if available (Render)
 const dataDir = process.env.DATA_DIR || process.cwd();
@@ -75,7 +96,7 @@ export function registerRoutes(server: Server, app: Express): void {
         storage.updateProposal(proposal.id, { status: "viewed" });
       }
 
-      res.json(proposal);
+      res.json(toPublicProposal(proposal));
     } catch (e) {
       res.status(500).json({ error: "Server error" });
     }
@@ -146,7 +167,7 @@ export function registerRoutes(server: Server, app: Express): void {
     try {
       const proposal = storage.getProposalByToken(req.params.token);
       if (!proposal) return res.status(404).json({ error: "Not found" });
-      res.json(storage.getChangeOrdersByProposal(String(proposal.id)));
+      res.json(storage.getChangeOrdersByProposal(String(proposal.id)).map(toPublicChangeOrder));
     } catch (e) {
       res.status(500).json({ error: "Server error" });
     }
@@ -188,7 +209,7 @@ export function registerRoutes(server: Server, app: Express): void {
         changeOrder: { ...changeOrder, signedByName },
         proposal,
       }).catch(err => console.error("[change-order] owner notification failed:", err));
-      res.json({ success: true, changeOrder: updated });
+      res.json({ success: true, changeOrder: updated ? toPublicChangeOrder(updated) : null });
     } catch (e: any) {
       console.error("[change-order] acceptance error:", e);
       res.status(500).json({ error: e.message || "Server error" });
@@ -209,7 +230,7 @@ export function registerRoutes(server: Server, app: Express): void {
         userAgent: req.headers["user-agent"] || null,
         createdAt: new Date().toISOString(),
       });
-      res.json(event);
+      res.json(toPublicActivity(event));
     } catch (e) {
       res.status(500).json({ error: "Server error" });
     }
@@ -263,27 +284,27 @@ export function registerRoutes(server: Server, app: Express): void {
   // ── Admin Routes ──────────────────────────────────────────
 
   // List all proposals
-  app.get("/api/admin/proposals", (_req, res) => {
+  app.get("/api/admin/proposals", requireAdmin as any, (_req, res) => {
     try {
-      res.json(storage.getAllProposals());
+      res.json(storage.getAllProposals().map(toAdminProposal));
     } catch (e) {
       res.status(500).json({ error: "Server error" });
     }
   });
 
   // Get single proposal by ID
-  app.get("/api/admin/proposals/:id", (req, res) => {
+  app.get("/api/admin/proposals/:id", requireAdmin as any, (req, res) => {
     try {
       const proposal = storage.getProposal(parseInt(req.params.id));
       if (!proposal) return res.status(404).json({ error: "Not found" });
-      res.json(proposal);
+      res.json(toAdminProposal(proposal));
     } catch (e) {
       res.status(500).json({ error: "Server error" });
     }
   });
 
   // Create proposal
-  app.post("/api/admin/proposals", (req, res) => {
+  app.post("/api/admin/proposals", requireAdmin as any, (req, res) => {
     try {
       const token = randomBytes(32).toString("hex");
       const proposalNumber = `MCC-${Date.now().toString(36).toUpperCase()}`;
@@ -307,7 +328,7 @@ export function registerRoutes(server: Server, app: Express): void {
   });
 
   // Update proposal
-  app.patch("/api/admin/proposals/:id", (req, res) => {
+  app.patch("/api/admin/proposals/:id", requireAdmin as any, (req, res) => {
     try {
       const proposal = storage.updateProposal(parseInt(req.params.id), req.body);
       if (!proposal) return res.status(404).json({ error: "Not found" });
@@ -325,7 +346,7 @@ export function registerRoutes(server: Server, app: Express): void {
   });
 
   // ── Change Orders CRUD ──
-  app.get("/api/admin/proposals/:id/change-orders", (req, res) => {
+  app.get("/api/admin/proposals/:id/change-orders", requireAdmin as any, (req, res) => {
     try {
       const proposal = storage.getProposal(parseInt(req.params.id));
       if (!proposal) return res.status(404).json({ error: "Proposal not found" });
@@ -335,7 +356,7 @@ export function registerRoutes(server: Server, app: Express): void {
     }
   });
 
-  app.post("/api/admin/proposals/:id/change-orders", (req, res) => {
+  app.post("/api/admin/proposals/:id/change-orders", requireAdmin as any, (req, res) => {
     try {
       const proposal = storage.getProposal(parseInt(req.params.id));
       if (!proposal) return res.status(404).json({ error: "Proposal not found" });
@@ -355,7 +376,7 @@ export function registerRoutes(server: Server, app: Express): void {
     }
   });
 
-  app.patch("/api/admin/change-orders/:coId", (req, res) => {
+  app.patch("/api/admin/change-orders/:coId", requireAdmin as any, (req, res) => {
     try {
       const existing = storage.getChangeOrder(req.params.coId);
       if (!existing) return res.status(404).json({ error: "Change order not found" });
@@ -370,7 +391,7 @@ export function registerRoutes(server: Server, app: Express): void {
     }
   });
 
-  app.delete("/api/admin/change-orders/:coId", (req, res) => {
+  app.delete("/api/admin/change-orders/:coId", requireAdmin as any, (req, res) => {
     try {
       const existing = storage.getChangeOrder(req.params.coId);
       if (!existing) return res.status(404).json({ error: "Change order not found" });
@@ -381,7 +402,7 @@ export function registerRoutes(server: Server, app: Express): void {
     }
   });
 
-  app.post("/api/admin/change-orders/:coId/send", async (req, res) => {
+  app.post("/api/admin/change-orders/:coId/send", requireAdmin as any, async (req, res) => {
     try {
       const changeOrder = storage.getChangeOrder(req.params.coId);
       if (!changeOrder) return res.status(404).json({ error: "Change order not found" });
@@ -409,7 +430,7 @@ export function registerRoutes(server: Server, app: Express): void {
   });
 
   // Send proposal to customer via email (Resend)
-  app.post("/api/admin/proposals/:id/send-email", async (req, res) => {
+  app.post("/api/admin/proposals/:id/send-email", requireAdmin as any, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const proposal = storage.getProposal(id);
@@ -508,7 +529,7 @@ export function registerRoutes(server: Server, app: Express): void {
         accessToken: proposal.accessToken,
       }).catch(err => console.error("[sign] notify owner failed:", err));
 
-      res.json({ success: true, proposal: updated });
+      res.json({ success: true, proposal: updated ? toPublicProposal(updated) : null });
     } catch (e: any) {
       console.error("[sign] Error:", e);
       res.status(500).json({ error: e.message || "Server error" });
@@ -516,7 +537,7 @@ export function registerRoutes(server: Server, app: Express): void {
   });
 
   // Delete proposal
-  app.delete("/api/admin/proposals/:id", (req, res) => {
+  app.delete("/api/admin/proposals/:id", requireAdmin as any, (req, res) => {
     try {
       storage.deleteProposal(parseInt(req.params.id));
       res.json({ success: true });
@@ -526,7 +547,7 @@ export function registerRoutes(server: Server, app: Express): void {
   });
 
   // ── Materials CRUD ──
-  app.get("/api/admin/proposals/:id/materials", (req, res) => {
+  app.get("/api/admin/proposals/:id/materials", requireAdmin as any, (req, res) => {
     try {
       res.json(storage.getMaterialsByProposal(parseInt(req.params.id)));
     } catch (e) {
@@ -534,7 +555,7 @@ export function registerRoutes(server: Server, app: Express): void {
     }
   });
 
-  app.post("/api/admin/materials", (req, res) => {
+  app.post("/api/admin/materials", requireAdmin as any, (req, res) => {
     try {
       res.json(storage.createMaterial(req.body));
     } catch (e: any) {
@@ -542,7 +563,7 @@ export function registerRoutes(server: Server, app: Express): void {
     }
   });
 
-  app.patch("/api/admin/materials/:id", (req, res) => {
+  app.patch("/api/admin/materials/:id", requireAdmin as any, (req, res) => {
     try {
       const m = storage.updateMaterial(parseInt(req.params.id), req.body);
       if (!m) return res.status(404).json({ error: "Not found" });
@@ -552,7 +573,7 @@ export function registerRoutes(server: Server, app: Express): void {
     }
   });
 
-  app.delete("/api/admin/materials/:id", (req, res) => {
+  app.delete("/api/admin/materials/:id", requireAdmin as any, (req, res) => {
     try {
       storage.deleteMaterial(parseInt(req.params.id));
       res.json({ success: true });
@@ -562,7 +583,7 @@ export function registerRoutes(server: Server, app: Express): void {
   });
 
   // ── Images CRUD ──
-  app.get("/api/admin/proposals/:id/images", (req, res) => {
+  app.get("/api/admin/proposals/:id/images", requireAdmin as any, (req, res) => {
     try {
       res.json(storage.getImagesByProposal(parseInt(req.params.id)));
     } catch (e) {
@@ -570,7 +591,7 @@ export function registerRoutes(server: Server, app: Express): void {
     }
   });
 
-  app.post("/api/admin/images", (req, res) => {
+  app.post("/api/admin/images", requireAdmin as any, (req, res) => {
     try {
       res.json(storage.createImage(req.body));
     } catch (e: any) {
@@ -578,7 +599,7 @@ export function registerRoutes(server: Server, app: Express): void {
     }
   });
 
-  app.delete("/api/admin/images/:id", (req, res) => {
+  app.delete("/api/admin/images/:id", requireAdmin as any, (req, res) => {
     try {
       storage.deleteImage(parseInt(req.params.id));
       res.json({ success: true });
@@ -588,7 +609,7 @@ export function registerRoutes(server: Server, app: Express): void {
   });
 
   // ── Incentives CRUD ──
-  app.get("/api/admin/incentives", (_req, res) => {
+  app.get("/api/admin/incentives", requireAdmin as any, (_req, res) => {
     try {
       res.json(storage.getAllIncentives());
     } catch (e) {
@@ -596,7 +617,7 @@ export function registerRoutes(server: Server, app: Express): void {
     }
   });
 
-  app.post("/api/admin/incentives", (req, res) => {
+  app.post("/api/admin/incentives", requireAdmin as any, (req, res) => {
     try {
       res.json(storage.createIncentive(req.body));
     } catch (e: any) {
@@ -604,7 +625,7 @@ export function registerRoutes(server: Server, app: Express): void {
     }
   });
 
-  app.delete("/api/admin/incentives/:id", (req, res) => {
+  app.delete("/api/admin/incentives/:id", requireAdmin as any, (req, res) => {
     try {
       storage.deleteIncentive(parseInt(req.params.id));
       res.json({ success: true });
@@ -614,7 +635,7 @@ export function registerRoutes(server: Server, app: Express): void {
   });
 
   // ── Warranty Documents CRUD ──
-  app.post("/api/admin/warranty-docs", (req, res) => {
+  app.post("/api/admin/warranty-docs", requireAdmin as any, (req, res) => {
     try {
       res.json(storage.createWarrantyDoc(req.body));
     } catch (e: any) {
@@ -622,7 +643,7 @@ export function registerRoutes(server: Server, app: Express): void {
     }
   });
 
-  app.delete("/api/admin/warranty-docs/:id", (req, res) => {
+  app.delete("/api/admin/warranty-docs/:id", requireAdmin as any, (req, res) => {
     try {
       storage.deleteWarrantyDoc(parseInt(req.params.id));
       res.json({ success: true });
@@ -632,7 +653,7 @@ export function registerRoutes(server: Server, app: Express): void {
   });
 
   // ── Documents CRUD ──
-  app.get("/api/admin/proposals/:id/documents", (req, res) => {
+  app.get("/api/admin/proposals/:id/documents", requireAdmin as any, (req, res) => {
     try {
       res.json(storage.getDocumentsByProposal(parseInt(req.params.id)));
     } catch (e) {
@@ -640,7 +661,7 @@ export function registerRoutes(server: Server, app: Express): void {
     }
   });
 
-  app.get("/api/admin/proposals/:id/warranty-docs", (req, res) => {
+  app.get("/api/admin/proposals/:id/warranty-docs", requireAdmin as any, (req, res) => {
     try {
       res.json(storage.getWarrantyDocsByProposal(parseInt(req.params.id)));
     } catch (e) {
@@ -648,7 +669,7 @@ export function registerRoutes(server: Server, app: Express): void {
     }
   });
 
-  app.post("/api/admin/documents", (req, res) => {
+  app.post("/api/admin/documents", requireAdmin as any, (req, res) => {
     try {
       res.json(storage.createDocument(req.body));
     } catch (e: any) {
@@ -656,7 +677,7 @@ export function registerRoutes(server: Server, app: Express): void {
     }
   });
 
-  app.delete("/api/admin/documents/:id", (req, res) => {
+  app.delete("/api/admin/documents/:id", requireAdmin as any, (req, res) => {
     try {
       storage.deleteDocument(parseInt(req.params.id));
       res.json({ success: true });
@@ -666,7 +687,7 @@ export function registerRoutes(server: Server, app: Express): void {
   });
 
   // ── Activity Tracking ──
-  app.get("/api/admin/activities", (_req, res) => {
+  app.get("/api/admin/activities", requireAdmin as any, (_req, res) => {
     try {
       res.json(storage.getAllActivities());
     } catch (e) {
@@ -674,7 +695,7 @@ export function registerRoutes(server: Server, app: Express): void {
     }
   });
 
-  app.get("/api/admin/proposals/:id/activities", (req, res) => {
+  app.get("/api/admin/proposals/:id/activities", requireAdmin as any, (req, res) => {
     try {
       res.json(storage.getActivitiesByProposal(parseInt(req.params.id)));
     } catch (e) {
@@ -683,7 +704,7 @@ export function registerRoutes(server: Server, app: Express): void {
   });
 
   // ── Customer Messages ──
-  app.get("/api/admin/messages", (_req, res) => {
+  app.get("/api/admin/messages", requireAdmin as any, (_req, res) => {
     try {
       res.json(storage.getAllMessages());
     } catch (e) {
@@ -691,7 +712,7 @@ export function registerRoutes(server: Server, app: Express): void {
     }
   });
 
-  app.get("/api/admin/proposals/:id/messages", (req, res) => {
+  app.get("/api/admin/proposals/:id/messages", requireAdmin as any, (req, res) => {
     try {
       res.json(storage.getMessagesByProposal(parseInt(req.params.id)));
     } catch (e) {
@@ -699,7 +720,7 @@ export function registerRoutes(server: Server, app: Express): void {
     }
   });
 
-  app.patch("/api/admin/messages/:id/read", (req, res) => {
+  app.patch("/api/admin/messages/:id/read", requireAdmin as any, (req, res) => {
     try {
       storage.markMessageRead(parseInt(req.params.id));
       res.json({ success: true });
@@ -709,7 +730,7 @@ export function registerRoutes(server: Server, app: Express): void {
   });
 
   // ── File Upload ──
-  app.post("/api/admin/upload", upload.single("file"), (req, res) => {
+  app.post("/api/admin/upload", requireAdmin as any, upload.single("file"), (req, res) => {
     try {
       if (!req.file) return res.status(400).json({ error: "No file uploaded" });
       const fileUrl = `/api/uploads/${req.file.filename}`;
@@ -759,13 +780,8 @@ export function registerRoutes(server: Server, app: Express): void {
   });
 
   // Upsert a single county's incentive data (used by scheduled task runner)
-  // Simple header-based auth. Header: X-Admin-Key: mccurdy-admin-2027
-  const ADMIN_KEY = process.env.ADMIN_KEY || "mccurdy-admin-2027";
-  app.post("/api/admin/upsert-county", (req, res) => {
+  app.post("/api/admin/upsert-county", requireAdmin as any, (req, res) => {
     try {
-      if (req.header("X-Admin-Key") !== ADMIN_KEY) {
-        return res.status(401).json({ error: "Unauthorized" });
-      }
       const body = req.body || {};
       const { county, climateZone, utility, programs } = body;
       const countyKey = (body.countyKey || county || "").toString().toLowerCase().replace(/\s+/g, "-").replace(/-county$/, "");
@@ -803,7 +819,7 @@ export function registerRoutes(server: Server, app: Express): void {
     }
   });
 
-  app.post("/api/admin/refresh-incentives", async (req, res) => {
+  app.post("/api/admin/refresh-incentives", requireAdmin as any, async (req, res) => {
     try {
       const taxYear = req.body?.taxYear ? parseInt(req.body.taxYear, 10) : undefined;
       const report = await manualRefresh(sqliteConnection, taxYear);
@@ -813,7 +829,7 @@ export function registerRoutes(server: Server, app: Express): void {
     }
   });
 
-  app.get("/api/admin/refresh-log", (_req, res) => {
+  app.get("/api/admin/refresh-log", requireAdmin as any, (_req, res) => {
     try {
       const rows = sqliteConnection.prepare(
         "SELECT run_id, run_at, run_type, county_key, status, changes_json, error_message, tax_year FROM incentive_refresh_log ORDER BY run_at DESC LIMIT 100"
@@ -825,43 +841,43 @@ export function registerRoutes(server: Server, app: Express): void {
   });
 
   // ── Mega-build routes ─────────────────────────────────────
-  app.post("/api/admin/proposals/:id/analyze-roof", async (req, res) => {
+  app.post("/api/admin/proposals/:id/analyze-roof", requireAdmin as any, async (req, res) => {
     const proposal = storage.getProposal(Number(req.params.id));
     if (!proposal) return res.status(404).json({ error: "Proposal not found" });
     if (!process.env.OPENAI_API_KEY) return res.json({ ok: false, error: "AI analysis not configured. Add OPENAI_API_KEY in Render env vars." });
     try { const result = await analyzeRoofPhotos(req.body?.imageUrls || []); storage.updateProposal(proposal.id, { aiRoofAnalysis: JSON.stringify(result) } as any); res.json({ ok: true, result }); }
     catch (error: any) { res.json({ ok: false, error: error.message || "Unable to analyze roof photos." }); }
   });
-  app.get("/api/admin/proposals/:id/upgrade-suggestions", (req,res) => { const p=storage.getProposal(Number(req.params.id)); if(!p) return res.status(404).json({error:"Not found"}); res.json(getUpgradeSuggestions(p)); });
+  app.get("/api/admin/proposals/:id/upgrade-suggestions", requireAdmin as any, (req,res) => { const p=storage.getProposal(Number(req.params.id)); if(!p) return res.status(404).json({error:"Not found"}); res.json(getUpgradeSuggestions(p)); });
   app.get("/api/proposals/:token/upgrade-suggestions", (req,res) => { const p=storage.getProposalByToken(req.params.token); if(!p) return res.status(404).json({error:"Not found"}); res.json(getUpgradeSuggestions(p)); });
-  app.post("/api/admin/proposals/:id/send-prep-email", async (req,res) => { const p=storage.getProposal(Number(req.params.id)); if(!p) return res.status(404).json({error:"Not found"}); if(!p.customerEmail || !p.appointmentDate) return res.status(400).json({error:"Customer email and appointment date are required"}); const result=await sendPrepareForVisitEmail({to:p.customerEmail,customerName:p.customerName,appointmentDate:p.appointmentDate,ownerName:p.estimator}); res.status(result.ok?200:502).json(result); });
-  app.get("/api/admin/proposals/:id/email-schedule", (req,res) => { res.json(db.select().from(emailSchedule).where(eq(emailSchedule.proposalId,Number(req.params.id))).orderBy(desc(emailSchedule.scheduledFor)).all()); });
-  app.delete("/api/admin/email-schedule/:id", (req,res) => { db.update(emailSchedule).set({status:"cancelled"}).where(eq(emailSchedule.id,req.params.id)).run(); res.json({success:true}); });
+  app.post("/api/admin/proposals/:id/send-prep-email", requireAdmin as any, async (req,res) => { const p=storage.getProposal(Number(req.params.id)); if(!p) return res.status(404).json({error:"Not found"}); if(!p.customerEmail || !p.appointmentDate) return res.status(400).json({error:"Customer email and appointment date are required"}); const result=await sendPrepareForVisitEmail({to:p.customerEmail,customerName:p.customerName,appointmentDate:p.appointmentDate,ownerName:p.estimator}); res.status(result.ok?200:502).json(result); });
+  app.get("/api/admin/proposals/:id/email-schedule", requireAdmin as any, (req,res) => { res.json(db.select().from(emailSchedule).where(eq(emailSchedule.proposalId,Number(req.params.id))).orderBy(desc(emailSchedule.scheduledFor)).all()); });
+  app.delete("/api/admin/email-schedule/:id", requireAdmin as any, (req,res) => { db.update(emailSchedule).set({status:"cancelled"}).where(eq(emailSchedule.id,req.params.id)).run(); res.json({success:true}); });
 
-  app.get("/api/admin/proposals/:id/addons", (req,res) => res.json(db.select().from(upgradeAddons).where(eq(upgradeAddons.proposalId,Number(req.params.id))).all()));
-  app.post("/api/admin/proposals/:id/addons", (req,res) => { const item=db.insert(upgradeAddons).values({id:randomUUID(),proposalId:Number(req.params.id),name:req.body.name,description:req.body.description || "",priceAdd:req.body.priceAdd || "$0",selected:req.body.selected ? 1:0,sortOrder:req.body.sortOrder || 0}).returning().get();res.status(201).json(item); });
-  app.patch("/api/admin/addons/:id", (req,res) => { const allowed=["name","description","priceAdd","selected","sortOrder"];const data=Object.fromEntries(Object.entries(req.body || {}).filter(([k])=>allowed.includes(k)));const item=db.update(upgradeAddons).set(data as any).where(eq(upgradeAddons.id,req.params.id)).returning().get(); if(!item) return res.status(404).json({error:"Not found"});res.json(item); });
-  app.delete("/api/admin/addons/:id", (req,res) => { db.delete(upgradeAddons).where(eq(upgradeAddons.id,req.params.id)).run();res.json({success:true}); });
-  app.get("/api/proposals/:token/addons", (req,res) => {const p=storage.getProposalByToken(req.params.token);if(!p)return res.status(404).json({error:"Not found"});res.json(db.select().from(upgradeAddons).where(eq(upgradeAddons.proposalId,p.id)).all());});
-  app.post("/api/proposals/:token/addons/:addonId/toggle", (req,res) => { const p=storage.getProposalByToken(req.params.token);if(!p)return res.status(404).json({error:"Not found"});const a=db.select().from(upgradeAddons).where(eq(upgradeAddons.id,req.params.addonId)).get();if(!a || a.proposalId!==p.id)return res.status(404).json({error:"Not found"});const item=db.update(upgradeAddons).set({selected:a.selected?0:1}).where(eq(upgradeAddons.id,a.id)).returning().get();res.json(item); });
+  app.get("/api/admin/proposals/:id/addons", requireAdmin as any, (req,res) => res.json(db.select().from(upgradeAddons).where(eq(upgradeAddons.proposalId,Number(req.params.id))).all()));
+  app.post("/api/admin/proposals/:id/addons", requireAdmin as any, (req,res) => { const item=db.insert(upgradeAddons).values({id:randomUUID(),proposalId:Number(req.params.id),name:req.body.name,description:req.body.description || "",priceAdd:req.body.priceAdd || "$0",selected:req.body.selected ? 1:0,sortOrder:req.body.sortOrder || 0}).returning().get();res.status(201).json(item); });
+  app.patch("/api/admin/addons/:id", requireAdmin as any, (req,res) => { const allowed=["name","description","priceAdd","selected","sortOrder"];const data=Object.fromEntries(Object.entries(req.body || {}).filter(([k])=>allowed.includes(k)));const item=db.update(upgradeAddons).set(data as any).where(eq(upgradeAddons.id,req.params.id)).returning().get(); if(!item) return res.status(404).json({error:"Not found"});res.json(item); });
+  app.delete("/api/admin/addons/:id", requireAdmin as any, (req,res) => { db.delete(upgradeAddons).where(eq(upgradeAddons.id,req.params.id)).run();res.json({success:true}); });
+  app.get("/api/proposals/:token/addons", (req,res) => {const p=storage.getProposalByToken(req.params.token);if(!p)return res.status(404).json({error:"Not found"});res.json(db.select().from(upgradeAddons).where(eq(upgradeAddons.proposalId,p.id)).all().map(toPublicAddon));});
+  app.post("/api/proposals/:token/addons/:addonId/toggle", (req,res) => { const p=storage.getProposalByToken(req.params.token);if(!p)return res.status(404).json({error:"Not found"});const a=db.select().from(upgradeAddons).where(eq(upgradeAddons.id,req.params.addonId)).get();if(!a || a.proposalId!==p.id)return res.status(404).json({error:"Not found"});const item=db.update(upgradeAddons).set({selected:a.selected?0:1}).where(eq(upgradeAddons.id,a.id)).returning().get();res.json(toPublicAddon(item)); });
 
-  app.get("/api/admin/crew", (_req,res) => res.json(db.select().from(crewMembers).orderBy(crewMembers.sortOrder).all()));
+  app.get("/api/admin/crew", requireAdmin as any, (_req,res) => res.json(db.select().from(crewMembers).orderBy(crewMembers.sortOrder).all()));
   app.get("/api/crew", (_req,res) => res.json(db.select().from(crewMembers).where(eq(crewMembers.active,1)).orderBy(crewMembers.sortOrder).all()));
-  app.post("/api/admin/crew", (req,res) => res.status(201).json(db.insert(crewMembers).values({id:randomUUID(),name:req.body.name,role:req.body.role,bio:req.body.bio,photoUrl:req.body.photoUrl || null,yearsExperience:Number(req.body.yearsExperience)||0,certifications:req.body.certifications||"",sortOrder:Number(req.body.sortOrder)||0,active:req.body.active === false ? 0:1}).returning().get()));
-  app.patch("/api/admin/crew/:id", (req,res) => {const row=db.update(crewMembers).set(req.body).where(eq(crewMembers.id,req.params.id)).returning().get();if(!row)return res.status(404).json({error:"Not found"});res.json(row);});
-  app.delete("/api/admin/crew/:id", (req,res) => {db.delete(crewMembers).where(eq(crewMembers.id,req.params.id)).run();res.json({success:true});});
+  app.post("/api/admin/crew", requireAdmin as any, (req,res) => res.status(201).json(db.insert(crewMembers).values({id:randomUUID(),name:req.body.name,role:req.body.role,bio:req.body.bio,photoUrl:req.body.photoUrl || null,yearsExperience:Number(req.body.yearsExperience)||0,certifications:req.body.certifications||"",sortOrder:Number(req.body.sortOrder)||0,active:req.body.active === false ? 0:1}).returning().get()));
+  app.patch("/api/admin/crew/:id", requireAdmin as any, (req,res) => {const row=db.update(crewMembers).set(req.body).where(eq(crewMembers.id,req.params.id)).returning().get();if(!row)return res.status(404).json({error:"Not found"});res.json(row);});
+  app.delete("/api/admin/crew/:id", requireAdmin as any, (req,res) => {db.delete(crewMembers).where(eq(crewMembers.id,req.params.id)).run();res.json({success:true});});
 
-  app.get("/api/admin/proposals/:id/timeline", (req,res) => res.json(db.select().from(projectTimeline).where(eq(projectTimeline.proposalId,Number(req.params.id))).orderBy(projectTimeline.sortOrder).all()));
-  app.post("/api/admin/proposals/:id/timeline", (req,res) => res.status(201).json(db.insert(projectTimeline).values({id:randomUUID(),proposalId:Number(req.params.id),phase:req.body.phase || "before",photoUrl:req.body.photoUrl,caption:req.body.caption || null,photoDate:Number(req.body.photoDate)||Math.floor(Date.now()/1000),sortOrder:Number(req.body.sortOrder)||0}).returning().get()));
-  app.patch("/api/admin/timeline/:id", (req,res) => {const row=db.update(projectTimeline).set(req.body).where(eq(projectTimeline.id,req.params.id)).returning().get();if(!row)return res.status(404).json({error:"Not found"});res.json(row);});
-  app.delete("/api/admin/timeline/:id", (req,res) => {db.delete(projectTimeline).where(eq(projectTimeline.id,req.params.id)).run();res.json({success:true});});
-  app.get("/api/proposals/:token/timeline", (req,res) => {const p=storage.getProposalByToken(req.params.token);if(!p)return res.status(404).json({error:"Not found"});res.json(db.select().from(projectTimeline).where(eq(projectTimeline.proposalId,p.id)).orderBy(projectTimeline.sortOrder).all());});
+  app.get("/api/admin/proposals/:id/timeline", requireAdmin as any, (req,res) => res.json(db.select().from(projectTimeline).where(eq(projectTimeline.proposalId,Number(req.params.id))).orderBy(projectTimeline.sortOrder).all()));
+  app.post("/api/admin/proposals/:id/timeline", requireAdmin as any, (req,res) => res.status(201).json(db.insert(projectTimeline).values({id:randomUUID(),proposalId:Number(req.params.id),phase:req.body.phase || "before",photoUrl:req.body.photoUrl,caption:req.body.caption || null,photoDate:Number(req.body.photoDate)||Math.floor(Date.now()/1000),sortOrder:Number(req.body.sortOrder)||0}).returning().get()));
+  app.patch("/api/admin/timeline/:id", requireAdmin as any, (req,res) => {const row=db.update(projectTimeline).set(req.body).where(eq(projectTimeline.id,req.params.id)).returning().get();if(!row)return res.status(404).json({error:"Not found"});res.json(row);});
+  app.delete("/api/admin/timeline/:id", requireAdmin as any, (req,res) => {db.delete(projectTimeline).where(eq(projectTimeline.id,req.params.id)).run();res.json({success:true});});
+  app.get("/api/proposals/:token/timeline", (req,res) => {const p=storage.getProposalByToken(req.params.token);if(!p)return res.status(404).json({error:"Not found"});const publicPhases=new Set(["before","during","after","completed"]);res.json(db.select().from(projectTimeline).where(eq(projectTimeline.proposalId,p.id)).orderBy(projectTimeline.sortOrder).all().filter(item=>publicPhases.has(item.phase)).map(toPublicTimelineItem));});
 
   function referralCode() { return randomBytes(6).toString("base64url").toUpperCase().slice(0,8); }
-  app.get("/api/proposals/:token/referrals", (req,res) => {const p=storage.getProposalByToken(req.params.token);if(!p)return res.status(404).json({error:"Not found"});let rows=db.select().from(referrals).where(eq(referrals.referrerProposalId,p.id)).all();if(!rows.length){const row=db.insert(referrals).values({id:randomUUID(),referrerProposalId:p.id,referrerName:p.customerName,referrerEmail:p.customerEmail || "",refereeName:"Referral link",referralCode:referralCode(),status:"invited"}).returning().get();rows=[row];}res.json(rows);});
-  app.get("/api/admin/referrals", (_req,res) => res.json(db.select().from(referrals).orderBy(desc(referrals.createdAt)).all()));
-  app.patch("/api/admin/referrals/:id", async (req,res) => {const old=db.select().from(referrals).where(eq(referrals.id,req.params.id)).get();if(!old)return res.status(404).json({error:"Not found"});const row=db.update(referrals).set(req.body).where(eq(referrals.id,old.id)).returning().get();if(req.body.status === "signed" && old.status !== "signed") await sendOwnerNotification("Referral signed", `<p>${old.refereeName} has signed a proposal referred by ${old.referrerName}.</p>`);res.json(row);});
-  app.post("/api/admin/referrals/:id/issue-reward", (req,res) => {const row=db.update(referrals).set({rewardIssued:1}).where(eq(referrals.id,req.params.id)).returning().get();if(!row)return res.status(404).json({error:"Not found"});res.json(row);});
+  app.get("/api/proposals/:token/referrals", (req,res) => {const p=storage.getProposalByToken(req.params.token);if(!p)return res.status(404).json({error:"Not found"});let rows=db.select().from(referrals).where(eq(referrals.referrerProposalId,p.id)).all();if(!rows.length){const row=db.insert(referrals).values({id:randomUUID(),referrerProposalId:p.id,referrerName:p.customerName,referrerEmail:p.customerEmail || "",refereeName:"Referral link",referralCode:referralCode(),status:"invited"}).returning().get();rows=[row];}res.json(rows.map(toPublicReferral));});
+  app.get("/api/admin/referrals", requireAdmin as any, (_req,res) => res.json(db.select().from(referrals).orderBy(desc(referrals.createdAt)).all()));
+  app.patch("/api/admin/referrals/:id", requireAdmin as any, async (req,res) => {const old=db.select().from(referrals).where(eq(referrals.id,req.params.id)).get();if(!old)return res.status(404).json({error:"Not found"});const row=db.update(referrals).set(req.body).where(eq(referrals.id,old.id)).returning().get();if(req.body.status === "signed" && old.status !== "signed") await sendOwnerNotification("Referral signed", `<p>${old.refereeName} has signed a proposal referred by ${old.referrerName}.</p>`);res.json(row);});
+  app.post("/api/admin/referrals/:id/issue-reward", requireAdmin as any, (req,res) => {const row=db.update(referrals).set({rewardIssued:1}).where(eq(referrals.id,req.params.id)).returning().get();if(!row)return res.status(404).json({error:"Not found"});res.json(row);});
   app.post("/api/referrals/:code", async (req,res) => {const seed=db.select().from(referrals).where(eq(referrals.referralCode,req.params.code)).get();if(!seed)return res.status(404).json({error:"Referral link not found"});const row=db.insert(referrals).values({id:randomUUID(),referrerProposalId:seed.referrerProposalId,referrerName:seed.referrerName,referrerEmail:seed.referrerEmail,refereeName:req.body.name,refereeEmail:req.body.email || null,refereePhone:req.body.phone || null,refereeAddress:req.body.address || null,referralCode:referralCode(),status:"invited"}).returning().get();await sendOwnerNotification("New neighbor referral", `<p><b>${req.body.name}</b> was referred by ${seed.referrerName}.<br>Email: ${req.body.email || "—"}<br>Phone: ${req.body.phone || "—"}<br>Address: ${req.body.address || "—"}</p>`);res.status(201).json(row);});
 
   app.post("/api/proposals/:token/warranty/register", async (req,res) => {const p=storage.getProposalByToken(req.params.token);if(!p)return res.status(404).json({error:"Not found"});const start=Math.floor(new Date(req.body.installDate || Date.now()).getTime()/1000);storage.updateProposal(p.id,{customerName:req.body.name || p.customerName,customerEmail:req.body.email || p.customerEmail,customerPhone:req.body.phone || p.customerPhone,propertyAddress:req.body.propertyAddress || p.propertyAddress,warrantyRegisteredAt:Math.floor(Date.now()/1000),warrantyStartDate:start} as any);for(const y of [1,3,5,10]) db.insert(emailSchedule).values({id:randomUUID(),proposalId:p.id,type:`maintenance_y${y}`,scheduledFor:start+y*365*86400,status:"pending"}).run();if(req.body.email || p.customerEmail) await sendWarrantyConfirmation({to:req.body.email || p.customerEmail!,customerName:req.body.name || p.customerName,accessToken:p.accessToken});await sendOwnerNotification("Warranty registered", `<p>${req.body.name || p.customerName} registered warranty for ${p.proposalNumber}.</p>`);res.json({success:true,warrantyStartDate:start});});
@@ -871,7 +887,7 @@ export function registerRoutes(server: Server, app: Express): void {
   // ── AI Roof Transformation ──
   // AI image generation requires specialized GPU services not available on this server.
   // Transformations are generated externally and uploaded via the standard image/upload endpoints.
-  app.post("/api/admin/generate-transformation", (_req, res) => {
+  app.post("/api/admin/generate-transformation", requireAdmin as any, (_req, res) => {
     res.status(200).json({
       info: true,
       message: "AI transformations are processed by McCurdy's AI service. Upload before photos and the AI previews will be generated and added automatically.",
@@ -879,7 +895,7 @@ export function registerRoutes(server: Server, app: Express): void {
   });
 
   // Check transformation status (for polling)
-  app.get("/api/admin/transformation-status/:proposalId", (req, res) => {
+  app.get("/api/admin/transformation-status/:proposalId", requireAdmin as any, (req, res) => {
     try {
       const proposalId = parseInt(req.params.proposalId);
       const images = storage.getImagesByProposal(proposalId);
@@ -891,7 +907,7 @@ export function registerRoutes(server: Server, app: Express): void {
   });
 
   // ── Seed demo data ──
-  app.post("/api/admin/seed-demo", (_req, res) => {
+  app.post("/api/admin/seed-demo", requireAdmin as any, (_req, res) => {
     try {
       const existing = storage.getProposalByNumber("MCC-2026-0001");
       if (existing) return res.json({ message: "Demo data already exists", proposal: existing });

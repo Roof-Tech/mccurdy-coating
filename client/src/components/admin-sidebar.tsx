@@ -35,7 +35,7 @@ export function AdminSidebar() {
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel className="text-[11px] uppercase tracking-wider text-sidebar-foreground/40 font-medium">
+          <SidebarGroupLabel className="text-xs uppercase tracking-wider text-sidebar-foreground/40 font-medium">
             Management
           </SidebarGroupLabel>
           <SidebarGroupContent>
@@ -62,7 +62,7 @@ export function AdminSidebar() {
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter className="p-3 border-t border-sidebar-border">
-        <div className="text-[11px] text-sidebar-foreground/40 text-center">
+        <div className="text-xs text-sidebar-foreground/40 text-center">
           McCurdy Roofing Inc. &middot; Admin Portal
         </div>
         <PerplexityAttribution />

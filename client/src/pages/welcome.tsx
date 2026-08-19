@@ -63,14 +63,14 @@ export default function Welcome() {
 
         <div className="relative z-10 p-8 md:p-10 flex flex-col justify-between" style={{ minHeight: '320px' }}>
           {/* Top: Logo + Badge */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <div className="w-12 h-12 rounded-xl bg-white/10 backdrop-blur-sm flex items-center justify-center border border-white/10">
                 <McCurdyLogo className="w-7 h-7 text-white" />
               </div>
               <div>
-                <p className="text-white/90 text-sm font-semibold tracking-wide">McCurdy Coatings</p>
-                <p className="text-white/50 text-xs">License #477152</p>
+                <p className="text-white/90 text-sm sm:text-base font-semibold tracking-wide">McCurdy Coatings</p>
+                <p className="text-white/50 text-sm sm:text-base">License #477152</p>
               </div>
             </div>
             <Badge className="bg-accent/90 hover:bg-accent text-white border-0 text-xs px-3 py-1 shadow-lg">
@@ -88,7 +88,7 @@ export default function Welcome() {
                 Investment Proposal
               </span>
             </h1>
-            <p className="text-white/60 text-sm mt-3 max-w-lg leading-relaxed">
+            <p className="text-white/60 text-base sm:text-lg md:text-xl mt-3 max-w-lg leading-relaxed">
               A comprehensive analysis of your roofing needs — system, materials, warranty options, pricing, savings opportunities, and next steps.
             </p>
           </div>
@@ -97,17 +97,17 @@ export default function Welcome() {
           <div className="flex flex-wrap gap-2 mt-6">
             <div className="inline-flex items-center gap-1.5 bg-white/10 backdrop-blur-sm rounded-lg px-3 py-1.5 border border-white/[0.08]">
               <User className="w-3.5 h-3.5 text-white/60" />
-              <span className="text-white/90 text-xs font-medium" data-testid="text-customer-name">{proposal.customerName}</span>
+              <span className="text-white/90 text-sm font-medium" data-testid="text-customer-name">{proposal.customerName}</span>
             </div>
             {proposal.companyName && (
               <div className="inline-flex items-center gap-1.5 bg-white/10 backdrop-blur-sm rounded-lg px-3 py-1.5 border border-white/[0.08]">
                 <Building2 className="w-3.5 h-3.5 text-white/60" />
-                <span className="text-white/90 text-xs font-medium">{proposal.companyName}</span>
+                <span className="text-white/90 text-sm font-medium">{proposal.companyName}</span>
               </div>
             )}
             <div className="inline-flex items-center gap-1.5 bg-white/10 backdrop-blur-sm rounded-lg px-3 py-1.5 border border-white/[0.08]">
               <Calendar className="w-3.5 h-3.5 text-white/60" />
-              <span className="text-white/90 text-xs font-medium">{new Date(proposal.proposalDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+              <span className="text-white/90 text-sm font-medium">{new Date(proposal.proposalDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
             </div>
           </div>
         </div>
@@ -121,11 +121,11 @@ export default function Welcome() {
               <MapPin className="w-5 h-5 text-primary" />
             </div>
             <div className="w-full flex-1 min-w-0">
-              <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium mb-1">Property Location</p>
+              <p className="text-sm text-muted-foreground uppercase tracking-wider font-medium mb-1">Property Location</p>
               <p className="text-sm font-semibold text-foreground break-words">{proposal.propertyAddress}</p>
             </div>
             {proposal.systemType && (
-              <Badge variant="outline" className="max-w-full whitespace-normal break-words text-xs border-accent/30 text-accent bg-accent/5 flex-shrink-0">
+              <Badge variant="outline" className="max-w-full whitespace-normal break-words text-sm border-accent/30 text-accent bg-accent/5 flex-shrink-0">
                 <Shield className="w-3 h-3 mr-1" />
                 {proposal.systemType}
               </Badge>
@@ -145,7 +145,7 @@ export default function Welcome() {
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-2">
                   <p className="text-sm font-semibold text-foreground">{proposal.estimator || 'McCurdy Roofing'}</p>
-                  <span className="text-xs text-muted-foreground">Estimator</span>
+                  <span className="text-sm text-muted-foreground">Estimator</span>
                 </div>
                 <p className="text-sm text-foreground/75 leading-relaxed italic" data-testid="text-welcome-message">
                   &ldquo;{proposal.welcomeMessage}&rdquo;
@@ -157,7 +157,7 @@ export default function Welcome() {
 
         {/* ── Quick Navigation Grid ── */}
         <div className="space-y-3 animate-fade-in-up" style={{ animationDelay: '0.3s', animationFillMode: 'backwards' }}>
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1">Quick Navigation</p>
+          <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wider px-1">Quick Navigation</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
             {[
               { label: "View Full Proposal", desc: "Scope, system & specifications", icon: FileText, href: `${basePath}/summary`, primary: true },
@@ -183,7 +183,7 @@ export default function Welcome() {
                       </div>
                       <div>
                         <p className={`text-sm font-semibold ${item.primary ? '' : 'text-foreground'}`}>{item.label}</p>
-                        <p className={`text-xs mt-0.5 ${item.primary ? 'text-white/70' : 'text-muted-foreground'}`}>{item.desc}</p>
+                        <p className={`text-sm mt-0.5 ${item.primary ? 'text-white/70' : 'text-muted-foreground'}`}>{item.desc}</p>
                       </div>
                     </div>
                     <ArrowRight className={`w-4 h-4 transition-transform group-hover:translate-x-1 ${
@@ -206,19 +206,19 @@ export default function Welcome() {
           ].map((trust) => (
             <div key={trust.label} className="text-center p-3 rounded-xl bg-muted/40 border border-transparent">
               <trust.icon className="w-5 h-5 text-accent mx-auto mb-1.5" />
-              <p className="text-xs font-semibold text-foreground leading-tight">{trust.label}</p>
-              <p className="text-[10px] text-muted-foreground">{trust.sublabel}</p>
+              <p className="text-sm font-semibold text-foreground leading-tight">{trust.label}</p>
+              <p className="text-sm text-muted-foreground">{trust.sublabel}</p>
             </div>
           ))}
         </div>
 
         {/* ── Footer ── */}
         <div className="flex flex-wrap items-center justify-between gap-2 pt-2 pb-2">
-          <p className="text-[10px] text-muted-foreground">
+          <p className="text-sm text-muted-foreground">
             Proposal #{proposal.proposalNumber}
           </p>
           <div className="flex items-center gap-3">
-            <a href="tel:6509520233" className="text-[10px] text-muted-foreground hover:text-accent transition-colors flex items-center gap-1">
+            <a href="tel:6509520233" className="text-sm text-muted-foreground hover:text-accent transition-colors flex items-center gap-1">
               <Phone className="w-3 h-3" /> 650-952-0233
             </a>
           </div>

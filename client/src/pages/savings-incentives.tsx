@@ -226,7 +226,7 @@ export default function SavingsIncentives() {
                 <Thermometer className="w-3.5 h-3.5 text-orange-500" />
               </div>
               <div>
-                <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Climate Zone</p>
+                <p className="text-xs uppercase tracking-wider text-muted-foreground font-medium">Climate Zone</p>
                 <p className="text-xs font-bold text-foreground">{countyData.climateZone}</p>
               </div>
             </div>
@@ -235,7 +235,7 @@ export default function SavingsIncentives() {
                 <Building2 className="w-3.5 h-3.5 text-blue-500" />
               </div>
               <div>
-                <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Utility Provider</p>
+                <p className="text-xs uppercase tracking-wider text-muted-foreground font-medium">Utility Provider</p>
                 <p className="text-xs font-bold text-foreground">{countyData.utility}</p>
               </div>
             </div>
@@ -273,7 +273,7 @@ export default function SavingsIncentives() {
                 <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse-glow" />
                 {countyData.county} Programs & Incentives
               </h2>
-              <Badge className="bg-primary/15 text-primary border-0 text-[10px] font-bold">
+              <Badge className="bg-primary/15 text-primary border-0 text-xs font-bold">
                 {totalPrograms} programs available
               </Badge>
             </div>
@@ -282,7 +282,7 @@ export default function SavingsIncentives() {
                 {programTypeCounts.map(({ type, count, label, Icon }) => {
                   const accent = typeAccents[type];
                   return (
-                    <div key={type} className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-medium ${accent.badge}`}>
+                    <div key={type} className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${accent.badge}`}>
                       <Icon className="w-3 h-3" />
                       <span>{count} {label}{count !== 1 ? "s" : ""}</span>
                     </div>
@@ -307,7 +307,7 @@ export default function SavingsIncentives() {
                     </div>
                     <h3 className={`text-sm font-bold ${accent.text}`}>{typeLabels[type]}</h3>
                     <div className="flex-1 h-px bg-border/40" />
-                    <span className="text-[10px] text-muted-foreground font-medium">{programs.length} program{programs.length !== 1 ? "s" : ""}</span>
+                    <span className="text-xs text-muted-foreground font-medium">{programs.length} program{programs.length !== 1 ? "s" : ""}</span>
                   </div>
                   {programs.map((prog, idx) => (
                     <div
@@ -317,7 +317,7 @@ export default function SavingsIncentives() {
                     >
                       <div className="flex flex-wrap items-start justify-between gap-3">
                         <h4 className="min-w-0 text-sm font-bold text-foreground leading-snug break-words">{prog.name}</h4>
-                        <Badge className={`text-[10px] flex-shrink-0 border-0 font-semibold ${accent.badge}`}>
+                        <Badge className={`text-xs flex-shrink-0 border-0 font-semibold ${accent.badge}`}>
                           {typeLabels[type]}
                         </Badge>
                       </div>
@@ -329,7 +329,7 @@ export default function SavingsIncentives() {
                         </div>
                       )}
                       {prog.notes && (
-                        <p className="text-[11px] text-muted-foreground italic border-l-2 border-muted/50 pl-2.5 py-0.5">{prog.notes}</p>
+                        <p className="text-xs text-muted-foreground italic border-l-2 border-muted/50 pl-2.5 py-0.5">{prog.notes}</p>
                       )}
                       <a
                         href={prog.link}
@@ -387,12 +387,12 @@ export default function SavingsIncentives() {
                       </div>
                       <h4 className="text-sm font-bold text-foreground">{inc.programName}</h4>
                     </div>
-                    <Badge className={`text-[10px] border-0 font-semibold ${accent.badge}`}>
+                    <Badge className={`text-xs border-0 font-semibold ${accent.badge}`}>
                       {typeLabels[inc.programType] || inc.programType}
                     </Badge>
                   </div>
                   {inc.applicability && <p className="text-xs text-foreground/75 leading-relaxed">{inc.applicability}</p>}
-                  {inc.notes && <p className="text-[11px] text-muted-foreground italic border-l-2 border-muted/50 pl-2.5">{inc.notes}</p>}
+                  {inc.notes && <p className="text-xs text-muted-foreground italic border-l-2 border-muted/50 pl-2.5">{inc.notes}</p>}
                   <div className="flex items-center gap-4 pt-1">
                     {inc.officialLink && (
                       <a href={inc.officialLink} target="_blank" rel="noopener noreferrer" className="text-xs text-primary flex items-center gap-1.5 font-medium hover:text-primary/80 transition-colors group">
@@ -402,7 +402,7 @@ export default function SavingsIncentives() {
                       </a>
                     )}
                     {inc.lastVerifiedDate && (
-                      <span className="text-[10px] text-muted-foreground bg-muted/30 px-2 py-0.5 rounded-full">
+                      <span className="text-xs text-muted-foreground bg-muted/30 px-2 py-0.5 rounded-full">
                         Verified: {inc.lastVerifiedDate}
                       </span>
                     )}

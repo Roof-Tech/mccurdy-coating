@@ -1,4 +1,5 @@
 import express, { type Request, Response, NextFunction } from "express";
+import { rateLimit } from "express-rate-limit";
 import { registerRoutes } from "./routes";
 import { sqliteConnection } from "./db";
 import { startIncentiveScheduler } from "./incentive-scheduler";
@@ -8,6 +9,8 @@ import { createServer } from "http";
 
 const app = express();
 const httpServer = createServer(app);
+
+app.set("trust proxy", 1);
 
 declare module "http" {
   interface IncomingMessage {
@@ -25,6 +28,36 @@ app.use(
 
 app.use(express.urlencoded({ extended: false }));
 
+const apiLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  limit: 100,
+  standardHeaders: "draft-8",
+  legacyHeaders: false,
+});
+
+const uploadLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  limit: 10,
+  standardHeaders: "draft-8",
+  legacyHeaders: false,
+});
+
+const authLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  limit: 20,
+  standardHeaders: "draft-8",
+  legacyHeaders: false,
+});
+
+// Register all limiters before application routes.
+app.use("/api", apiLimiter);
+app.use("/api/admin/upload", uploadLimiter);
+app.use("/api/proposal/:token/message", authLimiter);
+app.use("/api/proposals/:token/sign", authLimiter);
+app.use("/api/proposals/:token/review", authLimiter);
+app.use("/api/proposals/:token/warranty/register", authLimiter);
+app.use("/api/referrals/:code", authLimiter);
+
 export function log(message: string, source = "express") {
   const formattedTime = new Date().toLocaleTimeString("en-US", {
     hour: "numeric",
@@ -39,23 +72,11 @@ export function log(message: string, source = "express") {
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
-  let capturedJsonResponse: Record<string, any> | undefined = undefined;
-
-  const originalResJson = res.json;
-  res.json = function (bodyJson, ...args) {
-    capturedJsonResponse = bodyJson;
-    return originalResJson.apply(res, [bodyJson, ...args]);
-  };
 
   res.on("finish", () => {
     const duration = Date.now() - start;
     if (path.startsWith("/api")) {
-      let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
-      if (capturedJsonResponse) {
-        logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
-      }
-
-      log(logLine);
+      log(`${req.method} ${path} ${res.statusCode} in ${duration}ms`);
     }
   });
 

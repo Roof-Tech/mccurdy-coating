@@ -49,7 +49,7 @@ export default function ColorOptions() {
               />
               <div>
                 <p className="text-base font-bold text-foreground">{proposal.recommendedColor}</p>
-                <Badge className="bg-accent/10 text-accent border-0 text-[10px] mt-1">Recommended</Badge>
+                <Badge className="bg-accent/10 text-accent border-0 text-xs mt-1">Recommended</Badge>
               </div>
             </div>
           </div>

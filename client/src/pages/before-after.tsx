@@ -274,7 +274,7 @@ export default function BeforeAfter() {
                 <div className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 flex-shrink-0" />
                 <div>
                   <p className="text-xs font-semibold text-foreground">{item.title}</p>
-                  <p className="text-[11px] text-muted-foreground">{item.desc}</p>
+                  <p className="text-xs text-muted-foreground">{item.desc}</p>
                 </div>
               </div>
             ))}

@@ -32,8 +32,8 @@ export default function AdminMessages() {
                 <div className="flex items-start justify-between gap-4">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="text-[10px] capitalize">{msg.messageType}</Badge>
-                      {!msg.isRead && <Badge className="text-[10px] bg-accent text-accent-foreground">New</Badge>}
+                      <Badge variant="outline" className="text-xs capitalize">{msg.messageType}</Badge>
+                      {!msg.isRead && <Badge className="text-xs bg-accent text-accent-foreground">New</Badge>}
                     </div>
                     <p className="text-sm text-foreground/80">{msg.message}</p>
                     <div className="flex gap-3 text-xs text-muted-foreground">

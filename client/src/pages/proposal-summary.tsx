@@ -44,7 +44,7 @@ export default function ProposalSummary() {
           <div key={metric.label} className="glass-card rounded-xl p-4 text-center">
             <metric.icon className="w-4 h-4 text-accent mx-auto mb-2" />
             <p className="text-sm font-bold text-foreground leading-tight">{metric.value}</p>
-            <p className="text-[10px] text-muted-foreground mt-1 uppercase tracking-wider">{metric.label}</p>
+            <p className="text-sm text-muted-foreground mt-1 uppercase tracking-wider">{metric.label}</p>
           </div>
         ))}
       </div>
@@ -54,7 +54,7 @@ export default function ProposalSummary() {
         <div className="p-5 border-b border-border/50">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-semibold text-foreground">Project Overview</h3>
-            <Badge variant="outline" className="text-[10px] border-accent/30 text-accent">
+            <Badge variant="outline" className="text-sm border-accent/30 text-accent">
               {proposal.proposalNumber}
             </Badge>
           </div>
@@ -62,11 +62,11 @@ export default function ProposalSummary() {
         <CardContent className="p-5">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
             <div className="space-y-1">
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">System</p>
+              <p className="text-sm text-muted-foreground uppercase tracking-wider">System</p>
               <p className="font-medium text-foreground">{proposal.systemType}</p>
             </div>
             <div className="space-y-1">
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Estimator</p>
+              <p className="text-sm text-muted-foreground uppercase tracking-wider">Estimator</p>
               <div className="flex items-center gap-2">
                 <div className="w-6 h-6 rounded-full copper-gradient flex items-center justify-center">
                   <User className="w-3 h-3 text-white" />
@@ -75,15 +75,15 @@ export default function ProposalSummary() {
               </div>
             </div>
             <div className="space-y-1">
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Estimated Timeline</p>
+              <p className="text-sm text-muted-foreground uppercase tracking-wider">Estimated Timeline</p>
               <p className="font-medium text-foreground flex items-center gap-1.5">
                 <Clock className="w-3.5 h-3.5 text-muted-foreground" />
                 {proposal.timelineEstimate}
               </p>
             </div>
             <div className="space-y-1">
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Payment</p>
-              <p className="font-medium text-foreground text-xs leading-relaxed">No deposit required. 50%/50% split.</p>
+              <p className="text-sm text-muted-foreground uppercase tracking-wider">Payment</p>
+              <p className="font-medium text-foreground text-sm leading-relaxed">No deposit required. 50%/50% split.</p>
             </div>
           </div>
         </CardContent>
@@ -119,7 +119,7 @@ export default function ProposalSummary() {
               })}
               {totalSqFt > 0 && (
                 <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-border/30">
-                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Total Coverage</span>
+                  <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Total Coverage</span>
                   <span className="text-sm font-bold text-foreground tabular-nums">{totalSqFt.toLocaleString()} sq ft</span>
                 </div>
               )}
@@ -155,7 +155,7 @@ export default function ProposalSummary() {
               <div className="space-y-2">
                 {addOns.map((a: string, i: number) => (
                   <div key={i} className="flex items-center gap-3 p-2.5 rounded-lg bg-muted/30">
-                    <Badge className="bg-accent/10 text-accent border-0 text-[10px]">Add-on</Badge>
+                    <Badge className="bg-accent/10 text-accent border-0 text-sm">Add-on</Badge>
                     <span className="text-sm">{a}</span>
                   </div>
                 ))}
@@ -174,7 +174,7 @@ export default function ProposalSummary() {
             </div>
             <div>
               <p className="text-sm font-semibold text-foreground">View Pricing & Options</p>
-              <p className="text-xs text-muted-foreground">Compare 6 ASC warranty tiers</p>
+              <p className="text-sm text-muted-foreground">Compare 6 ASC warranty tiers</p>
             </div>
           </div>
           <ArrowRight className="w-4 h-4 text-muted-foreground/40 group-hover:text-primary group-hover:translate-x-1 transition-all" />

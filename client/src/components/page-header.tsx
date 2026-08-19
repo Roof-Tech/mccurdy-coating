@@ -19,7 +19,7 @@ export function PageHeader({ title, subtitle, badge, icon }: PageHeaderProps) {
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-lg font-bold text-foreground tracking-tight" data-testid="text-page-title">{title}</h1>
-            {badge && <Badge variant="secondary" className="text-[10px]">{badge}</Badge>}
+            {badge && <Badge variant="secondary" className="text-xs">{badge}</Badge>}
           </div>
           {subtitle && (
             <p className="text-xs text-muted-foreground mt-0.5 max-w-2xl" data-testid="text-page-subtitle">{subtitle}</p>

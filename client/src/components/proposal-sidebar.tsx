@@ -58,7 +58,7 @@ export function ProposalSidebar() {
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel className="text-[11px] uppercase tracking-wider text-sidebar-foreground/40 font-medium">
+          <SidebarGroupLabel className="text-xs uppercase tracking-wider text-sidebar-foreground/40 font-medium">
             Your Proposal
           </SidebarGroupLabel>
           <SidebarGroupContent>
@@ -85,12 +85,12 @@ export function ProposalSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
         <SidebarGroup className="border-t border-sidebar-border pt-3">
-          <SidebarGroupLabel className="text-[11px] uppercase tracking-wider text-sidebar-foreground/40 font-medium">After Your Project</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-xs uppercase tracking-wider text-sidebar-foreground/40 font-medium">After Your Project</SidebarGroupLabel>
           <SidebarGroupContent><SidebarMenu>{postJobNav.filter(item => item.path !== "/review" || proposal?.status === "completed" || proposal?.status === "job_completed" || !!proposal?.workCompletedDate).map(item => { const fullPath=`${basePath}${item.path}`; return <SidebarMenuItem key={item.path}><SidebarMenuButton asChild data-active={location===fullPath} className={(location===fullPath ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium" : "")}><Link href={fullPath}><item.icon className="w-4 h-4"/><span>{item.title}</span></Link></SidebarMenuButton></SidebarMenuItem> })}</SidebarMenu></SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter className="p-3 border-t border-sidebar-border">
-        <div className="text-[11px] text-sidebar-foreground/40 text-center">
+        <div className="text-xs text-sidebar-foreground/40 text-center">
           McCurdy Roofing Inc. &middot; Lic #477152
         </div>
         <PerplexityAttribution />

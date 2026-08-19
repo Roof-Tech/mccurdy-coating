@@ -40,7 +40,7 @@ export default function MilsBuild() {
                 <div className={`h-full rounded-full ${layer.color} transition-all duration-700`}
                   style={{ width: i === 0 ? '25%' : '100%' }} />
               </div>
-              <p className="text-[11px] text-muted-foreground mt-1">{layer.desc}</p>
+              <p className="text-xs text-muted-foreground mt-1">{layer.desc}</p>
             </div>
           ))}
         </CardContent>

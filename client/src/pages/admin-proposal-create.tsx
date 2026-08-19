@@ -270,7 +270,7 @@ export default function AdminProposalCreate() {
             onChange={e => set("welcomeMessage", e.target.value)}
             className="min-h-[90px] text-sm"
           />
-          <p className="text-[11px] text-muted-foreground mt-2">
+          <p className="text-xs text-muted-foreground mt-2">
             This appears on the customer's welcome page as a personal message from the estimator.
           </p>
         </CardContent>

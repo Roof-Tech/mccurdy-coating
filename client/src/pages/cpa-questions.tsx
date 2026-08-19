@@ -99,7 +99,7 @@ export default function CpaQuestions() {
                 {section.questions.map((q, i) => (
                   <div key={i} className="flex items-start gap-3">
                     <div className={`w-6 h-6 rounded-lg ${section.bgColor} flex items-center justify-center flex-shrink-0 mt-0.5`}>
-                      <span className={`text-[10px] font-bold ${section.color}`}>{i + 1}</span>
+                      <span className={`text-xs font-bold ${section.color}`}>{i + 1}</span>
                     </div>
                     <p className="text-sm text-foreground/80 leading-relaxed">{q}</p>
                   </div>

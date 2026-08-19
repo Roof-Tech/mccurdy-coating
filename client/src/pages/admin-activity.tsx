@@ -25,7 +25,7 @@ export default function AdminActivity() {
               {activities.map((act) => (
                 <li key={act.id} className="flex items-center justify-between p-3 text-sm">
                   <div className="flex items-center gap-3">
-                    <Badge variant="outline" className="text-[10px] capitalize">{act.eventType.replace("_", " ")}</Badge>
+                    <Badge variant="outline" className="text-xs capitalize">{act.eventType.replace("_", " ")}</Badge>
                     <span className="text-muted-foreground">Proposal #{act.proposalId}</span>
                   </div>
                   <span className="text-xs text-muted-foreground">{new Date(act.createdAt).toLocaleString()}</span>

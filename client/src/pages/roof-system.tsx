@@ -71,7 +71,7 @@ export default function RoofSystem() {
                 <div className={`${layer.color} rounded-lg px-4 py-3 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between`}>
                   <span className="text-xs font-semibold text-white">{layer.name}</span>
                   {layer.detail && (
-                    <span className="text-[10px] text-white/80 bg-white/15 rounded-full px-2.5 py-0.5">{layer.detail}</span>
+                    <span className="text-xs text-white/80 bg-white/15 rounded-full px-2.5 py-0.5">{layer.detail}</span>
                   )}
                 </div>
               </div>
@@ -79,7 +79,7 @@ export default function RoofSystem() {
           </div>
           {proposal.totalDryMils && (
             <div className="mt-4 p-4 rounded-xl bg-primary/5 border border-primary/10">
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Total Dry Mil Target</p>
+              <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Total Dry Mil Target</p>
               <p className="text-sm font-bold text-primary">{proposal.totalDryMils}</p>
             </div>
           )}

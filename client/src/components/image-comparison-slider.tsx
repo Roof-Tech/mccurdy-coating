@@ -146,7 +146,7 @@ export function ImageComparisonSlider({
 
       {/* Instruction hint */}
       {allLoaded && (
-        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 px-3 py-1.5 rounded-full text-[10px] font-medium z-10 pointer-events-none animate-pulse"
+        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 px-3 py-1.5 rounded-full text-xs font-medium z-10 pointer-events-none animate-pulse"
           style={{ backgroundColor: "rgba(0,0,0,0.5)", color: "white" }}
         >
           ← Drag to compare →
