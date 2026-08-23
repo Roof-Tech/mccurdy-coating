@@ -34,3 +34,88 @@ export async function analyzeRoofPhotos(imageUrls: string[]): Promise<AnalysisRe
     analyzedAt: Math.floor(Date.now() / 1000),
   };
 }
+
+export type PublicEstimateAnalysis = {
+  condition: "Good" | "Fair" | "Poor" | "Critical";
+  materialType:
+    | "TPO"
+    | "EPDM"
+    | "Modified Bitumen"
+    | "Built-up Roof"
+    | "Metal"
+    | "Concrete"
+    | "Composition Shingle"
+    | "Other";
+  sqftEstimate: number | null;
+  issues: string[];
+  upgrades: string[];
+  confidence: "high" | "medium" | "low";
+  notes: string;
+};
+
+const publicEstimatePrompt = `You are a commercial roofing analyst for McCurdy Coatings. Analyze the provided photos and satellite imagery of a commercial roof. Return valid JSON only.
+
+Analyze this roof and return JSON with:
+{
+  "condition": "Good" | "Fair" | "Poor" | "Critical",
+  "materialType": "TPO" | "EPDM" | "Modified Bitumen" | "Built-up Roof" | "Metal" | "Concrete" | "Composition Shingle" | "Other",
+  "sqftEstimate": integer or null,
+  "issues": string[] (max 5 short items),
+  "upgrades": string[] (max 5 short items, framed as benefits of silicone recoat),
+  "confidence": "high" | "medium" | "low",
+  "notes": string (2-3 sentences, professional tone, do NOT diagnose structural issues — coating-focused only)
+}
+
+Rules:
+- Never give a definitive dollar amount — that's not your job.
+- If photos are unclear, set confidence to "low" and note "in-person inspection recommended for accurate assessment".
+- Focus on coating suitability: is this a good candidate for silicone recoat?
+- Never mention brands other than McCurdy.`;
+
+export async function analyzeRoofForPublic(
+  imageUrls: string[],
+): Promise<PublicEstimateAnalysis> {
+  if (!process.env.OPENAI_API_KEY) throw new Error("AI_NOT_CONFIGURED");
+  if (!imageUrls.length) throw new Error("At least one roof photo is required.");
+  const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  const response = await client.chat.completions.create({
+    model: "gpt-4o",
+    response_format: { type: "json_object" },
+    messages: [
+      { role: "system", content: publicEstimatePrompt },
+      {
+        role: "user",
+        content: imageUrls.map((url) => ({
+          type: "image_url",
+          image_url: { url },
+        })) as any,
+      },
+    ],
+  });
+  const parsed = JSON.parse(response.choices[0]?.message?.content || "{}");
+  const validConditions = ["Good", "Fair", "Poor", "Critical"];
+  const validMaterials = [
+    "TPO", "EPDM", "Modified Bitumen", "Built-up Roof", "Metal",
+    "Concrete", "Composition Shingle", "Other",
+  ];
+  const condition = validConditions.includes(parsed.condition)
+    ? parsed.condition
+    : "Fair";
+  const materialType = validMaterials.includes(parsed.materialType)
+    ? parsed.materialType
+    : "Other";
+  return {
+    condition,
+    materialType,
+    sqftEstimate:
+      Number.isFinite(Number(parsed.sqftEstimate)) && Number(parsed.sqftEstimate) > 0
+        ? Math.round(Number(parsed.sqftEstimate))
+        : null,
+    issues: Array.isArray(parsed.issues) ? parsed.issues.slice(0, 5).map(String) : [],
+    upgrades: Array.isArray(parsed.upgrades) ? parsed.upgrades.slice(0, 5).map(String) : [],
+    confidence: ["high", "medium", "low"].includes(parsed.confidence)
+      ? parsed.confidence
+      : "medium",
+    notes: typeof parsed.notes === "string" ? parsed.notes : "",
+  };
+}

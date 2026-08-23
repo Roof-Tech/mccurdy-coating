@@ -205,6 +205,37 @@ sqlite.exec(`
   CREATE TABLE IF NOT EXISTS customer_preferences (proposal_id INTEGER PRIMARY KEY REFERENCES proposals(id), email_reminders INTEGER NOT NULL DEFAULT 1, storm_alerts INTEGER NOT NULL DEFAULT 1, seasonal_checkins INTEGER NOT NULL DEFAULT 1, review_prompts INTEGER NOT NULL DEFAULT 1);
   CREATE TABLE IF NOT EXISTS crew_checklists (id TEXT PRIMARY KEY, proposal_id INTEGER NOT NULL REFERENCES proposals(id), phase TEXT NOT NULL, completed INTEGER NOT NULL DEFAULT 0, completed_at INTEGER);
   CREATE TABLE IF NOT EXISTS crew_schedule (id TEXT PRIMARY KEY, crew_member_id TEXT NOT NULL, date TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'available', proposal_id INTEGER);
+  CREATE TABLE IF NOT EXISTS estimate_leads (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    email TEXT NOT NULL,
+    phone TEXT,
+    address TEXT,
+    city TEXT,
+    state TEXT DEFAULT 'CA',
+    property_type TEXT DEFAULT 'commercial',
+    building_type TEXT,
+    estimated_sqft INTEGER,
+    verified_sqft INTEGER,
+    ai_condition TEXT,
+    ai_material_type TEXT,
+    ai_issues TEXT,
+    ai_upgrades TEXT,
+    ai_confidence TEXT,
+    ai_raw_response TEXT,
+    photo_urls TEXT,
+    recommended_tier INTEGER,
+    price_low INTEGER,
+    price_high INTEGER,
+    price_recommended INTEGER,
+    status TEXT DEFAULT 'new',
+    converted_proposal_id TEXT,
+    notes TEXT,
+    created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+    contacted_at INTEGER,
+    ip_address TEXT,
+    user_agent TEXT
+  );
 `);
 
 // ── Safe migrations: add columns if they don't exist ──
@@ -269,6 +300,31 @@ addColumnIfMissing(
   "applicable_to",
   "TEXT NOT NULL DEFAULT 'commercial,residential'",
 );
+addColumnIfMissing("estimate_leads", "phone", "TEXT");
+addColumnIfMissing("estimate_leads", "address", "TEXT");
+addColumnIfMissing("estimate_leads", "city", "TEXT");
+addColumnIfMissing("estimate_leads", "state", "TEXT DEFAULT 'CA'");
+addColumnIfMissing("estimate_leads", "property_type", "TEXT DEFAULT 'commercial'");
+addColumnIfMissing("estimate_leads", "building_type", "TEXT");
+addColumnIfMissing("estimate_leads", "estimated_sqft", "INTEGER");
+addColumnIfMissing("estimate_leads", "verified_sqft", "INTEGER");
+addColumnIfMissing("estimate_leads", "ai_condition", "TEXT");
+addColumnIfMissing("estimate_leads", "ai_material_type", "TEXT");
+addColumnIfMissing("estimate_leads", "ai_issues", "TEXT");
+addColumnIfMissing("estimate_leads", "ai_upgrades", "TEXT");
+addColumnIfMissing("estimate_leads", "ai_confidence", "TEXT");
+addColumnIfMissing("estimate_leads", "ai_raw_response", "TEXT");
+addColumnIfMissing("estimate_leads", "photo_urls", "TEXT");
+addColumnIfMissing("estimate_leads", "recommended_tier", "INTEGER");
+addColumnIfMissing("estimate_leads", "price_low", "INTEGER");
+addColumnIfMissing("estimate_leads", "price_high", "INTEGER");
+addColumnIfMissing("estimate_leads", "price_recommended", "INTEGER");
+addColumnIfMissing("estimate_leads", "status", "TEXT DEFAULT 'new'");
+addColumnIfMissing("estimate_leads", "converted_proposal_id", "TEXT");
+addColumnIfMissing("estimate_leads", "notes", "TEXT");
+addColumnIfMissing("estimate_leads", "contacted_at", "INTEGER");
+addColumnIfMissing("estimate_leads", "ip_address", "TEXT");
+addColumnIfMissing("estimate_leads", "user_agent", "TEXT");
 
 // Seed a starter crew directory once. These profiles are editable in Admin > Crew.
 const crewCount = (

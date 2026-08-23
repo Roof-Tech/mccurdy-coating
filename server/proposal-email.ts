@@ -173,6 +173,107 @@ export function escapeHtml(s: string): string {
     .replace(/'/g, "&#039;");
 }
 
+type InstantEstimateEmailArgs = {
+  lead: {
+    id: string;
+    name: string;
+    email: string;
+    phone?: string | null;
+    address?: string | null;
+    city?: string | null;
+    state?: string | null;
+    propertyType?: string | null;
+    estimatedSqft: number;
+    condition: string;
+    materialType: string;
+    recommendedTier: number;
+    priceLow: number;
+    priceHigh: number;
+    priceRecommended: number;
+    issues: string[];
+    upgrades: string[];
+    photoUrls: string[];
+  };
+};
+
+/**
+ * Sends both the owner alert and the prospect's estimate confirmation.
+ * A notification failure never blocks an estimate result from being stored.
+ */
+export async function sendInstantEstimateEmails(
+  args: InstantEstimateEmailArgs,
+): Promise<void> {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) {
+    console.warn("[instant-estimate] RESEND_API_KEY not set — estimate emails skipped");
+    return;
+  }
+  const { lead } = args;
+  const money = (amount: number) =>
+    new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      maximumFractionDigits: 0,
+    }).format(amount);
+  const property = [lead.address, lead.city, lead.state].filter(Boolean).join(", ");
+  const issueList = lead.issues.length
+    ? `<ul>${lead.issues.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>`
+    : "<p>No immediate coating concerns were confidently detected from the submitted images.</p>";
+  const photoLinks = lead.photoUrls
+    .map(
+      (url, index) =>
+        `<a href="${escapeHtml(url)}" style="color:#01696F">View submitted photo ${index + 1}</a>`,
+    )
+    .join(" &middot; ");
+  const ownerHtml = `<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:680px;margin:0 auto">
+    <div style="background:#01696F;color:#fff;padding:24px;border-radius:10px 10px 0 0"><strong style="font-size:21px">New Instant Estimate Lead</strong><div style="margin-top:5px;opacity:.86">AI-assisted estimate ready for follow-up</div></div>
+    <div style="border:1px solid #dbe4e7;border-top:none;padding:24px;line-height:1.6">
+      <p><strong>${escapeHtml(lead.name)}</strong> &middot; <a href="mailto:${escapeHtml(lead.email)}">${escapeHtml(lead.email)}</a>${lead.phone ? ` &middot; <a href="tel:${escapeHtml(lead.phone)}">${escapeHtml(lead.phone)}</a>` : ""}</p>
+      <p><strong>Property:</strong> ${escapeHtml(property || "City/state not supplied")}<br><strong>Type:</strong> ${escapeHtml(lead.propertyType || "commercial")}<br><strong>Roof:</strong> ${lead.estimatedSqft.toLocaleString()} sq ft · ${escapeHtml(lead.condition)} · ${escapeHtml(lead.materialType)}</p>
+      <div style="background:#f4f9f8;border-left:4px solid #01696F;padding:16px"><strong>Recommended ${lead.recommendedTier}-Year Silicone System: ${money(lead.priceRecommended)}</strong><br>Range: ${money(lead.priceLow)} – ${money(lead.priceHigh)}</div>
+      <h3>Detected coating considerations</h3>${issueList}
+      <p>${photoLinks}</p>
+      <p><a href="${APP_BASE_URL}/#/admin/instant-estimates" style="display:inline-block;background:#01696F;color:#fff;padding:12px 18px;border-radius:6px;text-decoration:none;font-weight:600">Open Instant Estimates</a></p>
+    </div></div>`;
+  const prospectHtml = `<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:640px;margin:0 auto;background:#fff">
+    <div style="background:linear-gradient(135deg,#01696F,#0C4E54);padding:30px 28px;text-align:center;color:#fff"><div style="font-size:24px;font-weight:700">McCurdy Coatings</div><div style="opacity:.86;font-size:13px;margin-top:4px">Your instant roof-coating estimate</div></div>
+    <div style="padding:30px 28px;color:#1a1a1a;line-height:1.6"><p style="font-size:17px">Hi ${escapeHtml(lead.name)},</p><p>Thanks for sharing your roof photos. Here is your AI-assisted planning range for a <strong>${lead.estimatedSqft.toLocaleString()} sq ft</strong> ${escapeHtml(lead.materialType)} roof.</p>
+      <div style="border:1px solid #dbe4e7;border-radius:10px;padding:20px;text-align:center;background:#f8fafc"><div style="font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:#64748b">Estimated range</div><div style="font-size:28px;font-weight:700;color:#0f172a;margin:5px 0">${money(lead.priceLow)} – ${money(lead.priceHigh)}</div><div style="font-size:16px;font-weight:700;color:#01696F">Recommended: ${lead.recommendedTier}-Year Silicone System — ${money(lead.priceRecommended)}</div></div>
+      <p>We’ll be in touch within 24 hours to review your roof and confirm options with a free on-site inspection.</p>
+      <p style="text-align:center;margin:26px 0"><a href="https://calendly.com/mccurdycoatings" style="display:inline-block;background:#01696F;color:#fff;padding:13px 22px;border-radius:7px;text-decoration:none;font-weight:700">Book Free On-Site Inspection</a></p>
+      <p style="font-size:14px;color:#475569">Questions? Call <a href="tel:6509520233" style="color:#01696F">(650) 952-0233</a> or text <a href="sms:6508085469" style="color:#01696F">(650) 808-5469</a>.</p>
+    </div><div style="background:#f5f5f0;padding:18px 28px;color:#64748b;font-size:12px;text-align:center">McCurdy Roofing Inc. · License #477152<br>371 Shaw Rd, South San Francisco, CA 94080</div></div>`;
+  const send = async (payload: Record<string, unknown>) => {
+    const response = await fetch(RESEND_API, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    if (!response.ok) {
+      const detail = await response.text().catch(() => "");
+      console.error("[instant-estimate] Resend error", response.status, detail);
+    }
+  };
+  await Promise.all([
+    send({
+      from: FROM_ADDRESS,
+      to: [OWNER_EMAIL],
+      reply_to: lead.email,
+      subject: `🎯 New Instant Estimate Lead: ${lead.name} — ${lead.city || "Bay Area"} — ${money(lead.priceRecommended)}`,
+      html: ownerHtml,
+      text: `New Instant Estimate Lead\n${lead.name} (${lead.email})\n${property}\nRecommended ${lead.recommendedTier}-Year: ${money(lead.priceRecommended)}\nRange: ${money(lead.priceLow)} - ${money(lead.priceHigh)}`,
+    }),
+    send({
+      from: FROM_ADDRESS,
+      to: [lead.email],
+      reply_to: OWNER_EMAIL,
+      subject: "Your McCurdy Coatings Instant Estimate",
+      html: prospectHtml,
+      text: `Hi ${lead.name},\n\nYour estimated range is ${money(lead.priceLow)} - ${money(lead.priceHigh)}. Recommended ${lead.recommendedTier}-Year Silicone System: ${money(lead.priceRecommended)}.\n\nWe will be in touch within 24 hours. Book a free inspection: https://calendly.com/mccurdycoatings\n\nCall 650-952-0233 or text 650-808-5469.`,
+    }),
+  ]);
+}
+
 // ── Change order emails ─────────────────────────────────────
 export async function sendChangeOrderEmail(args: {
   to: string;

@@ -496,3 +496,47 @@ export const crewSchedule = sqliteTable("crew_schedule", {
   status: text("status").notNull().default("available"),
   proposalId: integer("proposal_id"),
 });
+
+// ── Public instant roof estimate leads ─────────────────────────
+export const estimateLeads = sqliteTable("estimate_leads", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  email: text("email").notNull(),
+  phone: text("phone"),
+  address: text("address"),
+  city: text("city"),
+  state: text("state").default("CA"),
+  propertyType: text("property_type").default("commercial"), // commercial | industrial | multifamily | residential
+  buildingType: text("building_type"), // warehouse | retail | office | apartment | other
+  estimatedSqft: integer("estimated_sqft"),
+  verifiedSqft: integer("verified_sqft"),
+  aiCondition: text("ai_condition"), // Good | Fair | Poor | Critical
+  aiMaterialType: text("ai_material_type"),
+  aiIssues: text("ai_issues"), // JSON string array
+  aiUpgrades: text("ai_upgrades"), // JSON string array
+  aiConfidence: text("ai_confidence"), // high | medium | low
+  aiRawResponse: text("ai_raw_response"),
+  photoUrls: text("photo_urls"), // JSON array of uploaded photo paths
+  recommendedTier: integer("recommended_tier"),
+  priceLow: integer("price_low"),
+  priceHigh: integer("price_high"),
+  priceRecommended: integer("price_recommended"),
+  status: text("status").default("new"), // new | contacted | qualified | converted | not_interested
+  convertedProposalId: text("converted_proposal_id"),
+  notes: text("notes"),
+  createdAt: integer("created_at", { mode: "timestamp" })
+    .notNull()
+    .$defaultFn(() => new Date()),
+  contactedAt: integer("contacted_at", { mode: "timestamp" }),
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+});
+
+export const insertEstimateLeadSchema = createInsertSchema(estimateLeads).omit({
+  id: true,
+  createdAt: true,
+  contactedAt: true,
+  convertedProposalId: true,
+});
+export type InsertEstimateLead = z.infer<typeof insertEstimateLeadSchema>;
+export type EstimateLead = typeof estimateLeads.$inferSelect;

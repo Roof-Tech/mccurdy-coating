@@ -46,6 +46,8 @@ const AdminMessages = lazy(() => import("@/pages/admin-messages"));
 const AdminActivity = lazy(() => import("@/pages/admin-activity"));
 const AdminCrew = lazy(() => import("@/pages/admin-crew"));
 const AdminReferrals = lazy(() => import("@/pages/admin-referrals"));
+const AdminEstimateLeads = lazy(() => import("@/pages/admin-estimate-leads"));
+const Estimate = lazy(() => import("@/pages/estimate"));
 
 const Messages = lazy(() => import("@/pages/messages"));
 const Invoices = lazy(() => import("@/pages/invoices"));
@@ -194,6 +196,7 @@ function AdminApp() {
               <Route path="/admin/activity" component={AdminActivity} />
               <Route path="/admin/crew" component={AdminCrew} />
               <Route path="/admin/referrals" component={AdminReferrals} />
+              <Route path="/admin/instant-estimates" component={AdminEstimateLeads} />
               <Route path="/admin/financing" component={AdminFinancing} />
               <Route path="/admin/scheduling" component={AdminScheduling} />
               <Route component={AdminDashboard} />
@@ -251,9 +254,17 @@ function LandingPage() {
           please use it to access your personalized proposal.
         </p>
         <div className="space-y-2">
-          <a href="/#/view/demo-proposal-2026" className="block">
+          <a href="/#/estimate" className="block">
             <button
               className="w-full px-4 py-2.5 bg-primary text-primary-foreground rounded-md text-sm font-medium"
+              data-testid="button-instant-estimate"
+            >
+              Get Instant Roof Estimate
+            </button>
+          </a>
+          <a href="/#/view/demo-proposal-2026" className="block">
+            <button
+              className="w-full px-4 py-2.5 border border-border rounded-md text-sm text-foreground"
               data-testid="button-demo"
             >
               View Demo Proposal
@@ -286,6 +297,10 @@ function AppRouter() {
 
   if (viewMatch) {
     return <CustomerProposalApp token={viewMatch[1]} />;
+  }
+
+  if (location.startsWith("/estimate")) {
+    return <Estimate />;
   }
 
   if (location.startsWith("/admin")) {

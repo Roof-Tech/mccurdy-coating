@@ -25,6 +25,7 @@ import {
   crewSchedule,
   incentives,
   proposals,
+  estimateLeads,
 } from "@shared/schema";
 import { sqliteConnection, db } from "./db";
 import { getCountyFromDb, getAllCountiesFromDb } from "./incentive-refresh";
@@ -42,15 +43,17 @@ import {
   sendFinancingApplicationToOwner,
   sendBrandedEmail,
   escapeHtml,
+  sendInstantEstimateEmails,
 } from "./proposal-email";
-import { analyzeRoofPhotos } from "./ai-roof-analysis";
+import { analyzeRoofForPublic, analyzeRoofPhotos } from "./ai-roof-analysis";
 import { getUpgradeSuggestions } from "./upgrade-engine";
-import { eq, desc } from "drizzle-orm";
+import { and, desc, eq, like, or, sql } from "drizzle-orm";
 import { randomBytes, randomUUID } from "crypto";
 import { z } from "zod";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
+import { rateLimit } from "express-rate-limit";
 import {
   toAdminProposal,
   toPublicActivity,
@@ -114,6 +117,149 @@ const upload = multer({
   },
 });
 
+// Public instant-estimate uploads are isolated from authenticated proposal files.
+const estimateDataDir = process.env.DATA_DIR || "/var/data";
+const estimateUploadDir = path.join(estimateDataDir, "estimate-uploads");
+try {
+  fs.mkdirSync(estimateUploadDir, { recursive: true });
+} catch (error) {
+  // Local development environments may not provide /var/data.
+  console.warn("[estimate-uploads] Falling back to project storage:", error);
+  fs.mkdirSync(path.join(process.cwd(), "estimate-uploads"), { recursive: true });
+}
+const activeEstimateUploadDir = fs.existsSync(estimateUploadDir)
+  ? estimateUploadDir
+  : path.join(process.cwd(), "estimate-uploads");
+
+const estimateUpload = multer({
+  storage: multer.diskStorage({
+    destination: (req, _file, callback) => {
+      const leadId = (req as Request & { estimateLeadId?: string }).estimateLeadId;
+      const destination = path.join(activeEstimateUploadDir, leadId || "unassigned");
+      fs.mkdirSync(destination, { recursive: true });
+      callback(null, destination);
+    },
+    filename: (_req, file, callback) => {
+      const ext = path.extname(file.originalname).toLowerCase() || ".jpg";
+      callback(null, `${randomUUID()}${ext}`);
+    },
+  }),
+  limits: { fileSize: 10 * 1024 * 1024, files: 5 },
+  fileFilter: (_req, file, callback) => {
+    callback(null, /^image\/(jpeg|png|webp|gif|heic|heif)$/i.test(file.mimetype));
+  },
+});
+
+const instantEstimateLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  limit: 5,
+  standardHeaders: "draft-8",
+  legacyHeaders: false,
+  message: { error: "Please try again in an hour." },
+});
+
+const publicEstimateInput = z.object({
+  name: z.string().trim().min(2).max(100),
+  email: z.string().trim().email().max(254),
+  phone: z.string().trim().max(40).optional(),
+  address: z.string().trim().max(250).optional(),
+  city: z.string().trim().min(2).max(100),
+  state: z.string().trim().min(2).max(30).default("CA"),
+  propertyType: z.enum(["commercial", "industrial", "multifamily", "residential"]).default("commercial"),
+  buildingType: z.enum(["warehouse", "retail", "office", "apartment", "other"]).optional(),
+  sqft: z.coerce.number().int().min(100).max(10000000).optional(),
+  satelliteUrl: z.union([z.string().trim().url().max(2048), z.literal("")]).optional(),
+});
+
+const ESTIMATE_TIER_PRICES: Record<number, number> = {
+  5: 5.5, 10: 6.5, 15: 7.5, 20: 9.5, 25: 12, 30: 14,
+};
+
+function parseEstimateList(value: string | null): string[] {
+  try {
+    const parsed = JSON.parse(value || "[]");
+    return Array.isArray(parsed) ? parsed.map(String) : [];
+  } catch {
+    return [];
+  }
+}
+
+function toPublicEstimate(lead: typeof estimateLeads.$inferSelect) {
+  return {
+    id: lead.id,
+    condition: lead.aiCondition || "Fair",
+    materialType: lead.aiMaterialType || "Other",
+    estimatedSqft: lead.estimatedSqft || 5000,
+    recommendedTier: lead.recommendedTier || 20,
+    priceLow: lead.priceLow || 0,
+    priceHigh: lead.priceHigh || 0,
+    priceRecommended: lead.priceRecommended || 0,
+    issues: parseEstimateList(lead.aiIssues),
+    upgrades: parseEstimateList(lead.aiUpgrades),
+    confidence: lead.aiConfidence || "medium",
+    notes: (() => {
+      try {
+        return JSON.parse(lead.aiRawResponse || "{}").notes || "";
+      } catch {
+        return "";
+      }
+    })(),
+    photoUrls: parseEstimateList(lead.photoUrls),
+  };
+}
+
+function createProposalFromEstimateLead(lead: typeof estimateLeads.$inferSelect) {
+  if (lead.convertedProposalId) {
+    const existing = storage.getProposal(Number(lead.convertedProposalId));
+    if (existing) return existing;
+  }
+  const warrantyTier = lead.recommendedTier || 20;
+  const sqft = lead.verifiedSqft || lead.estimatedSqft || 5000;
+  const proposal = storage.createProposal({
+    proposalNumber: `MCC-${Date.now().toString(36).toUpperCase()}`,
+    customerName: lead.name,
+    customerEmail: lead.email,
+    customerPhone: lead.phone,
+    propertyAddress: lead.address || `${lead.city || "Bay Area"}, ${lead.state || "CA"}`,
+    city: lead.city,
+    state: lead.state || "CA",
+    propertyType: lead.propertyType || "commercial",
+    projectType: lead.propertyType || "commercial",
+    proposalDate: new Date().toISOString().slice(0, 10),
+    estimator: "Mike McCurdy",
+    status: "draft",
+    accessToken: randomBytes(32).toString("hex"),
+    verifiedSqft: sqft,
+    sqftMeasurementSource: lead.verifiedSqft ? "manual_measurement" : "ai_estimate",
+    roofAreas: JSON.stringify([`Estimated roof area — ${sqft.toLocaleString()} sq ft`]),
+    warrantyTerm: `${warrantyTier}-Year Silicone System`,
+    systemType: "Silicone Roof Restoration System",
+    currentCondition: lead.aiCondition || "Fair",
+    roofSystemType: lead.aiMaterialType || "Existing roof system",
+    keyIssues: lead.aiIssues || "[]",
+    whyRecommended: lead.aiUpgrades || "[]",
+    aiRoofAnalysis: lead.aiRawResponse,
+    privateNotes: `Converted from Instant Estimate lead ${lead.id}.`,
+    pricingOptions: JSON.stringify(
+      Object.entries(ESTIMATE_TIER_PRICES).map(([years, price]) => ({
+        name: `${years}-Year Silicone System`,
+        price: `$${price.toFixed(2)}/sq ft`,
+        total: Math.round(sqft * price),
+        recommended: Number(years) === warrantyTier,
+      })),
+    ),
+  });
+  db.update(estimateLeads)
+    .set({
+      status: "converted",
+      convertedProposalId: String(proposal.id),
+      contactedAt: lead.contactedAt || new Date(),
+    })
+    .where(eq(estimateLeads.id, lead.id))
+    .run();
+  return proposal;
+}
+
 export function registerRoutes(server: Server, app: Express): void {
   // Auto-seed demo data on first boot
   try {
@@ -127,6 +273,233 @@ export function registerRoutes(server: Server, app: Express): void {
   } catch (e) {
     console.log("[startup] Could not auto-seed:", e);
   }
+
+  // ── Public Instant Roof Estimate ────────────────────────────
+  app.use("/api/estimate-uploads", (req, res, next) => {
+    const requested = path
+      .normalize(req.path)
+      .replace(/^(\.\.(\/|\\|$))+/, "")
+      .replace(/^[/\\]+/, "");
+    const filePath = path.join(activeEstimateUploadDir, requested);
+    if (!filePath.startsWith(activeEstimateUploadDir)) return res.status(400).end();
+    if (!fs.existsSync(filePath)) return res.status(404).end();
+    return res.sendFile(filePath, (error) => {
+      if (error && !res.headersSent) next(error);
+    });
+  });
+
+  app.post(
+    "/api/estimate",
+    instantEstimateLimiter,
+    (req, _res, next) => {
+      (req as Request & { estimateLeadId?: string }).estimateLeadId = randomUUID();
+      next();
+    },
+    estimateUpload.fields([
+      { name: "photos", maxCount: 4 },
+      { name: "satelliteImage", maxCount: 1 },
+    ]),
+    async (req, res) => {
+      const leadId = (req as Request & { estimateLeadId?: string }).estimateLeadId || randomUUID();
+      try {
+        const input = publicEstimateInput.parse(req.body);
+        const files = req.files as Record<string, Express.Multer.File[]> | undefined;
+        const roofPhotos = files?.photos || [];
+        const satellitePhotos = files?.satelliteImage || [];
+        if (roofPhotos.length < 1) {
+          return res.status(400).json({ error: "Please upload at least one roof photo." });
+        }
+        if (roofPhotos.length > 4) {
+          return res.status(400).json({ error: "A maximum of four roof photos is allowed." });
+        }
+
+        const origin = process.env.APP_BASE_URL || `${req.protocol}://${req.get("host")}`;
+        const localUrls = [...roofPhotos, ...satellitePhotos].map(
+          (file) => `/api/estimate-uploads/${leadId}/${file.filename}`,
+        );
+        const aiUrls = localUrls.map((url) => `${origin}${url}`);
+        if (input.satelliteUrl) aiUrls.push(input.satelliteUrl);
+
+        const analysis = await analyzeRoofForPublic(aiUrls);
+        const verifiedSqft = input.sqft ? Math.round(input.sqft) : null;
+        const estimatedSqft = verifiedSqft || analysis.sqftEstimate || 5000;
+        const recommendedTier =
+          analysis.condition === "Good"
+            ? 20
+            : analysis.condition === "Fair"
+              ? 15
+              : 10;
+        const priceLow = Math.round(estimatedSqft * ESTIMATE_TIER_PRICES[5]);
+        const priceHigh = Math.round(estimatedSqft * ESTIMATE_TIER_PRICES[30]);
+        const priceRecommended = Math.round(
+          estimatedSqft * ESTIMATE_TIER_PRICES[recommendedTier],
+        );
+        const aiRawResponse = JSON.stringify({
+          ...analysis,
+          notes:
+            analysis.condition === "Critical"
+              ? `${analysis.notes} A recoat may be needed sooner; an in-person inspection is recommended.`.trim()
+              : analysis.notes,
+        });
+        const lead = db
+          .insert(estimateLeads)
+          .values({
+            id: leadId,
+            name: input.name,
+            email: input.email,
+            phone: input.phone || null,
+            address: input.address || null,
+            city: input.city,
+            state: input.state,
+            propertyType: input.propertyType,
+            buildingType: input.buildingType || null,
+            estimatedSqft,
+            verifiedSqft,
+            aiCondition: analysis.condition,
+            aiMaterialType: analysis.materialType,
+            aiIssues: JSON.stringify(analysis.issues),
+            aiUpgrades: JSON.stringify(analysis.upgrades),
+            aiConfidence: analysis.confidence,
+            aiRawResponse,
+            photoUrls: JSON.stringify(localUrls),
+            recommendedTier,
+            priceLow,
+            priceHigh,
+            priceRecommended,
+            status: "new",
+            ipAddress: req.ip || null,
+            userAgent: req.headers["user-agent"] || null,
+          })
+          .returning()
+          .get();
+
+        // Deliver notifications after persistence; email errors do not affect the lead.
+        void sendInstantEstimateEmails({
+          lead: {
+            id: lead.id,
+            name: lead.name,
+            email: lead.email,
+            phone: lead.phone,
+            address: lead.address,
+            city: lead.city,
+            state: lead.state,
+            propertyType: lead.propertyType,
+            estimatedSqft,
+            condition: analysis.condition,
+            materialType: analysis.materialType,
+            recommendedTier,
+            priceLow,
+            priceHigh,
+            priceRecommended,
+            issues: analysis.issues,
+            upgrades: analysis.upgrades,
+            photoUrls: localUrls.map((url) => `${origin}${url}`),
+          },
+        });
+        return res.status(201).json(toPublicEstimate(lead));
+      } catch (error: any) {
+        if (error instanceof z.ZodError) {
+          return res.status(400).json({
+            error: "Please check the required contact and property information.",
+            fields: error.flatten(),
+          });
+        }
+        console.error("[instant-estimate] Create failed:", error);
+        const message =
+          error?.message === "AI_NOT_CONFIGURED"
+            ? "Instant estimates are temporarily unavailable. Please call (650) 952-0233."
+            : "We could not analyze those images. Please try different roof photos or call us.";
+        return res.status(500).json({ error: message });
+      }
+    },
+  );
+
+  app.get("/api/estimate/:id", (req, res) => {
+    const lead = db
+      .select()
+      .from(estimateLeads)
+      .where(eq(estimateLeads.id, String(req.params.id)))
+      .get();
+    if (!lead) return res.status(404).json({ error: "Estimate not found." });
+    return res.json(toPublicEstimate(lead));
+  });
+
+  app.post("/api/estimate/:id/request-proposal", instantEstimateLimiter, async (req, res) => {
+    const lead = db
+      .select()
+      .from(estimateLeads)
+      .where(eq(estimateLeads.id, String(req.params.id)))
+      .get();
+    if (!lead) return res.status(404).json({ error: "Estimate not found." });
+    const proposal = createProposalFromEstimateLead(lead);
+    db.update(estimateLeads)
+      .set({ notes: [lead.notes, "Prospect requested a full proposal."].filter(Boolean).join("\n") })
+      .where(eq(estimateLeads.id, lead.id))
+      .run();
+    // The owner receives the full lead on submission; this creates their draft proposal immediately.
+    return res.json({ ok: true, proposalId: proposal.id });
+  });
+
+  // ── Instant Estimate Admin APIs ─────────────────────────────
+  app.get("/api/admin/estimate-leads", requireAdmin as any, (req, res) => {
+    try {
+      const page = Math.max(1, Number(req.query.page) || 1);
+      const pageSize = Math.min(100, Math.max(1, Number(req.query.pageSize) || 25));
+      const status = typeof req.query.status === "string" ? req.query.status : "";
+      const search = typeof req.query.search === "string" ? req.query.search.toLowerCase().trim() : "";
+      let all = db.select().from(estimateLeads).orderBy(desc(estimateLeads.createdAt)).all();
+      const newCount = all.filter((lead) => lead.status === "new").length;
+      if (status) all = all.filter((lead) => lead.status === status);
+      if (search) {
+        all = all.filter((lead) =>
+          `${lead.name} ${lead.email}`.toLowerCase().includes(search),
+        );
+      }
+      const total = all.length;
+      return res.json({
+        items: all.slice((page - 1) * pageSize, page * pageSize),
+        total,
+        page,
+        pageSize,
+        newCount,
+      });
+    } catch (error) {
+      console.error("[instant-estimate] Admin list failed:", error);
+      return res.status(500).json({ error: "Unable to load estimate leads." });
+    }
+  });
+
+  app.patch("/api/admin/estimate-leads/:id", requireAdmin as any, (req, res) => {
+    const update = z
+      .object({
+        status: z.enum(["new", "contacted", "qualified", "converted", "not_interested"]).optional(),
+        notes: z.string().max(10000).optional(),
+        contactedAt: z.union([z.number(), z.string().datetime()]).optional(),
+      })
+      .safeParse(req.body);
+    if (!update.success) return res.status(400).json({ error: "Invalid lead update." });
+    const values: Record<string, unknown> = { ...update.data };
+    if (typeof values.contactedAt === "string") values.contactedAt = new Date(values.contactedAt);
+    const lead = db
+      .update(estimateLeads)
+      .set(values as any)
+      .where(eq(estimateLeads.id, req.params.id))
+      .returning()
+      .get();
+    if (!lead) return res.status(404).json({ error: "Estimate lead not found." });
+    return res.json(lead);
+  });
+
+  app.post("/api/admin/estimate-leads/:id/convert", requireAdmin as any, (req, res) => {
+    const lead = db
+      .select()
+      .from(estimateLeads)
+      .where(eq(estimateLeads.id, req.params.id))
+      .get();
+    if (!lead) return res.status(404).json({ error: "Estimate lead not found." });
+    const proposal = createProposalFromEstimateLead(lead);
+    return res.status(201).json({ proposalId: proposal.id, proposalToken: proposal.accessToken });
+  });
 
   // ── Public Customer Routes (by access token) ──────────────
 

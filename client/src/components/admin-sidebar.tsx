@@ -20,7 +20,10 @@ import {
   Settings,
   Users,
   Gift,
+  Sparkles,
 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 
 const adminNav = [
   { title: "Dashboard", url: "/admin", icon: LayoutDashboard },
@@ -29,12 +32,17 @@ const adminNav = [
   { title: "Activity Log", url: "/admin/activity", icon: Activity },
   { title: "Crew", url: "/admin/crew", icon: Users },
   { title: "Referrals", url: "/admin/referrals", icon: Gift },
+  { title: "Instant Estimates", url: "/admin/instant-estimates", icon: Sparkles },
   { title: "Financing", url: "/admin/financing", icon: Settings },
   { title: "Scheduling", url: "/admin/scheduling", icon: Settings },
 ];
 
 export function AdminSidebar() {
   const [location] = useLocation();
+  const { data: estimateData } = useQuery<{ newCount: number }>({
+    queryKey: ["/api/admin/estimate-leads", "sidebar"],
+    queryFn: () => apiRequest("GET", "/api/admin/estimate-leads?status=new&pageSize=1").then((res) => res.json()),
+  });
 
   return (
     <Sidebar>
@@ -76,6 +84,9 @@ export function AdminSidebar() {
                       <Link href={item.url}>
                         <item.icon className="w-4 h-4" />
                         <span>{item.title}</span>
+                        {item.url === "/admin/instant-estimates" && (estimateData?.newCount || 0) > 0 && (
+                          <span className="ml-auto rounded-full bg-sidebar-primary px-1.5 py-0.5 text-xs font-bold text-sidebar-primary-foreground" data-testid="badge-new-instant-estimates">{estimateData?.newCount}</span>
+                        )}
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
