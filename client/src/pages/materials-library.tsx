@@ -50,10 +50,10 @@ export default function MaterialsLibrary() {
   useEffect(() => { trackEvent("viewed", { page: "materials" }); }, []);
 
   const materialsList = materials.length > 0 ? materials : [
-    { id: 1, productName: "ASC Silicone Primer", category: "primer", manufacturer: "ASC (American Silicone Coatings)", usedFor: "Surface preparation and adhesion promotion", technicalSummary: "Single-component moisture-cure primer. VOC compliant." },
-    { id: 2, productName: "ASC Qualifying Silicone Base Coat", category: "base_coat", manufacturer: "ASC (American Silicone Coatings)", usedFor: "Primary waterproofing layer", technicalSummary: "High-solids silicone elastomeric coating. 90%+ solids content." },
-    { id: 3, productName: "ASC Qualifying Silicone Top Coat", category: "top_coat", manufacturer: "ASC (American Silicone Coatings)", usedFor: "Final weathering surface with UV protection", technicalSummary: "High-solids silicone top coat. Cool-roof rated. SRI 110+ in white." },
-    { id: 4, productName: "Silicone Sealant/Mastic", category: "sealant", manufacturer: "ASC (American Silicone Coatings)", usedFor: "Detail work at penetrations and transitions", technicalSummary: "100% silicone sealant for gap filling and detail work." },
+    { id: 1, productName: "Premium Silicone Primer", category: "primer", manufacturer: "McCurdy-Approved Silicone Manufacturer", usedFor: "Surface preparation and adhesion promotion", technicalSummary: "Single-component moisture-cure primer. VOC compliant." },
+    { id: 2, productName: "Premium Silicone Base Coat", category: "base_coat", manufacturer: "McCurdy-Approved Silicone Manufacturer", usedFor: "Primary waterproofing layer", technicalSummary: "High-solids silicone elastomeric coating. 90%+ solids content." },
+    { id: 3, productName: "Premium Silicone Top Coat", category: "top_coat", manufacturer: "McCurdy-Approved Silicone Manufacturer", usedFor: "Final weathering surface with UV protection", technicalSummary: "High-solids silicone top coat. Cool-roof rated. SRI 110+ in white." },
+    { id: 4, productName: "Silicone Sealant/Mastic", category: "sealant", manufacturer: "McCurdy-Approved Silicone Manufacturer", usedFor: "Detail work at penetrations and transitions", technicalSummary: "100% silicone sealant for gap filling and detail work." },
     { id: 5, productName: "Polyester Reinforcing Fabric", category: "reinforcing", manufacturer: "Various", usedFor: "Reinforcement at seams, penetrations, and stress points", technicalSummary: "Non-woven polyester fabric embedded between coating layers." },
     { id: 6, productName: "Drain Retrofit Kit", category: "drain", manufacturer: "Various", usedFor: "Drainage improvement in ponding areas", technicalSummary: "Complete drain assembly with strainer, clamp ring, and membrane collar." },
   ];
@@ -78,7 +78,7 @@ export default function MaterialsLibrary() {
           </Badge>
         </div>
         <p className="text-xs text-muted-foreground leading-relaxed">
-          Each material has been specifically selected for compatibility with the ASC Roof Renewal system and your roof's conditions.
+          Each material has been specifically selected for compatibility with the McCurdy Silicone Roof Renewal system and your roof's conditions.
         </p>
       </div>
 

@@ -122,7 +122,7 @@ function PricingTierCard({
           <Label className="text-sm text-muted-foreground">Tier Name</Label>
           <Input
             className="h-8 text-sm"
-            placeholder="20-Year ASC Warranty"
+            placeholder="20-Year Warranty"
             value={opt.name}
             onChange={e => onChange({ name: e.target.value })}
           />
@@ -131,7 +131,7 @@ function PricingTierCard({
           <Label className="text-sm text-muted-foreground">Price</Label>
           <Input
             className="h-8 text-sm"
-            placeholder="$9.50/sq ft"
+            placeholder="$8.50/sq ft"
             value={opt.price}
             onChange={e => onChange({ price: e.target.value })}
           />
@@ -852,7 +852,7 @@ export default function AdminProposalEdit() {
                 <div className="space-y-1.5">
                   <Label className="text-sm">Manufacturer Name</Label>
                   <Input
-                    placeholder="ASC (American Silicone Coatings)"
+                    placeholder="McCurdy-Approved Silicone Manufacturer"
                     value={ed.manufacturerName || ""}
                     onChange={e => setField("manufacturerName", e.target.value)}
                   />
@@ -868,7 +868,7 @@ export default function AdminProposalEdit() {
                 <div className="space-y-1.5">
                   <Label className="text-sm">Total Dry Mils</Label>
                   <Input
-                    placeholder="23–56 dry mils depending on tier"
+                    placeholder="20-50 dry mils depending on warranty tier selected"
                     value={ed.totalDryMils || ""}
                     onChange={e => setField("totalDryMils", e.target.value)}
                   />
@@ -912,7 +912,7 @@ export default function AdminProposalEdit() {
               <div className="space-y-1.5">
                 <Label className="text-sm">Manufacturer Warranty</Label>
                 <Input
-                  placeholder="ASC Manufacturer Warranty — tier based on dry mil build"
+                  placeholder="Manufacturer Warranty — tier based on dry mil build"
                   value={ed.manufacturerWarranty || ""}
                   onChange={e => setField("manufacturerWarranty", e.target.value)}
                 />

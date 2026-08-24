@@ -203,7 +203,7 @@ export default function Welcome() {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 animate-fade-in-up" style={{ animationDelay: '0.4s', animationFillMode: 'backwards' }}>
           {[
             { icon: Shield, label: "Licensed & Insured", sublabel: "Lic #477152" },
-            { icon: Award, label: "Up to 30-Year", sublabel: "ASC Warranty" },
+            { icon: Award, label: "Up to 30-Year", sublabel: "Warranty" },
             { icon: Clock, label: "3-4 Week", sublabel: "Timeline" },
           ].map((trust) => (
             <div key={trust.label} className="text-center p-3 rounded-xl bg-muted/40 border border-transparent">

@@ -12,7 +12,7 @@ export type AnalysisResult = {
   analyzedAt: number;
 };
 
-const prompt = "You are a 30-year veteran commercial roofing inspector for McCurdy Coatings, a Bay Area silicone roof coating specialist. Analyze the roof photos provided. Return a JSON object with fields: materialType (BUR/TPO/EPDM/Modified Bitumen/PVC/Metal/Shingle/Unknown), estimatedSqft (number, best guess from photo perspective), conditionRating (Poor/Fair/Good/Excellent), visibleIssues (array of short strings), recommendedUpgrades (array of {title, reason}), overallSummary (2-3 sentences), and confidence ({materialType, sqft, condition, issues, upgrades}, each high/medium/low). For each field return a confidence: high/medium/low based on photo clarity and visibility.";
+const prompt = "You are a 30-year veteran commercial roofing inspector for McCurdy Silicone, a Bay Area silicone roof coating specialist. Analyze the roof photos provided. Return a JSON object with fields: materialType (BUR/TPO/EPDM/Modified Bitumen/PVC/Metal/Shingle/Unknown), estimatedSqft (number, best guess from photo perspective), conditionRating (Poor/Fair/Good/Excellent), visibleIssues (array of short strings), recommendedUpgrades (array of {title, reason}), overallSummary (2-3 sentences), and confidence ({materialType, sqft, condition, issues, upgrades}, each high/medium/low). For each field return a confidence: high/medium/low based on photo clarity and visibility.";
 
 export async function analyzeRoofPhotos(imageUrls: string[]): Promise<AnalysisResult> {
   if (!process.env.OPENAI_API_KEY) throw new Error("AI_NOT_CONFIGURED");
@@ -53,7 +53,7 @@ export type PublicEstimateAnalysis = {
   notes: string;
 };
 
-const publicEstimatePrompt = `You are a commercial roofing analyst for McCurdy Coatings. Analyze the provided photos and satellite imagery of a commercial roof. Return valid JSON only.
+const publicEstimatePrompt = `You are a commercial roofing analyst for McCurdy Silicone. Analyze the provided photos and satellite imagery of a commercial roof. Return valid JSON only.
 
 Analyze this roof and return JSON with:
 {

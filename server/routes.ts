@@ -172,7 +172,7 @@ const publicEstimateInput = z.object({
 });
 
 const ESTIMATE_TIER_PRICES: Record<number, number> = {
-  5: 5.5, 10: 6.5, 15: 7.5, 20: 9.5, 25: 12, 30: 14,
+  5: 4.5, 10: 5.5, 15: 6.5, 20: 8.5, 25: 9.5, 30: 10.5,
 };
 
 function parseEstimateList(value: string | null): string[] {
@@ -2638,7 +2638,7 @@ function seedDemoData() {
     ]),
     systemType: "Silicone Roof Restoration System",
     scopeSummary:
-      "Full silicone roof restoration system over existing modified bitumen membrane. Includes power washing, seam repair, reinforcement of all penetrations and transitions, primer application, and two-coat silicone coating system with 30 dry mil minimum total build.",
+      "Full silicone roof restoration system over existing modified bitumen membrane. Includes power washing, seam repair, reinforcement of all penetrations and transitions, primer application, and two-coat silicone coating system with 20 dry mil minimum total build.",
     exclusions:
       "Interior repairs, structural modifications, gutter replacement (existing gutters in good condition), HVAC unit replacement or relocation.",
     timelineEstimate: "3-4 weeks from contract signing, weather permitting",
@@ -2664,11 +2664,11 @@ function seedDemoData() {
       "Flashing deterioration around 12 rooftop HVAC penetrations",
       "Drain screens clogged — two drains functioning below capacity",
     ]),
-    roofSystemType: "ASC Roof Renewal Qualifying Silicone System",
-    coatingType: "ASC Qualifying Silicone Roof Coating",
-    primer: "ASC Silicone Primer",
-    baseCoat: "ASC Silicone Base Coat",
-    topCoat: "ASC Silicone Top Coat",
+    roofSystemType: "McCurdy Silicone Roof Renewal System",
+    coatingType: "Premium Silicone Roof Coating",
+    primer: "Premium Silicone Primer",
+    baseCoat: "Premium Silicone Base Coat",
+    topCoat: "Premium Silicone Top Coat",
     reinforcement:
       "Polyester reinforcing fabric at all seams, penetrations, and transitions",
     accessories: JSON.stringify([
@@ -2681,116 +2681,116 @@ function seedDemoData() {
       "All 12 HVAC penetrations will receive full fabric reinforcement with 3-course flashing detail. Pipe boots will be replaced where deteriorated.",
     drainageTaper:
       "Two additional drain retrofit kits included in higher-tier options to address ponding areas",
-    manufacturerName: "ASC (American Silicone Coatings)",
+    manufacturerName: "McCurdy-Approved Silicone Manufacturer",
     layerCount: 3,
     primerMils: "2-3 dry mils",
     baseCoatMils: "Varies by warranty tier",
     topCoatMils: "Varies by warranty tier",
-    totalDryMils: "23-56 dry mils depending on warranty tier selected",
+    totalDryMils: "20-50 dry mils depending on warranty tier selected",
     milsExplanation:
-      "Mil thickness directly determines roof performance and warranty eligibility. ASC Roof Renewal systems are engineered with specific dry mil targets for each warranty tier: 23 mils (5-yr), 30 mils (10-yr), 38 mils (15-yr), 45 mils (20-yr), 51 mils (25-yr), and 56 mils (30-yr). Higher mil builds provide longer protection and greater warranty coverage.",
+      "Mil thickness directly determines roof performance and warranty eligibility. The McCurdy Silicone Roof Renewal System is engineered with specific dry mil targets for each warranty tier: 20 mils (5-yr), 26 mils (10-yr), 32 mils (15-yr), 38 mils (20-yr), 44 mils (25-yr), and 50 mils (30-yr). Higher mil builds provide longer protection and greater warranty coverage.",
     recommendedColor: "White (Cool White)",
     alternateColors: JSON.stringify(["Light Gray", "Tan", "Light Blue"]),
     colorNotes:
       "White provides maximum solar reflectivity (SRI 110+) and best energy savings. Meets Title 24 cool roof requirements. Gray and tan are also compliant but with slightly lower reflectivity values.",
     manufacturerWarranty:
-      "ASC Manufacturer Warranty — tier based on dry mil build (5 to 30 years)",
+      "Manufacturer Warranty — tier based on dry mil build (5 to 30 years)",
     workmanshipWarranty: "McCurdy Roofing Workmanship Warranty",
     ndlWarranty:
       "NDL warranty covers 100% of material and labor costs for the full warranty term with no depreciation or dollar cap. This is the highest level of manufacturer backing available.",
     warrantyTerm: "5 to 30 years based on selected tier",
     warrantySummary:
-      "Your roof will be covered by an ASC manufacturer warranty matched to the mil thickness of the system installed, plus a McCurdy Roofing workmanship warranty. Regular maintenance inspections (recommended annually) help preserve full warranty coverage.",
+      "Your roof will be covered by a manufacturer warranty matched to the mil thickness of the system installed, plus a McCurdy Roofing workmanship warranty. Regular maintenance inspections (recommended annually) help preserve full warranty coverage.",
     warrantyMaintenance:
       "Annual inspection recommended. McCurdy offers a maintenance program that includes annual roof inspection, drain clearing, minor touch-up repairs, and warranty compliance documentation.",
     pricingOptions: JSON.stringify([
       {
-        name: "5-Year ASC Warranty",
+        name: "5-Year Warranty",
+        price: "$4.50/sq ft",
+        description:
+          "McCurdy Silicone Roof Renewal System with 20 dry mils. Entry-level protection ideal for short-term hold or budget-conscious projects.",
+        features: [
+          "Full power wash and prep",
+          "Primer coat",
+          "20 dry mils silicone build",
+          "All penetration reinforcement",
+          "5-year manufacturer warranty",
+        ],
+        recommended: false,
+      },
+      {
+        name: "10-Year Warranty",
         price: "$5.50/sq ft",
         description:
-          "ASC Roof Renewal system with 23 dry mils. Entry-level protection ideal for short-term hold or budget-conscious projects.",
+          "McCurdy Silicone Roof Renewal System with 26 dry mils. Solid mid-range protection with strong value per year of coverage.",
         features: [
           "Full power wash and prep",
           "Primer coat",
-          "23 dry mils silicone build",
+          "26 dry mils silicone build",
           "All penetration reinforcement",
-          "5-year ASC manufacturer warranty",
+          "10-year manufacturer warranty",
         ],
         recommended: false,
       },
       {
-        name: "10-Year ASC Warranty",
+        name: "15-Year Warranty",
         price: "$6.50/sq ft",
         description:
-          "ASC Roof Renewal system with 30 dry mils. Solid mid-range protection with strong value per year of coverage.",
+          "McCurdy Silicone Roof Renewal System with 32 dry mils. Best balance of cost and long-term protection.",
         features: [
           "Full power wash and prep",
           "Primer coat",
-          "30 dry mils silicone build",
+          "32 dry mils silicone build",
           "All penetration reinforcement",
-          "10-year ASC manufacturer warranty",
+          "15-year manufacturer warranty",
         ],
         recommended: false,
       },
       {
-        name: "15-Year ASC Warranty",
-        price: "$7.50/sq ft",
+        name: "20-Year Warranty",
+        price: "$8.50/sq ft",
         description:
-          "ASC Roof Renewal system with 38 dry mils. Best balance of cost and long-term protection.",
+          "McCurdy Silicone Roof Renewal System with 38 dry mils. Premium protection for owners planning to hold property long-term.",
         features: [
           "Full power wash and prep",
           "Primer coat",
           "38 dry mils silicone build",
           "All penetration reinforcement",
-          "15-year ASC manufacturer warranty",
-        ],
-        recommended: false,
-      },
-      {
-        name: "20-Year ASC Warranty",
-        price: "$9.50/sq ft",
-        description:
-          "ASC Roof Renewal system with 45 dry mils. Premium protection for owners planning to hold property long-term.",
-        features: [
-          "Full power wash and prep",
-          "Primer coat",
-          "45 dry mils silicone build",
-          "All penetration reinforcement",
           "Drainage improvements",
-          "20-year ASC manufacturer warranty",
+          "20-year manufacturer warranty",
         ],
         recommended: true,
       },
       {
-        name: "25-Year ASC Warranty",
-        price: "$12.00/sq ft",
+        name: "25-Year Warranty",
+        price: "$9.50/sq ft",
         description:
-          "ASC Roof Renewal system with 51 dry mils. Extended protection with maximum durability for high-value properties.",
+          "McCurdy Silicone Roof Renewal System with 44 dry mils. Extended protection with maximum durability for high-value properties.",
         features: [
           "Full power wash and prep",
           "Primer coat",
-          "51 dry mils silicone build",
+          "44 dry mils silicone build",
           "All penetration reinforcement",
           "Drainage improvements",
           "Parapet wall treatment",
-          "25-year ASC manufacturer warranty",
+          "25-year manufacturer warranty",
         ],
         recommended: false,
       },
       {
-        name: "30-Year ASC Warranty",
-        price: "$14.00/sq ft",
+        name: "30-Year Warranty",
+        price: "$10.50/sq ft",
         description:
-          "ASC Roof Renewal system with 56 dry mils. The ultimate roof investment — maximum mil build and longest manufacturer warranty available.",
+          "McCurdy Silicone Roof Renewal System with 50 dry mils. The ultimate roof investment — maximum mil build and longest manufacturer warranty available.",
         features: [
           "Full power wash and prep",
           "Primer coat",
-          "56 dry mils silicone build",
+          "50 dry mils silicone build",
           "All penetration reinforcement",
           "Drainage improvements",
           "Parapet wall treatment",
           "Skylight re-seal",
-          "30-year ASC manufacturer warranty",
+          "30-year manufacturer warranty",
           "Priority scheduling",
         ],
         recommended: false,
@@ -2806,8 +2806,8 @@ function seedDemoData() {
   const materialData = [
     {
       proposalId: proposal.id,
-      manufacturer: "ASC (American Silicone Coatings)",
-      productName: "ASC Silicone Primer",
+      manufacturer: "McCurdy-Approved Silicone Manufacturer",
+      productName: "Premium Silicone Primer",
       category: "primer",
       usedFor:
         "Surface preparation and adhesion promotion over existing modified bitumen membrane",
@@ -2817,8 +2817,8 @@ function seedDemoData() {
     },
     {
       proposalId: proposal.id,
-      manufacturer: "ASC (American Silicone Coatings)",
-      productName: "ASC Qualifying Silicone Base Coat",
+      manufacturer: "McCurdy-Approved Silicone Manufacturer",
+      productName: "Premium Silicone Base Coat",
       category: "base_coat",
       usedFor:
         "Primary waterproofing layer applied over primer. Provides base-level protection and fill.",
@@ -2828,8 +2828,8 @@ function seedDemoData() {
     },
     {
       proposalId: proposal.id,
-      manufacturer: "ASC (American Silicone Coatings)",
-      productName: "ASC Qualifying Silicone Top Coat",
+      manufacturer: "McCurdy-Approved Silicone Manufacturer",
+      productName: "Premium Silicone Top Coat",
       category: "top_coat",
       usedFor:
         "Final weathering surface. Provides UV protection, reflectivity, and aesthetic finish.",
@@ -2839,13 +2839,13 @@ function seedDemoData() {
     },
     {
       proposalId: proposal.id,
-      manufacturer: "ASC (American Silicone Coatings)",
+      manufacturer: "McCurdy-Approved Silicone Manufacturer",
       productName: "Silicone Sealant/Mastic",
       category: "sealant",
       usedFor:
         "Detail work at penetrations, transitions, and repair of existing defects",
       technicalSummary:
-        "100% silicone sealant for gap filling and detail work. Compatible with all ASC system components.",
+        "100% silicone sealant for gap filling and detail work. Compatible with all Premium Silicone system components.",
       sortOrder: 4,
     },
     {
@@ -2925,7 +2925,7 @@ function seedDemoData() {
       officialLink:
         "https://www.energy.ca.gov/programs-and-topics/programs/building-energy-efficiency-standards",
       notes:
-        "The proposed ASC white silicone system exceeds Title 24 cool roof requirements. McCurdy provides compliance documentation.",
+        "The proposed white silicone system exceeds Title 24 cool roof requirements. McCurdy provides compliance documentation.",
       lastVerifiedDate: 1769904000,
       sortOrder: 4,
     },

@@ -122,7 +122,7 @@ export default function PricingOptions() {
       <GuaranteeRibbon />
       <PageHeader
         title="Pricing & Options"
-        subtitle="Compare ASC Roof Renewal warranty tiers — select the right level for your property"
+        subtitle="Compare McCurdy Silicone Roof Renewal System warranty tiers — select the right level for your property"
         icon={<DollarSign className="w-5 h-5" />}
       />
 
@@ -142,12 +142,12 @@ export default function PricingOptions() {
           </div>
           <div>
             <p className="text-xs font-semibold text-white/90">
-              How ASC Warranty Tiers Work
+              How Warranty Tiers Work
             </p>
             <p className="text-xs text-white/60 mt-1 leading-relaxed max-w-2xl">
               Each tier is defined by the total dry mils of silicone applied to
               your roof. Higher mil builds provide longer waterproof protection
-              and qualify for extended ASC manufacturer warranties. All tiers
+              and qualify for extended manufacturer warranties. All tiers
               include full surface prep, primer, penetration reinforcement, and
               silicone coating.
             </p>
@@ -574,7 +574,7 @@ export default function PricingOptions() {
           <div className="flex items-center gap-2 mb-3">
             <Zap className="w-4 h-4 text-accent" />
             <h3 className="text-sm font-semibold text-foreground">
-              Why Choose ASC?
+              Why Choose McCurdy Silicone?
             </h3>
           </div>
           <div className="space-y-2">

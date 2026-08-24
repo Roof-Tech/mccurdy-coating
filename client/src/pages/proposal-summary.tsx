@@ -41,7 +41,7 @@ export default function ProposalSummary() {
         {[
           { label: "Project Type", value: proposal.projectType ? proposal.projectType.charAt(0).toUpperCase() + proposal.projectType.slice(1) : "Commercial", icon: Building2 },
           { label: "Total Roof Area", value: displayedSqft > 0 ? `${displayedSqft.toLocaleString()} sq ft` : "—", icon: Ruler },
-          { label: "System", value: "ASC Silicone", icon: Layers },
+          { label: "System", value: "Premium Silicone", icon: Layers },
           { label: "Timeline", value: proposal.timelineEstimate?.replace("from contract signing, ", "") || "3-4 weeks", icon: Clock },
         ].map((metric) => (
           <div key={metric.label} className="glass-card rounded-xl p-4 text-center">
@@ -177,7 +177,7 @@ export default function ProposalSummary() {
             </div>
             <div>
               <p className="text-sm font-semibold text-foreground">View Pricing & Options</p>
-              <p className="text-sm text-muted-foreground">Compare 6 ASC warranty tiers</p>
+              <p className="text-sm text-muted-foreground">Compare 6 warranty tiers</p>
             </div>
           </div>
           <ArrowRight className="w-4 h-4 text-muted-foreground/40 group-hover:text-primary group-hover:translate-x-1 transition-all" />
