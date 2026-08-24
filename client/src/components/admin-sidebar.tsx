@@ -98,7 +98,7 @@ export function AdminSidebar() {
       </SidebarContent>
       <SidebarFooter className="p-3 border-t border-sidebar-border">
         <div className="text-xs text-sidebar-foreground/40 text-center">
-          © McCurdy Roofing Inc. · License #477152 · Family-Owned Since 1992
+          © McCurdy Roofing Inc. · License #477152 · Family-Owned Since 1985
         </div>
       </SidebarFooter>
     </Sidebar>

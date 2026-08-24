@@ -171,7 +171,7 @@ export function ProposalSidebar() {
       </SidebarContent>
       <SidebarFooter className="p-3 border-t border-sidebar-border">
         <p className="text-xs text-center text-sidebar-foreground/50">
-          © McCurdy Roofing Inc. · License #477152 · Family-Owned Since 1992
+          © McCurdy Roofing Inc. · License #477152 · Family-Owned Since 1985
         </p>
       </SidebarFooter>
     </Sidebar>
