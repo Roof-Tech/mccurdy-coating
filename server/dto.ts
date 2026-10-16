@@ -22,6 +22,7 @@ export function toPublicProposal(proposal: Proposal) {
     lastSentTo: _lastSentTo,
     sendCount: _sendCount,
     aiRoofAnalysis: _aiRoofAnalysis,
+    aiAnalysisReviewedBy: _aiAnalysisReviewedBy,
     ...publicProposal
   } = proposal;
 
@@ -78,8 +79,9 @@ export function toPublicTimelineItem(item: ProjectTimeline) {
     createdAt: _createdAt,
     ...publicTimelineItem
   } = item;
-
-  return publicTimelineItem;
+  // Older field captures appended internal crew notes to captions; never show those to customers.
+  const caption = publicTimelineItem.caption ? publicTimelineItem.caption.replace(/\s*·\s*Note:[\s\S]*$/, "").trim() || null : null;
+  return { ...publicTimelineItem, caption };
 }
 
 export function toPublicReferral(referral: Referral) {

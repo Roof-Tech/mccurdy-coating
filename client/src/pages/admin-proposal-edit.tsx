@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { useState, useRef, useCallback, useEffect } from "react";
 import type { Proposal, Material, Document as DocType, WarrantyDocument, ProposalImage, ChangeOrder } from "@shared/schema";
+import { MeasurementImport } from "@/components/measurement-import";
 import { AiRoofPanel, UpgradeMenuPanel, JobPhotosPanel, EmailSchedulePanel, ProposalMessagesPanel } from "@/components/admin-mega-feature-panels";
 
 // ── Helpers ────────────────────────────────────────────────────
@@ -682,7 +683,8 @@ export default function AdminProposalEdit() {
                     <div className="space-y-1.5"><Label className="text-sm">Verified Sq Ft</Label><Input data-testid="input-verified-sqft" type="number" min="0" value={ed.verifiedSqft || ""} onChange={e => setField("verifiedSqft", e.target.value)} /></div>
                     <div className="space-y-1.5"><Label className="text-sm">Measurement Source</Label><Select value={ed.sqftMeasurementSource || "ai_estimate"} onValueChange={v => setField("sqftMeasurementSource", v)}><SelectTrigger data-testid="select-measurement-source"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="ai_estimate">AI estimate</SelectItem><SelectItem value="manual_measurement">Manual measurement</SelectItem><SelectItem value="aerial_report">Aerial report</SelectItem><SelectItem value="blueprint">Blueprint</SelectItem></SelectContent></Select></div>
                     <div className="sm:col-span-2 space-y-1.5"><Label className="text-sm">Measurement Notes</Label><Textarea data-testid="textarea-measurement-notes" value={ed.measurementNotes || ""} onChange={e => setField("measurementNotes", e.target.value)} placeholder="Measurement details, report reference, or exclusions" /></div>
-                    <div className="sm:col-span-2"><Label className="text-sm">Upload Aerial Report</Label><Input data-testid="input-upload-aerial-report" className="mt-1" type="file" accept=".pdf,image/*" onChange={e => { const file=e.target.files?.[0]; if(file) { setField("sqftMeasurementSource", "aerial_report"); handleUpload(file, "aerial_report"); } e.currentTarget.value=""; }} /></div>
+                    <MeasurementImport proposalId={proposalId} onApplied={(p: any) => setEd(prev => ({ ...prev, verifiedSqft: String(p?.verifiedSqft || ""), sqftMeasurementSource: p?.sqftMeasurementSource || prev.sqftMeasurementSource, measurementNotes: p?.measurementNotes || "", roofAreas: tryParseArray(p?.roofAreas).join("\n") || prev.roofAreas }))} />
+                    <div className="sm:col-span-2"><Label className="text-sm">Upload Aerial Report (file only)</Label><Input data-testid="input-upload-aerial-report" className="mt-1" type="file" accept=".pdf,image/*" onChange={e => { const file=e.target.files?.[0]; if(file) { setField("sqftMeasurementSource", "aerial_report"); handleUpload(file, "aerial_report"); } e.currentTarget.value=""; }} /></div>
                   </div>
                   {ed.appointmentDate && ed.customerEmail && <Button data-testid="button-send-prep-email" variant="outline" onClick={async()=>{const r=await apiRequest("POST",`/api/admin/proposals/${proposalId}/send-prep-email`); if(!r.ok) throw new Error("Unable to send"); toast({title:"Prep-for-visit email sent"});}}><Mail className="w-4 h-4 mr-2"/>Send Prep-For-Visit Email</Button>}
                 </div>

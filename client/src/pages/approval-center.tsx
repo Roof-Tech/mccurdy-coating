@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { CheckCircle, Phone, MessageCircle, Send, RefreshCw, Shield, ArrowRight, PenTool, Eraser, CalendarDays, ClipboardCheck } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { apiRequest } from "@/lib/queryClient";
+import { CustomerVerify } from "@/components/customer-verify";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ChangeOrder } from "@shared/schema";
 
@@ -100,7 +101,7 @@ function SignaturePad({ onChange }: { onChange: (dataUrl: string | null) => void
         )}
       </div>
       <div className="flex justify-end">
-        <Button type="button" variant="ghost" size="sm" onClick={clear} className="text-xs h-7 gap-1.5" data-testid="button-clear-signature">
+        <Button type="button" variant="ghost" size="sm" onClick={clear} className="text-xs min-h-11 gap-1.5" data-testid="button-clear-signature">
           <Eraser className="w-3 h-3" /> Clear
         </Button>
       </div>
@@ -334,7 +335,7 @@ export default function ApprovalCenter() {
                         By signing, I, <strong className="text-foreground">{name || "[your name]"}</strong>, approve this {changeOrder.type === "credit" ? "credit" : "addition"} change order for the amount shown above.
                       </div>
                       <Button
-                        className="w-full h-10 bg-orange-600 hover:bg-orange-700 text-white gap-2 font-semibold"
+                        className="w-full min-h-12 bg-orange-600 hover:bg-orange-700 text-white gap-2 font-semibold"
                         onClick={() => handleChangeOrderAcceptance(changeOrder)}
                         disabled={submitting === `change-order-${changeOrder.id}`}
                         data-testid={`button-accept-change-order-${changeOrder.id}`}
@@ -375,6 +376,14 @@ export default function ApprovalCenter() {
               <CheckCircle className="w-8 h-8 text-green-600 mx-auto mb-2" />
               <p className="text-sm font-semibold text-foreground">Signed &amp; Approved</p>
               <p className="text-sm text-muted-foreground mt-1">McCurdy Roofing was notified. Expect a call within one business day.</p>
+              <div className="mt-4 space-y-2 text-left">
+                <p className="text-sm font-semibold text-foreground">Next steps</p>
+                <a href="https://calendly.com/mccurdycoatings?utm_source=portal&utm_medium=approval&utm_campaign=post_sign" target="_blank" rel="noopener noreferrer" className="flex min-h-12 w-full items-center justify-center gap-2 rounded-md bg-green-600 px-4 text-sm font-semibold text-white hover:bg-green-700" data-testid="link-post-sign-book">
+                  <CalendarDays className="h-4 w-4" /> Book your pre-job walkthrough
+                </a>
+                <p className="text-xs text-muted-foreground">No deposit is due. 50% is due when materials are loaded and cleaning &amp; sealing are complete; the final 50% at completion. Invoices will appear in your portal.</p>
+                <a href={`#/view/${token}/invoices`} className="flex min-h-11 w-full items-center justify-center rounded-md border text-sm font-medium" data-testid="link-post-sign-invoices">View invoices &amp; payment options</a>
+              </div>
             </div>
           ) : (
             <>
@@ -403,7 +412,7 @@ export default function ApprovalCenter() {
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={() => setRequestedStart(new Date().toISOString().slice(0, 10))}
-                    className="flex items-center justify-center gap-2 h-10 w-full rounded-md border border-green-600 bg-green-50 hover:bg-green-100 text-green-700 text-sm font-medium transition-colors"
+                    className="flex items-center justify-center gap-2 min-h-12 w-full rounded-md border border-green-600 bg-green-50 hover:bg-green-100 text-green-700 text-sm font-medium transition-colors"
                     data-testid="link-book-start-date"
                   >
                     <CalendarDays className="w-4 h-4" />
@@ -417,6 +426,7 @@ export default function ApprovalCenter() {
                 <label className="text-sm font-medium text-foreground mb-1.5 block">
                   Your Signature <span className="text-destructive">*</span>
                 </label>
+                <div className="mb-3"><CustomerVerify token={token} compact /></div>
                 <SignaturePad onChange={setSignature} />
               </div>
 
@@ -425,7 +435,7 @@ export default function ApprovalCenter() {
               </div>
 
               <Button
-                className="w-full bg-green-600 hover:bg-green-700 text-white gap-2 font-semibold h-11"
+                className="w-full bg-green-600 hover:bg-green-700 text-white gap-2 font-semibold min-h-12"
                 onClick={handleApprove}
                 disabled={submitting === "approve"}
                 data-testid="button-approve"

@@ -24,8 +24,7 @@ const COUNTIES_2026 = {
       { name: "Alameda Municipal Power Rebates", type: "utility", description: "AMP customers can apply for rebates for heat pump HVAC, smart thermostats, electric panel upgrades, and energy efficiency measures.", link: "https://www.alamedamp.com/398/Rebates-Programs" },
       { name: "East Bay Community Energy Programs", type: "utility", description: "EBCE provides clean energy programs and incentives for Alameda County residents and businesses.", link: "https://ebce.org/" },
       { name: "PACE Financing", type: "financing", description: "Property Assessed Clean Energy financing for energy efficiency improvements including roofing. Repaid through property tax assessment.", link: "https://dfpi.ca.gov/consumers/housing/pace/", notes: "100% financing available." },
-      { name: "Title 24 Compliance (Zone 3/12)", type: "compliance", description: "Zone 3: No prescriptive cool roof requirement. Zone 12 (inland): Cool roof with SRI ≥16 (steep-slope), SRI ≥75 (low-slope).", link: "https://www.energy.ca.gov/programs-and-topics/programs/building-energy-efficiency-standards/climate-zone-tool-maps-and", notes: "Silicone coating systems exceed all Title 24 cool roof thresholds." },
-      { name: "Federal Energy Efficient Home Improvement Credit (25C)", type: "tax_deduction", description: "Federal tax credit up to 30% of qualifying energy-efficient home improvement costs, up to $1,200/year for roofing materials.", link: "https://www.energystar.gov/about/federal-tax-credits", amount: "Up to $1,200/year" },
+      { name: "Title 24 Compliance (Zone 3/12)", type: "compliance", description: "Zone 3: No prescriptive cool roof requirement. Zone 12 (inland): Cool roof with SRI ≥16 (steep-slope), SRI ≥75 (low-slope).", link: "https://www.energy.ca.gov/programs-and-topics/programs/building-energy-efficiency-standards/climate-zone-tool-maps-and", notes: "Requirements depend on roof slope, building type, climate zone, and permit scope. McCurdy provides the coating's CRRC ratings for your permit." },
       { name: "Section 179 Deduction (Commercial)", type: "tax_deduction", description: "Commercial property owners may deduct full cost of roof restoration as a business expense in the year completed.", link: "https://www.irs.gov/forms-pubs/about-publication-946", notes: "Consult your CPA." },
     ]
   },
@@ -42,7 +41,6 @@ const COUNTIES_2026 = {
       { name: "PACE Financing", type: "financing", description: "Property Assessed Clean Energy financing for roofing and energy improvements.", link: "https://dfpi.ca.gov/consumers/housing/pace/" },
       { name: "GoGreen Financing", type: "financing", description: "PG&E customers can finance up to 100% of energy upgrade costs through approved lenders.", link: "https://gogreenfinancing.com/" },
       { name: "Title 24 Compliance (Zone 3)", type: "compliance", description: "Climate Zone 3 has no prescriptive cool roof requirement for steep-slope residential. Low-slope commercial: SRI ≥75.", link: "https://www.energy.ca.gov/programs-and-topics/programs/building-energy-efficiency-standards/climate-zone-tool-maps-and" },
-      { name: "Federal 25C Tax Credit", type: "tax_deduction", description: "Up to 30% of qualifying energy-efficient roofing material costs, max $1,200/year.", link: "https://www.energystar.gov/about/federal-tax-credits", amount: "Up to $1,200/year" },
       { name: "Section 179 Deduction (Commercial)", type: "tax_deduction", description: "Commercial owners may deduct full roof restoration cost as business expense.", link: "https://www.irs.gov/forms-pubs/about-publication-946" },
     ]
   },
@@ -58,7 +56,6 @@ const COUNTIES_2026 = {
       { name: "BayREN EASE Home Program", type: "rebate", description: "Weatherization upgrades with co-pay capped at $1,000.", link: "https://www.bayren.org/ease-home", amount: "Co-pay capped at $1,000" },
       { name: "PACE Financing", type: "financing", description: "Property Assessed Clean Energy financing for energy improvements.", link: "https://dfpi.ca.gov/consumers/housing/pace/" },
       { name: "Title 24 Compliance (Zone 3)", type: "compliance", description: "Climate Zone 3: No prescriptive cool roof requirement for steep-slope. Low-slope commercial buildings: SRI ≥75.", link: "https://www.energy.ca.gov/programs-and-topics/programs/building-energy-efficiency-standards/climate-zone-tool-maps-and" },
-      { name: "Federal 25C Tax Credit", type: "tax_deduction", description: "Up to 30% of qualifying roofing material costs, max $1,200/year.", link: "https://www.energystar.gov/about/federal-tax-credits", amount: "Up to $1,200/year" },
       { name: "Section 179 Deduction (Commercial)", type: "tax_deduction", description: "Commercial owners may deduct full roof restoration cost as business expense.", link: "https://www.irs.gov/forms-pubs/about-publication-946" },
     ]
   },
@@ -73,8 +70,7 @@ const COUNTIES_2026 = {
       { name: "BayREN EASE Home Program", type: "rebate", description: "Weatherization upgrades with co-pay capped at $1,000.", link: "https://www.bayren.org/ease-home", amount: "Co-pay capped at $1,000" },
       { name: "PACE Financing", type: "financing", description: "Property Assessed Clean Energy financing for energy improvements.", link: "https://dfpi.ca.gov/consumers/housing/pace/" },
       { name: "GoGreen Financing", type: "financing", description: "PG&E customers can finance up to 100% of energy upgrade costs through approved lenders.", link: "https://gogreenfinancing.com/" },
-      { name: "Title 24 Compliance (Zone 3/12)", type: "compliance", description: "West Contra Costa (Zone 3): no prescriptive cool roof. East Contra Costa (Zone 12): steep-slope SRI ≥16, low-slope SRI ≥75.", link: "https://www.energy.ca.gov/programs-and-topics/programs/building-energy-efficiency-standards/climate-zone-tool-maps-and", notes: "Silicone coatings exceed all requirements." },
-      { name: "Federal 25C Tax Credit", type: "tax_deduction", description: "Up to 30% of qualifying roofing material costs, max $1,200/year.", link: "https://www.energystar.gov/about/federal-tax-credits", amount: "Up to $1,200/year" },
+      { name: "Title 24 Compliance (Zone 3/12)", type: "compliance", description: "West Contra Costa (Zone 3): no prescriptive cool roof. East Contra Costa (Zone 12): steep-slope SRI ≥16, low-slope SRI ≥75.", link: "https://www.energy.ca.gov/programs-and-topics/programs/building-energy-efficiency-standards/climate-zone-tool-maps-and", notes: "Requirements depend on roof slope, building type, climate zone, and permit scope. McCurdy provides the coating's CRRC ratings for your permit." },
       { name: "Section 179 Deduction (Commercial)", type: "tax_deduction", description: "Commercial owners may deduct full roof restoration cost as business expense.", link: "https://www.irs.gov/forms-pubs/about-publication-946" },
     ]
   },
@@ -89,7 +85,6 @@ const COUNTIES_2026 = {
       { name: "San Joaquin Valley Air Pollution Control District", type: "rebate", description: "SJVAPCD offers various incentive programs for air quality improvements in the San Joaquin Valley.", link: "https://www.valleyair.org/grants/" },
       { name: "PACE Financing", type: "financing", description: "Property Assessed Clean Energy financing available for energy improvements.", link: "https://dfpi.ca.gov/consumers/housing/pace/" },
       { name: "Title 24 Compliance (Zone 12)", type: "compliance", description: "Zone 12 requires cool roof compliance: steep-slope SRI ≥16, low-slope SRI ≥75.", link: "https://www.energy.ca.gov/programs-and-topics/programs/building-energy-efficiency-standards/climate-zone-tool-maps-and", notes: "Silicone systems exceed Zone 12 requirements with SRI 110+." },
-      { name: "Federal 25C Tax Credit", type: "tax_deduction", description: "Up to 30% of qualifying roofing material costs, max $1,200/year.", link: "https://www.energystar.gov/about/federal-tax-credits", amount: "Up to $1,200/year" },
       { name: "Section 179 Deduction (Commercial)", type: "tax_deduction", description: "Commercial owners may deduct full roof restoration cost as business expense.", link: "https://www.irs.gov/forms-pubs/about-publication-946" },
       { name: "Energy Upgrade California", type: "rebate", description: "Statewide program offering incentives for home improvements including energy-efficient roofing.", link: "https://www.energyupgradeca.org/", amount: "Up to $5,000 for combined upgrades" },
     ]
@@ -104,7 +99,6 @@ const COUNTIES_2026 = {
       { name: "PACE Financing", type: "financing", description: "Property Assessed Clean Energy financing for roofing and energy improvements.", link: "https://dfpi.ca.gov/consumers/housing/pace/" },
       { name: "GoGreen Financing", type: "financing", description: "PG&E customers can finance up to 100% of energy upgrade costs.", link: "https://gogreenfinancing.com/" },
       { name: "Title 24 Compliance (Zone 12)", type: "compliance", description: "Zone 12: prescriptive cool roof requirements. Steep-slope SRI ≥16. Low-slope SRI ≥75.", link: "https://www.energy.ca.gov/programs-and-topics/programs/building-energy-efficiency-standards/climate-zone-tool-maps-and" },
-      { name: "Federal 25C Tax Credit", type: "tax_deduction", description: "Up to 30% of qualifying roofing material costs, max $1,200/year.", link: "https://www.energystar.gov/about/federal-tax-credits", amount: "Up to $1,200/year" },
       { name: "Section 179 Deduction (Commercial)", type: "tax_deduction", description: "Commercial owners may deduct full roof restoration cost as business expense.", link: "https://www.irs.gov/forms-pubs/about-publication-946" },
       { name: "Energy Upgrade California", type: "rebate", description: "Statewide incentives for home energy improvements.", link: "https://www.energyupgradeca.org/", amount: "Up to $5,000 for combined upgrades" },
     ]
@@ -120,7 +114,6 @@ const COUNTIES_2026 = {
       { name: "PACE Financing", type: "financing", description: "Property Assessed Clean Energy financing for energy improvements.", link: "https://dfpi.ca.gov/consumers/housing/pace/" },
       { name: "GoGreen Financing", type: "financing", description: "Finance up to 100% of energy upgrade costs.", link: "https://gogreenfinancing.com/" },
       { name: "Title 24 Compliance (Zone 12)", type: "compliance", description: "Zone 12: cool roof required. Steep-slope SRI ≥16. Low-slope SRI ≥75.", link: "https://www.energy.ca.gov/programs-and-topics/programs/building-energy-efficiency-standards/climate-zone-tool-maps-and" },
-      { name: "Federal 25C Tax Credit", type: "tax_deduction", description: "Up to 30% of qualifying roofing material costs, max $1,200/year.", link: "https://www.energystar.gov/about/federal-tax-credits", amount: "Up to $1,200/year" },
       { name: "Section 179 Deduction (Commercial)", type: "tax_deduction", description: "Commercial owners may deduct full roof restoration cost as business expense.", link: "https://www.irs.gov/forms-pubs/about-publication-946" },
     ]
   },
@@ -135,7 +128,6 @@ const COUNTIES_2026 = {
       { name: "BayREN EASE Home Program", type: "rebate", description: "Weatherization upgrades with co-pay capped at $1,000.", link: "https://www.bayren.org/ease-home", amount: "Co-pay capped at $1,000" },
       { name: "PACE Financing", type: "financing", description: "Property Assessed Clean Energy financing for energy improvements.", link: "https://dfpi.ca.gov/consumers/housing/pace/" },
       { name: "Title 24 Compliance (Zone 3)", type: "compliance", description: "Zone 3: no prescriptive cool roof for steep-slope. Low-slope commercial: SRI ≥75.", link: "https://www.energy.ca.gov/programs-and-topics/programs/building-energy-efficiency-standards/climate-zone-tool-maps-and" },
-      { name: "Federal 25C Tax Credit", type: "tax_deduction", description: "Up to 30% of qualifying roofing material costs, max $1,200/year.", link: "https://www.energystar.gov/about/federal-tax-credits", amount: "Up to $1,200/year" },
       { name: "Section 179 Deduction (Commercial)", type: "tax_deduction", description: "Commercial owners may deduct full roof restoration cost as business expense.", link: "https://www.irs.gov/forms-pubs/about-publication-946" },
     ]
   },
@@ -150,7 +142,6 @@ const COUNTIES_2026 = {
       { name: "PACE Financing", type: "financing", description: "Property Assessed Clean Energy financing for energy improvements.", link: "https://dfpi.ca.gov/consumers/housing/pace/" },
       { name: "GoGreen Financing", type: "financing", description: "Finance up to 100% of energy upgrade costs.", link: "https://gogreenfinancing.com/" },
       { name: "Title 24 Compliance (Zone 13)", type: "compliance", description: "Zone 13 (very hot): strictest cool roof requirements. Steep-slope SRI ≥16 or aged SR ≥0.20 with TE ≥0.75. Low-slope SRI ≥75 or aged SR ≥0.63 with TE ≥0.75.", link: "https://www.energy.ca.gov/programs-and-topics/programs/building-energy-efficiency-standards/climate-zone-tool-maps-and", notes: "Silicone coatings dramatically exceed these requirements." },
-      { name: "Federal 25C Tax Credit", type: "tax_deduction", description: "Up to 30% of qualifying roofing material costs, max $1,200/year.", link: "https://www.energystar.gov/about/federal-tax-credits", amount: "Up to $1,200/year" },
       { name: "Section 179 Deduction (Commercial)", type: "tax_deduction", description: "Commercial owners may deduct full roof restoration cost as business expense.", link: "https://www.irs.gov/forms-pubs/about-publication-946" },
       { name: "Energy Upgrade California", type: "rebate", description: "Statewide incentives for home energy improvements.", link: "https://www.energyupgradeca.org/", amount: "Up to $5,000 for combined upgrades" },
     ]
@@ -168,7 +159,6 @@ const COUNTIES_2026 = {
       { name: "PACE Financing", type: "financing", description: "Property Assessed Clean Energy financing for energy improvements.", link: "https://dfpi.ca.gov/consumers/housing/pace/" },
       { name: "GoGreen Financing", type: "financing", description: "Finance up to 100% of energy upgrade costs.", link: "https://gogreenfinancing.com/" },
       { name: "Title 24 Compliance (Zone 4)", type: "compliance", description: "Zone 4: cool roof required for low-slope commercial (SRI ≥75). Steep-slope residential: no prescriptive requirement but earns compliance credit.", link: "https://www.energy.ca.gov/programs-and-topics/programs/building-energy-efficiency-standards/climate-zone-tool-maps-and" },
-      { name: "Federal 25C Tax Credit", type: "tax_deduction", description: "Up to 30% of qualifying roofing material costs, max $1,200/year.", link: "https://www.energystar.gov/about/federal-tax-credits", amount: "Up to $1,200/year" },
       { name: "Section 179 Deduction (Commercial)", type: "tax_deduction", description: "Commercial owners may deduct full roof restoration cost as business expense.", link: "https://www.irs.gov/forms-pubs/about-publication-946" },
     ]
   },

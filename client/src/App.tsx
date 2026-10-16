@@ -7,6 +7,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { ProposalSidebar } from "@/components/proposal-sidebar";
 import { AdminSidebar } from "@/components/admin-sidebar";
+import { AdminGate, AdminSignOut } from "@/components/admin-gate";
 import { ProposalProvider } from "@/lib/proposal-context";
 import { Suspense, lazy } from "react";
 
@@ -52,9 +53,14 @@ const Estimate = lazy(() => import("@/pages/estimate"));
 const Messages = lazy(() => import("@/pages/messages"));
 const Invoices = lazy(() => import("@/pages/invoices"));
 const Preferences = lazy(() => import("@/pages/preferences"));
+const MyProperties = lazy(() => import("@/pages/my-properties"));
 const AdminFinancing = lazy(() => import("@/pages/admin-financing"));
 const AdminScheduling = lazy(() => import("@/pages/admin-scheduling"));
 const FieldCapture = lazy(() => import("@/pages/admin-field-capture"));
+const AdminTeam = lazy(() => import("@/pages/admin-team"));
+const AdminInvoices = lazy(() => import("@/pages/admin-invoices"));
+const AdminIncentives = lazy(() => import("@/pages/admin-incentives"));
+const AdminRetention = lazy(() => import("@/pages/admin-retention"));
 import NotFound from "@/pages/not-found";
 
 function LoadingSpinner() {
@@ -119,6 +125,7 @@ function CustomerProposalApp({ token }: { token: string }) {
                 <Route path="/view/:token/review" component={ReviewRouter} />
                 <Route path="/view/:token/messages" component={Messages} />
                 <Route path="/view/:token/invoices" component={Invoices} />
+                <Route path="/view/:token/properties" component={MyProperties} />
                 <Route
                   path="/view/:token/preferences"
                   component={Preferences}
@@ -172,9 +179,12 @@ function AdminApp() {
             data-testid="header-admin"
           >
             <SidebarTrigger data-testid="button-admin-sidebar-toggle" />
-            <span className="text-xs text-muted-foreground pr-2">
-              Admin Portal
-            </span>
+            <div className="flex items-center gap-2 pr-1">
+              <span className="hidden text-xs text-muted-foreground sm:inline">
+                Admin Portal
+              </span>
+              <AdminSignOut />
+            </div>
           </header>
           <main id="main-content" className="flex-1 overflow-y-auto">
             <Switch>
@@ -199,6 +209,10 @@ function AdminApp() {
               <Route path="/admin/instant-estimates" component={AdminEstimateLeads} />
               <Route path="/admin/financing" component={AdminFinancing} />
               <Route path="/admin/scheduling" component={AdminScheduling} />
+              <Route path="/admin/team" component={AdminTeam} />
+              <Route path="/admin/invoices" component={AdminInvoices} />
+              <Route path="/admin/incentives" component={AdminIncentives} />
+              <Route path="/admin/storm-followups" component={AdminRetention} />
               <Route component={AdminDashboard} />
             </Switch>
           </main>
@@ -304,7 +318,11 @@ function AppRouter() {
   }
 
   if (location.startsWith("/admin")) {
-    return <AdminApp />;
+    return (
+      <AdminGate>
+        <AdminApp />
+      </AdminGate>
+    );
   }
 
   return <LandingPage />;

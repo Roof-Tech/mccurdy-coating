@@ -54,6 +54,13 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import { rateLimit } from "express-rate-limit";
+import { requireAdmin, registerAuthRoutes } from "./admin-auth";
+import { registerPaymentRoutes } from "./payments";
+import { applyIncentiveRules } from "./incentive-rules";
+import { registerFieldOpsRoutes, optimizeUpload } from "./field-ops";
+import { registerMeasurementRoutes } from "./measurements";
+import { registerCustomerPortalRoutes, afterProposalSigned, isVerifiedFor } from "./customer-portal";
+import { registerRetentionRoutes, isStormOptedIn, setStormOptIn, sendStormFollowups } from "./retention";
 import {
   toAdminProposal,
   toPublicActivity,
@@ -65,19 +72,7 @@ import {
 } from "./dto";
 // spawn import removed — AI generation is handled externally
 
-function requireAdmin(req: Request, res: Response, next: NextFunction) {
-  const ADMIN_KEY = process.env.ADMIN_KEY;
-  if (!ADMIN_KEY) {
-    return res
-      .status(500)
-      .json({ error: "Server misconfigured: ADMIN_KEY not set" });
-  }
-  const provided = req.header("X-Admin-Key");
-  if (!provided || provided !== ADMIN_KEY) {
-    return res.status(401).json({ error: "Unauthorized" });
-  }
-  next();
-}
+// Admin auth (accounts, MFA, sessions, roles) lives in ./admin-auth
 
 // File upload configuration — use persistent disk if available (Render)
 const dataDir = process.env.DATA_DIR || process.cwd();
@@ -96,7 +91,7 @@ const upload = multer({
       cb(null, `${base}_${Date.now()}${ext}`);
     },
   }),
-  limits: { fileSize: 50 * 1024 * 1024 }, // 50MB
+  limits: { fileSize: 25 * 1024 * 1024 }, // 25MB raw (phone photos); docs capped at 20MB in the route; images are re-encoded to ~0.3-1MB WebP
   fileFilter: (_req, file, cb) => {
     const allowed = [
       ".pdf",
@@ -261,6 +256,12 @@ function createProposalFromEstimateLead(lead: typeof estimateLeads.$inferSelect)
 }
 
 export function registerRoutes(server: Server, app: Express): void {
+  registerAuthRoutes(app);
+  registerPaymentRoutes(app);
+  registerFieldOpsRoutes(app);
+  registerRetentionRoutes(app);
+  registerCustomerPortalRoutes(app);
+  registerMeasurementRoutes(app, uploadDir);
   // Auto-seed demo data on first boot
   try {
     const existing = storage.getProposalByNumber("MCC-2026-0001");
@@ -568,37 +569,43 @@ export function registerRoutes(server: Server, app: Express): void {
         ...storage.getIncentivesByProposal(proposal.id),
         ...storage.getAllIncentives().filter((i) => !i.proposalId),
       ];
-      const now = Math.floor(Date.now() / 1000),
-        staleAt = now - 90 * 86400;
-      const filtered = all
+      const constructionStart = (proposal as any).scheduledStartDate || null;
+      const toIso = (v: any) => {
+        if (v === null || v === undefined || v === "") return undefined;
+        const n = Number(v);
+        if (Number.isFinite(n) && n > 100000) return new Date(n * 1000).toISOString().slice(0, 10); // unix seconds (number or numeric text)
+        return String(v).slice(0, 10);
+      };
+      const candidates = all
         .filter((i: any) => {
-          const applies = String(i.applicableTo || "commercial,residential")
-            .split(",")
-            .map((x: string) => x.trim());
-          const isResidentialOnly =
-            /25c|bayren home|ease home/i.test(i.programName) ||
-            (applies.length === 1 && applies[0] === "residential");
-          if (propertyType === "commercial" && isResidentialOnly) return false;
-          if (!applies.includes(propertyType) && !applies.includes("all"))
-            return false;
-          if (/bayren business/i.test(i.programName))
-            return (
-              propertyType === "commercial" &&
-              /pg\s*&?\s*e|pge/i.test(proposal.utilityTerritory || "")
-            );
-          if (/bambe/i.test(i.programName))
-            return propertyType === "multifamily";
-          return true;
+          const applies = String(i.applicableTo || "commercial,residential").split(",").map((x: string) => x.trim());
+          return applies.includes(propertyType) || applies.includes("all");
         })
         .map((i: any) => ({
           ...i,
-          verificationStatus:
-            i.expiryDate && i.expiryDate < now
-              ? "expired"
-              : i.lastVerifiedDate && (typeof i.lastVerifiedDate === "number" ? i.lastVerifiedDate : Math.floor(new Date(i.lastVerifiedDate).getTime() / 1000)) < staleAt
-                ? "needs_review"
-                : i.verificationStatus || "current",
+          name: i.programName,
+          type: i.programType,
+          description: i.applicability || "",
+          link: i.officialLink || "",
+          notes: i.notes || undefined,
+          verified: toIso(i.lastVerifiedDate),
+          expiryDate: toIso(i.expiryDate),
+          reviewStatus: i.verificationStatus === "needs_review" ? "needs_review" : undefined,
         }));
+      const filtered = applyIncentiveRules(candidates, {
+        propertyType,
+        utilityTerritory: proposal.utilityTerritory || "",
+        constructionStart,
+      }).map((r: any) => ({
+        ...r,
+        programName: r.name,
+        programType: r.type,
+        applicability: r.description,
+        officialLink: r.link,
+        notes: r.notes ?? null,
+        lastVerifiedDate: r.verified ?? null,
+        expiryDate: r.expiryDate ?? null,
+      }));
       res.json(filtered);
     } catch (e) {
       res.status(500).json({ error: "Server error" });
@@ -792,26 +799,61 @@ export function registerRoutes(server: Server, app: Express): void {
       .refine((v) => [60, 84, 120, 180].includes(v), "Choose a valid term"),
     preferredProvider: z.enum(["GoGreen", "PACE", "HERO", "Contact Me"]),
   });
+  // Stars are optional and never used to decide who is asked for a public review.
   const reviewSchema = z.object({
-    stars: z.number().int().min(1).max(5),
+    stars: z.number().int().min(0).max(5).optional().default(0),
     feedback: z.string().max(5000).optional().nullable(),
+    site: z.string().max(40).optional(),
   });
 
-  app.get("/api/health", (_req, res) => {
+  // Real dependency checks (cached 10 min) so "ok" means email, AI and payments actually work.
+  type Probe = { ok: boolean; detail: string };
+  const probeCache: { at: number; email?: Probe; ai?: Probe } = { at: 0 };
+  const probeServices = async () => {
+    if (Date.now() - probeCache.at < 10 * 60 * 1000 && probeCache.email) return probeCache;
+    const timeout = () => AbortSignal.timeout(5000);
+    let email: Probe = { ok: false, detail: "RESEND_API_KEY not set" };
+    if (process.env.RESEND_API_KEY) {
+      try {
+        const r = await fetch("https://api.resend.com/domains", { headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}` }, signal: timeout() });
+        if (!r.ok) email = { ok: false, detail: `Resend rejected the API key (${r.status})` };
+        else {
+          const j: any = await r.json();
+          const verified = (j.data || []).filter((d: any) => d.status === "verified").map((d: any) => d.name);
+          const from = process.env.RESEND_FROM || "onboarding@resend.dev";
+          const fromDomain = (from.match(/@([^>\s]+)/) || [])[1] || "";
+          if (fromDomain === "resend.dev") email = { ok: false, detail: verified.length ? `Sender is still the Resend test address; set RESEND_FROM to an address at ${verified[0]}` : "Sandbox mode: no verified sending domain, so emails only reach the account owner. Verify mccurdycoatings.com in Resend." };
+          else if (!verified.includes(fromDomain)) email = { ok: false, detail: `Sender domain ${fromDomain} is not verified in Resend` };
+          else email = { ok: true, detail: `Sending from ${fromDomain}` };
+        }
+      } catch (e: any) { email = { ok: false, detail: `Resend unreachable: ${e.message}` }; }
+    }
+    let ai: Probe = { ok: false, detail: "OPENAI_API_KEY not set" };
+    if (process.env.OPENAI_API_KEY) {
+      try {
+        const r = await fetch("https://api.openai.com/v1/models/gpt-4o-mini", { headers: { Authorization: `Bearer ${process.env.OPENAI_API_KEY}` }, signal: timeout() });
+        ai = r.ok ? { ok: true, detail: "OpenAI reachable" } : { ok: false, detail: `OpenAI rejected the key (${r.status})` };
+      } catch (e: any) { ai = { ok: false, detail: `OpenAI unreachable: ${e.message}` }; }
+    }
+    Object.assign(probeCache, { at: Date.now(), email, ai });
+    return probeCache;
+  };
+  app.get("/api/health", async (_req, res) => {
     let dbHealthy = true;
     try {
       sqliteConnection.prepare("SELECT 1").get();
     } catch {
       dbHealthy = false;
     }
-    res.json({
-      status: dbHealthy ? "ok" : "degraded",
+    const { email, ai } = await probeServices();
+    const payments: Probe = process.env.STRIPE_SECRET_KEY ? { ok: !!process.env.STRIPE_WEBHOOK_SECRET, detail: process.env.STRIPE_WEBHOOK_SECRET ? "Stripe configured" : "Stripe key set but webhook secret missing" } : { ok: false, detail: "Online card payments not set up (manual payment links only)" };
+    const critical = dbHealthy;
+    const allOk = critical && email!.ok && ai!.ok;
+    res.status(critical ? 200 : 503).json({
+      status: !critical ? "down" : allOk ? "ok" : "degraded",
       timestamp: Date.now(),
-      services: {
-        db: dbHealthy,
-        email: !!process.env.RESEND_API_KEY,
-        ai: !!process.env.OPENAI_API_KEY,
-      },
+      services: { db: dbHealthy, email: email!.ok, ai: ai!.ok, payments: payments.ok },
+      details: { email: email!.detail, ai: ai!.detail, payments: payments.detail },
       version: process.env.RENDER_GIT_COMMIT || "unknown",
     });
   });
@@ -882,31 +924,6 @@ export function registerRoutes(server: Server, app: Express): void {
         });
     }
   });
-  app.get("/api/proposals/:token/invoices", (req, res) => {
-    const p = storage.getProposalByToken(req.params.token);
-    if (!p) return res.status(404).json({ error: "Not found" });
-    res.json(
-      db.select().from(invoices).where(eq(invoices.proposalId, p.id)).all(),
-    );
-  });
-  app.post(
-    "/api/proposals/:token/invoices/:id/payment-interest",
-    async (req, res) => {
-      const p = storage.getProposalByToken(req.params.token),
-        invoice = db
-          .select()
-          .from(invoices)
-          .where(eq(invoices.id, req.params.id))
-          .get();
-      if (!p || !invoice || invoice.proposalId !== p.id)
-        return res.status(404).json({ error: "Not found" });
-      await sendOwnerNotification(
-        "Payment interest received",
-        `<p>${escapeHtml(p.customerName)} requested online payment for invoice ${escapeHtml(invoice.id)}.</p>`,
-      );
-      res.json({ success: true });
-    },
-  );
   app.post("/api/proposals/:token/financing/apply", async (req, res) => {
     try {
       const p = storage.getProposalByToken(req.params.token);
@@ -953,7 +970,7 @@ export function registerRoutes(server: Server, app: Express): void {
         .values({ proposalId: p.id })
         .returning()
         .get();
-    res.json(row);
+    res.json({ ...row, stormAlerts: isStormOptedIn(p.id) ? 1 : 0 });
   });
   app.patch("/api/proposals/:token/preferences", (req, res) => {
     const p = storage.getProposalByToken(req.params.token);
@@ -987,7 +1004,8 @@ export function registerRoutes(server: Server, app: Express): void {
           .values({ proposalId: p.id, ...permitted })
           .returning()
           .get();
-    res.json(row);
+    if ("stormAlerts" in (req.body || {})) setStormOptIn(p.id, !!req.body.stormAlerts, "preferences");
+    res.json({ ...row, stormAlerts: isStormOptedIn(p.id) ? 1 : 0 });
   });
   app.get("/api/unsubscribe/:token/:type", (req, res) => {
     const p = storage.getProposalByToken(req.params.token);
@@ -1000,6 +1018,7 @@ export function registerRoutes(server: Server, app: Express): void {
     };
     const field = map[req.params.type];
     if (!field) return res.status(400).send("Unknown preference");
+    if (field === "stormAlerts") setStormOptIn(p.id, false, "unsubscribe");
     const existing = db
       .select()
       .from(customerPreferences)
@@ -1387,6 +1406,8 @@ export function registerRoutes(server: Server, app: Express): void {
           });
       }
 
+      if (process.env.CUSTOMER_VERIFY_REQUIRED === "1" && proposal.customerEmail && !isVerifiedFor(req, proposal))
+        return res.status(403).json({ error: "Please verify your email before signing.", code: "VERIFY_REQUIRED" });
       const now = new Date().toISOString();
       const updated = storage.updateProposal(proposal.id, {
         customerSignature: signature,
@@ -1428,9 +1449,12 @@ export function registerRoutes(server: Server, app: Express): void {
         propertyAddress: proposal.propertyAddress,
         accessToken: proposal.accessToken,
       }).catch((err) => console.error("[sign] notify owner failed:", err));
+      // Next steps: milestone invoice drafts + walkthrough booking email.
+      afterProposalSigned(req, proposal.id).catch((err) => console.error("[sign] after-sign failed:", err));
 
       res.json({
         success: true,
+        nextSteps: { bookingUrl: "https://calendly.com/mccurdycoatings?utm_source=portal&utm_medium=approval&utm_campaign=post_sign" },
         proposal: updated ? toPublicProposal(updated) : null,
       });
     } catch (e: any) {
@@ -1711,41 +1735,6 @@ export function registerRoutes(server: Server, app: Express): void {
     if (!row) return res.status(404).json({ error: "Not found" });
     res.json(row);
   });
-  app.get("/api/admin/invoices", requireAdmin as any, (_req, res) =>
-    res.json(db.select().from(invoices).all()),
-  );
-  app.post("/api/admin/invoices", requireAdmin as any, (req, res) => {
-    const data = z
-      .object({
-        proposalId: z.number().int(),
-        amount: z.string().min(1),
-        description: z.string().min(1),
-        dueDate: z.number().int().optional().nullable(),
-      })
-      .parse(req.body);
-    res.status(201).json(
-      db
-        .insert(invoices)
-        .values({
-          id: randomUUID(),
-          ...data,
-          status: "draft",
-          createdAt: Math.floor(Date.now() / 1000),
-        })
-        .returning()
-        .get(),
-    );
-  });
-  app.patch("/api/admin/invoices/:id", requireAdmin as any, (req, res) => {
-    const row = db
-      .update(invoices)
-      .set(req.body)
-      .where(eq(invoices.id, req.params.id))
-      .returning()
-      .get();
-    if (!row) return res.status(404).json({ error: "Not found" });
-    res.json(row);
-  });
   app.get("/api/admin/stale-incentives", requireAdmin as any, (_req, res) => {
     const now = Math.floor(Date.now() / 1000),
       stale = now - 90 * 86400;
@@ -1765,72 +1754,45 @@ export function registerRoutes(server: Server, app: Express): void {
         })),
     );
   });
-  app.post(
-    "/api/admin/storm-outreach",
-    requireAdmin as any,
-    async (_req, res) => {
-      const cutoff = Date.now() - 5 * 365 * 86400 * 1000;
-      const rows = db
-        .select()
-        .from(proposals)
-        .all()
-        .filter(
-          (p: any) =>
-            p.workCompletedDate &&
-            new Date(p.workCompletedDate).getTime() >= cutoff &&
-            p.customerEmail,
-        );
-      let sent = 0;
-      for (const p of rows) {
-        const pref = db
-          .select()
-          .from(customerPreferences)
-          .where(eq(customerPreferences.proposalId, p.id))
-          .get();
-        if (pref?.stormAlerts === 0) continue;
-        await sendBrandedEmail({
-          to: p.customerEmail!,
-          customerName: p.customerName,
-          subject: "Recent storms in the Bay Area",
-          title: "Concerned about recent storms?",
-          body: "<p>Recent storms in the Bay Area can put stress on roof systems. Book a free inspection if you are concerned.</p>",
-          actionLabel: "Book a free inspection",
-          actionUrl: "https://calendly.com/mccurdycoatings",
-        });
-        sent++;
-      }
-      res.json({ success: true, sent });
-    },
-  );
-  app.get("/api/admin/schedule", requireAdmin as any, (_req, res) =>
+  // Legacy button: now opt-in only, tracked like automatic storm alerts.
+  app.post("/api/admin/storm-outreach", requireAdmin as any, async (req, res) => {
+    const r = await sendStormFollowups({ date: new Date().toISOString().slice(0, 10), reason: String(req.body?.reason || "heavy weather").slice(0, 120) }, "manual");
+    res.json({ success: true, sent: r.sent, recipients: r.recipients });
+  });
+  app.get("/api/admin/schedule", requireAdmin as any, (_req, res) => {
+    const all = db.select().from(proposals).all();
     res.json({
-      appointments: db
-        .select()
-        .from(proposals)
-        .all()
-        .filter((p) => p.appointmentDate || p.workCompletedDate),
+      appointments: all.filter((p) => p.appointmentDate || p.workCompletedDate),
+      jobs: all
+        .filter((p) => !["draft", "declined", "completed", "job_completed"].includes(String(p.status)))
+        .map((p) => ({ id: p.id, customerName: p.customerName, propertyAddress: p.propertyAddress, city: p.city, status: p.status })),
+      crewMembers: db.select().from(crewMembers).all().filter((c: any) => c.active !== 0),
       crew: db.select().from(crewSchedule).all(),
-    }),
-  );
-  app.post("/api/admin/crew-schedule", requireAdmin as any, (req, res) =>
-    res.status(201).json(
-      db
-        .insert(crewSchedule)
-        .values({ id: randomUUID(), ...req.body })
-        .returning()
-        .get(),
-    ),
-  );
-  app.patch("/api/admin/crew-schedule/:id", requireAdmin as any, (req, res) =>
-    res.json(
-      db
-        .update(crewSchedule)
-        .set(req.body)
-        .where(eq(crewSchedule.id, req.params.id))
-        .returning()
-        .get(),
-    ),
-  );
+    });
+  });
+  const crewSlotSchema = z.object({
+    crewMemberId: z.string().min(1),
+    date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+    status: z.enum(["assigned", "unavailable", "available"]),
+    proposalId: z.number().int().nullable().optional(),
+  });
+  // One slot per crew member per day: assigning replaces that day's slot, so crews can't be double-booked.
+  app.post("/api/admin/crew-schedule", requireAdmin as any, (req, res) => {
+    try {
+      const data = crewSlotSchema.parse(req.body);
+      if (data.status === "assigned" && !data.proposalId) return res.status(400).json({ error: "Choose a job to assign." });
+      const existing = db.select().from(crewSchedule).all().filter((r) => r.crewMemberId === data.crewMemberId && r.date === data.date);
+      for (const r of existing) db.delete(crewSchedule).where(eq(crewSchedule.id, r.id)).run();
+      if (data.status === "available") return res.json({ cleared: true });
+      res.status(201).json(db.insert(crewSchedule).values({ id: randomUUID(), crewMemberId: data.crewMemberId, date: data.date, status: data.status, proposalId: data.status === "assigned" ? data.proposalId! : null }).returning().get());
+    } catch (e: any) {
+      res.status(400).json({ error: e.issues?.[0]?.message || e.message });
+    }
+  });
+  app.delete("/api/admin/crew-schedule/:id", requireAdmin as any, (req, res) => {
+    db.delete(crewSchedule).where(eq(crewSchedule.id, req.params.id)).run();
+    res.json({ ok: true });
+  });
   app.get(
     "/api/admin/proposals/:id/checklist",
     requireAdmin as any,
@@ -1879,16 +1841,25 @@ export function registerRoutes(server: Server, app: Express): void {
     "/api/admin/upload",
     requireAdmin as any,
     upload.single("file"),
-    (req, res) => {
+    async (req, res) => {
       try {
         if (!req.file)
           return res.status(400).json({ error: "No file uploaded" });
-        const fileUrl = `/api/uploads/${req.file.filename}`;
+        const isImage = /^image\//.test(req.file.mimetype);
+        if (!isImage && req.file.size > 20 * 1024 * 1024) {
+          fs.unlink(req.file.path, () => undefined);
+          return res.status(413).json({ error: "Documents must be 20 MB or smaller." });
+        }
+        // Photos are resized and converted to WebP (+ responsive variants) so pages load fast on cellular.
+        const optimized = isImage ? await optimizeUpload(req.file.path, "/api/uploads").catch(() => null) : null;
         res.json({
-          url: fileUrl,
+          url: optimized?.url || `/api/uploads/${req.file.filename}`,
           filename: req.file.originalname,
-          size: req.file.size,
-          mimetype: req.file.mimetype,
+          size: optimized?.bytes ?? req.file.size,
+          originalSize: req.file.size,
+          mimetype: optimized ? "image/webp" : req.file.mimetype,
+          width: optimized?.width,
+          height: optimized?.height,
         });
       } catch (e: any) {
         res.status(500).json({ error: e.message || "Upload failed" });
@@ -1900,59 +1871,17 @@ export function registerRoutes(server: Server, app: Express): void {
   app.use("/api/uploads", (req, res, next) => {
     const filePath = path.join(uploadDir, path.basename(req.path));
     if (fs.existsSync(filePath)) {
-      return res.sendFile(filePath);
+      // Upload names are unique (timestamped), so they can be cached long-term.
+      return res.sendFile(filePath, { maxAge: "365d", immutable: true });
     }
     res.status(404).json({ error: "File not found" });
   });
 
   // ── County Incentives ──
   // Current-content normalization keeps older county seed records accurate at response time.
-  const currentCountyPrograms = (data: any, propertyType = "commercial", utilityTerritory = "") => {
+  const currentCountyPrograms = (data: any, propertyType = "commercial", utilityTerritory = "", constructionStart?: string | null) => {
     if (!data) return data;
-    const property = propertyType.toLowerCase();
-    const hasPge = /pg\s*&?\s*e|pge/i.test(utilityTerritory || data.utility || "");
-    const programs = (data.programs || []).filter((program: any) => {
-      const name = String(program.name || "");
-      if (property === "commercial" && /25c|bayren home|ease home/i.test(name)) return false;
-      if (property !== "multifamily" && /bambe/i.test(name)) return false;
-      return true;
-    }).map((program: any) => {
-      const name = String(program.name || "");
-      const next = { ...program, verified: "2026-08-19" };
-      if (/pg\s*&?\s*e|pge/i.test(name)) Object.assign(next, {
-        name: "PG&E Business Rebates",
-        description: "PG&E Business Rebates — programs updated annually. Amount not guaranteed. Check current program list.",
-        amount: "Amount varies — check current program page",
-        link: "https://www.pge.com/en/save-energy-and-money/rebates-and-incentives.html",
-        notes: "Verified: 2026-08-19",
-      });
-      if (/bayren/i.test(name)) Object.assign(next, {
-        amount: "Amount varies — check current program page",
-        notes: "Amount not stated by current program page; application required. Verified: 2026-08-19",
-        link: next.link || "https://www.bayren.org/business",
-      });
-      if (/title 24/i.test(name)) Object.assign(next, {
-        name: "2025 California Energy Code — Title 24",
-        description: "2025 California Energy Code (effective January 1, 2026). Requirements vary by climate zone. McCurdy silicone coatings meet or exceed cool-roof requirements for Climate Zones 1-16 for low-slope roofs per Section 110.8(i).",
-        link: "https://www.energy.ca.gov/programs-and-topics/programs/building-energy-efficiency-standards",
-      });
-      if (/25c/i.test(name) && property === "residential") Object.assign(next, {
-        description: "Annual limit $1,200. Roof coatings not typically eligible unless part of a qualified insulation improvement. Consult CPA.",
-        amount: "Annual limit $1,200",
-        link: "https://www.irs.gov/instructions/i5695",
-      });
-      if (/section 179/i.test(name)) Object.assign(next, {
-        name: "Section 179 — Equipment Expensing (2026)",
-        description: "Section 179 is equipment expensing (different from 179D), still relevant for commercial roofs as building improvements up to $1,220,000 in 2026 with a $3,050,000 phase-out threshold.",
-        link: "https://www.irs.gov/publications/p946",
-        notes: "Consult your CPA. McCurdy does not provide tax advice. Rules subject to change.",
-      });
-      return next;
-    });
-    if (property === "commercial" && hasPge) programs.push({ name: "BayREN Business", type: "rebate", description: "BayREN Business offerings may apply to commercial buildings on PG&E service.", amount: "Amount varies — check current program page", link: "https://www.bayren.org/business", notes: "This program applies because your property is commercial on PG&E service. Verified: 2026-08-19", verified: "2026-08-19" });
-    if (property === "multifamily") programs.push({ name: "BayREN BAMBE", type: "rebate", description: "BayREN BAMBE supports qualifying multifamily energy projects.", amount: "Amount varies — check current program page", link: "https://www.bayren.org/business", notes: `This program applies because your property is multifamily${hasPge ? " on PG&E service" : ""}. Verified: 2026-08-19`, verified: "2026-08-19" });
-    if (property === "commercial" && !programs.some((x: any) => /179d/i.test(x.name))) programs.unshift({ name: "Section 179D — Energy Efficient Commercial Buildings Deduction (2026 rules)", type: "tax_deduction", description: "$0.59/sf base at 25% savings, up to $1.19/sf at 55% savings, $5.94/sf maximum with prevailing wage/apprenticeship compliance. Deduction terminates for property whose construction begins after June 30, 2026.", link: "https://www.irs.gov/instructions/i7205", notes: "Consult your CPA. McCurdy does not provide tax advice. Rules subject to change.", verified: "2026-08-19" });
-    return { ...data, programs };
+    return { ...data, programs: applyIncentiveRules(data.programs || [], { propertyType, utilityTerritory: utilityTerritory || data.utility, climateZone: data.climateZone, constructionStart }) };
   };
   app.get("/api/county-incentives/:county", (req, res) => {
     try {
@@ -1960,11 +1889,13 @@ export function registerRoutes(server: Server, app: Express): void {
       // Prefer live DB (auto-refreshed yearly). Fall back to hard-coded seed if row missing.
       const propertyType = String(req.query.propertyType || "commercial");
       const utilityTerritory = String(req.query.utilityTerritory || "");
+      const startQ = String(req.query.constructionStart || "");
+      const constructionStart = /^\d{4}-\d{2}-\d{2}$/.test(startQ) ? startQ : null;
       const dbData = getCountyFromDb(sqliteConnection, county);
-      if (dbData) return res.json(currentCountyPrograms(dbData, propertyType, utilityTerritory));
+      if (dbData) return res.json(currentCountyPrograms(dbData, propertyType, utilityTerritory, constructionStart));
       const data = getCountyIncentives(county);
       if (!data) return res.status(404).json({ error: "County not found" });
-      res.json(currentCountyPrograms(data, propertyType, utilityTerritory));
+      res.json(currentCountyPrograms(data, propertyType, utilityTerritory, constructionStart));
     } catch (e) {
       res.status(500).json({ error: "Server error" });
     }
@@ -1972,9 +1903,10 @@ export function registerRoutes(server: Server, app: Express): void {
 
   app.get("/api/county-incentives", (req, res) => {
     try {
+      const propertyType = String(req.query.propertyType || "commercial");
       const dbData = getAllCountiesFromDb(sqliteConnection);
-      if (dbData.length > 0) return res.json(dbData);
-      res.json(getAllCountyIncentives());
+      const list = dbData.length > 0 ? dbData : getAllCountyIncentives();
+      res.json(list.map((c: any) => currentCountyPrograms(c, propertyType, "")));
     } catch (e) {
       res.status(500).json({ error: "Server error" });
     }
@@ -2023,7 +1955,8 @@ export function registerRoutes(server: Server, app: Express): void {
           county,
           climateZone || "",
           utility || "",
-          JSON.stringify(programs),
+          // Scheduled-task data is held for admin review; a signed-in admin may approve on upload.
+          JSON.stringify(programs.map((p: any) => (req.adminUser && body.approved === true ? { ...p, reviewStatus: "approved", verified: now.slice(0, 10), source: "admin" } : { ...p, reviewStatus: "needs_review", source: p.source || "automation" }))),
           taxYear,
           now,
           now,
@@ -2038,6 +1971,28 @@ export function registerRoutes(server: Server, app: Express): void {
     } catch (e) {
       res.status(500).json({ error: (e as Error).message });
     }
+  });
+
+  // Admin incentive review queue
+  app.get("/api/admin/county-incentives/review", requireAdmin as any, (_req, res) => {
+    const rows = sqliteConnection.prepare("SELECT county_key, county_name, climate_zone, utility, programs, tax_year, last_updated FROM county_incentives ORDER BY county_name").all() as any[];
+    res.json(rows.map((r) => {
+      let programs: any[] = [];
+      try { programs = JSON.parse(r.programs); } catch {}
+      const customerView = applyIncentiveRules(programs, { propertyType: "commercial", utilityTerritory: r.utility, climateZone: r.climate_zone });
+      return { countyKey: r.county_key, county: r.county_name, utility: r.utility, taxYear: r.tax_year, lastUpdated: r.last_updated, programs, pending: customerView.filter((p) => p.verificationStatus === "needs_review").length, shown: customerView.length };
+    }));
+  });
+  // Approve a county's programs after checking them against the official sources.
+  app.post("/api/admin/county-incentives/:key/approve", requireAdmin as any, (req, res) => {
+    if (!req.adminUser || !["owner", "admin"].includes(req.adminUser.role)) return res.status(403).json({ error: "Only owners and admins can approve incentives." });
+    const row = sqliteConnection.prepare("SELECT programs FROM county_incentives WHERE county_key = ?").get(req.params.key) as any;
+    if (!row) return res.status(404).json({ error: "County not found" });
+    const names: string[] | undefined = Array.isArray(req.body?.programNames) ? req.body.programNames : undefined;
+    const today = new Date().toISOString().slice(0, 10);
+    const programs = JSON.parse(row.programs).map((p: any) => (!names || names.includes(p.name) ? { ...p, reviewStatus: "approved", verified: today, source: "admin", approvedBy: req.adminUser!.email } : p));
+    sqliteConnection.prepare("UPDATE county_incentives SET programs = ?, last_audit_passed = ? WHERE county_key = ?").run(JSON.stringify(programs), new Date().toISOString(), req.params.key);
+    res.json({ ok: true, approved: names ? names.length : programs.length });
   });
 
   app.post(
@@ -2514,7 +2469,7 @@ export function registerRoutes(server: Server, app: Express): void {
         if (!p) return res.status(404).json({ error: "Not found" });
         const data = reviewSchema.parse({
           ...req.body,
-          stars: Number(req.body.stars),
+          stars: req.body.stars === undefined ? 0 : Number(req.body.stars),
         });
         const row = db
           .insert(reviews)
@@ -2529,7 +2484,7 @@ export function registerRoutes(server: Server, app: Express): void {
           .get();
         await sendOwnerNotification(
           "Private project feedback",
-          `<p>${escapeHtml(p.customerName)} gave ${row.stars}/5 stars.</p>`,
+          `<p>${escapeHtml(p.customerName)} sent a private note:</p><p>${escapeHtml(row.feedback || "(no message)")}</p>`,
         );
         res.status(201).json(row);
       } catch (e: any) {
@@ -2543,7 +2498,7 @@ export function registerRoutes(server: Server, app: Express): void {
       if (!p) return res.status(404).json({ error: "Not found" });
       const data = reviewSchema.parse({
         ...req.body,
-        stars: Number(req.body.stars),
+        stars: req.body.stars === undefined ? 0 : Number(req.body.stars),
       });
       res.status(201).json(
         db
@@ -2552,7 +2507,7 @@ export function registerRoutes(server: Server, app: Express): void {
             id: randomUUID(),
             proposalId: p.id,
             stars: data.stars,
-            feedback: data.feedback || null,
+            feedback: data.site ? `Opened ${data.site} review link` : data.feedback || null,
             wentPublic: 1,
           })
           .returning()
@@ -2879,10 +2834,10 @@ function seedDemoData() {
   const incentiveData = [
     {
       proposalId: proposal.id,
-      programName: "Section 179 — Equipment Expensing (2026)",
+      programName: "Section 179 Expensing — Commercial Roofs (2026)",
       programType: "tax_deduction",
       applicability:
-        "Section 179 is equipment expensing, distinct from 179D. Commercial building improvements may qualify up to $1,220,000 in 2026, with a $3,050,000 phase-out threshold.",
+        "Roofs on nonresidential buildings are qualified real property eligible for Section 179 expensing: up to $2,560,000 for tax years beginning in 2026, phased out above $4,090,000 and limited to business income. Otherwise depreciated over 39 years (MACRS). Section 179D is a separate deduction.",
       officialLink: "https://www.irs.gov/publications/p946",
       notes:
         "Consult your CPA. McCurdy does not provide tax advice. Rules subject to change.",
@@ -3025,7 +2980,7 @@ const COUNTY_INCENTIVES: Record<string, CountyIncentive> = {
           "Zone 3: No prescriptive cool roof requirement. Zone 12 (inland): Cool roof with SRI ≥16 is one compliance path for steep-slope, SRI ≥75 for low-slope.",
         link: "https://www.energy.ca.gov/programs-and-topics/programs/building-energy-efficiency-standards/climate-zone-tool-maps-and",
         notes:
-          "Silicone coating systems exceed all Title 24 cool roof thresholds.",
+          "Requirements depend on roof slope, building type, climate zone, and permit scope. McCurdy provides the coating's CRRC ratings for your permit.",
       },
       {
         name: "California Energy-Smart Homes",
@@ -3034,16 +2989,6 @@ const COUNTY_INCENTIVES: Record<string, CountyIncentive> = {
           "Incentives for whole-building electrification including heat pump systems and energy efficiency upgrades.",
         link: "https://www.smud.org/en/Going-Green/California-Energy-Smart-Homes",
         notes: "Statewide program. May be stackable with utility rebates.",
-      },
-      {
-        name: "Federal Energy Efficient Home Improvement Credit (25C)",
-        type: "tax_deduction",
-        description:
-          "Federal tax credit up to 30% of qualifying energy-efficient home improvement costs, up to $1,200/year for roofing materials.",
-        link: "https://www.energystar.gov/about/federal-tax-credits",
-        amount: "Up to $1,200/year",
-        notes:
-          "Applies to ENERGY STAR certified metal roofs and asphalt shingles with cooling granules.",
       },
       {
         name: "Section 179 Deduction (Commercial)",
@@ -3123,14 +3068,6 @@ const COUNTY_INCENTIVES: Record<string, CountyIncentive> = {
         link: "https://www.energy.ca.gov/programs-and-topics/programs/building-energy-efficiency-standards/climate-zone-tool-maps-and",
       },
       {
-        name: "Federal 25C Tax Credit",
-        type: "tax_deduction",
-        description:
-          "Up to 30% of qualifying energy-efficient roofing material costs, max $1,200/year.",
-        link: "https://www.energystar.gov/about/federal-tax-credits",
-        amount: "Up to $1,200/year",
-      },
-      {
         name: "Section 179 Deduction (Commercial)",
         type: "tax_deduction",
         description:
@@ -3198,14 +3135,6 @@ const COUNTY_INCENTIVES: Record<string, CountyIncentive> = {
         link: "https://www.energy.ca.gov/programs-and-topics/programs/building-energy-efficiency-standards/climate-zone-tool-maps-and",
       },
       {
-        name: "Federal 25C Tax Credit",
-        type: "tax_deduction",
-        description:
-          "Up to 30% of qualifying roofing material costs, max $1,200/year.",
-        link: "https://www.energystar.gov/about/federal-tax-credits",
-        amount: "Up to $1,200/year",
-      },
-      {
         name: "Section 179 Deduction (Commercial)",
         type: "tax_deduction",
         description:
@@ -3267,14 +3196,6 @@ const COUNTY_INCENTIVES: Record<string, CountyIncentive> = {
         link: "https://www.energy.ca.gov/programs-and-topics/programs/building-energy-efficiency-standards/climate-zone-tool-maps-and",
         notes:
           "Silicone coating systems exceed Zone 12 requirements with SRI 110+.",
-      },
-      {
-        name: "Federal 25C Tax Credit",
-        type: "tax_deduction",
-        description:
-          "Up to 30% of qualifying roofing material costs, max $1,200/year.",
-        link: "https://www.energystar.gov/about/federal-tax-credits",
-        amount: "Up to $1,200/year",
       },
       {
         name: "Section 179 Deduction (Commercial)",
@@ -3341,18 +3262,10 @@ const COUNTY_INCENTIVES: Record<string, CountyIncentive> = {
         name: "Title 24 Compliance (Zone 12)",
         type: "compliance",
         description:
-          "Climate Zone 12 has prescriptive cool roof requirements. Steep-slope: SRI ≥16. Low-slope: SRI ≥75. Silicone coatings exceed all thresholds.",
+          "Climate Zone 12 has prescriptive cool roof requirements. Steep-slope: SRI ≥16. Low-slope: SRI ≥75. Compliance is confirmed for your specific roof and permit.",
         link: "https://www.energy.ca.gov/programs-and-topics/programs/building-energy-efficiency-standards/climate-zone-tool-maps-and",
         notes:
           "Zone 12 is a mandatory cool roof zone. McCurdy systems are fully compliant.",
-      },
-      {
-        name: "Federal 25C Tax Credit",
-        type: "tax_deduction",
-        description:
-          "Up to 30% of qualifying roofing material costs, max $1,200/year.",
-        link: "https://www.energystar.gov/about/federal-tax-credits",
-        amount: "Up to $1,200/year",
       },
       {
         name: "Section 179 Deduction (Commercial)",
@@ -3433,16 +3346,8 @@ const COUNTY_INCENTIVES: Record<string, CountyIncentive> = {
         name: "Title 24 Compliance (Zone 3/12)",
         type: "compliance",
         description:
-          "Coastal Zone 3: No prescriptive cool roof requirement for steep-slope. Inland Zone 12: SRI ≥16 steep-slope, SRI ≥75 low-slope. McCurdy silicone systems exceed all requirements.",
+          "Coastal Zone 3: No prescriptive cool roof requirement for steep-slope. Inland Zone 12: SRI ≥16 steep-slope, SRI ≥75 low-slope. Compliance is confirmed for your specific roof and permit.",
         link: "https://www.energy.ca.gov/programs-and-topics/programs/building-energy-efficiency-standards/climate-zone-tool-maps-and",
-      },
-      {
-        name: "Federal 25C Tax Credit",
-        type: "tax_deduction",
-        description:
-          "Up to 30% of qualifying roofing material costs, max $1,200/year.",
-        link: "https://www.energystar.gov/about/federal-tax-credits",
-        amount: "Up to $1,200/year",
       },
       {
         name: "Section 179 Deduction (Commercial)",
@@ -3508,14 +3413,6 @@ const COUNTY_INCENTIVES: Record<string, CountyIncentive> = {
           "Climate Zone 12 requires cool roof compliance. Steep-slope: SRI ≥16. Low-slope: SRI ≥75. Silicone coating systems meet and exceed these requirements.",
         link: "https://www.energy.ca.gov/programs-and-topics/programs/building-energy-efficiency-standards/climate-zone-tool-maps-and",
         notes: "Zone 12 is a mandatory cool roof zone.",
-      },
-      {
-        name: "Federal 25C Tax Credit",
-        type: "tax_deduction",
-        description:
-          "Up to 30% of qualifying roofing material costs, max $1,200/year.",
-        link: "https://www.energystar.gov/about/federal-tax-credits",
-        amount: "Up to $1,200/year",
       },
       {
         name: "Section 179 Deduction (Commercial)",

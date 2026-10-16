@@ -16,7 +16,7 @@ export default function Compliance() {
     },
     {
       value: "when", icon: Building2, title: "When Does It Matter?",
-      content: "Title 24 cool-roof requirements typically apply when more than 50% of the roof surface is being replaced or recovered on a commercial building. Climate zone, building type, and roof slope all factor into the specific requirements. Requirements vary by climate zone. McCurdy silicone coatings meet or exceed cool-roof requirements for Climate Zones 1-16 for low-slope roofs per Section 110.8(i).",
+      content: "Title 24 cool-roof requirements typically apply when more than 50% of the roof surface is being replaced or recovered on a commercial building. Climate zone, building type, and roof slope all factor into the specific requirements. Requirements vary by climate zone. Under the 2025 California Energy Code (effective January 1, 2026), McCurdy documents the specified coating's CRRC-rated aged solar reflectance, thermal emittance, and SRI against the requirement for your roof slope and climate zone, and includes it with your permit paperwork.",
     },
     {
       value: "docs", icon: FileCheck, title: "What Documents Are Involved?",

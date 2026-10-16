@@ -46,6 +46,11 @@ export default function Welcome() {
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto pb-8" data-testid="page-welcome">
+      {/* Primary actions first on phones, so customers don't scroll past the hero to act. */}
+      <div className="mx-4 mt-4 grid grid-cols-2 gap-2 sm:hidden" data-testid="bar-welcome-quick-actions">
+        <Link href={`${basePath}/pricing`}><Button className="min-h-12 w-full gap-1.5 font-semibold" data-testid="button-quick-pricing"><BarChart3 className="h-4 w-4" /> See pricing</Button></Link>
+        <Link href={`${basePath}/approve`}><Button variant="outline" className="min-h-12 w-full gap-1.5 font-semibold" data-testid="button-quick-approve"><CheckCircle className="h-4 w-4" /> Approve</Button></Link>
+      </div>
       <div className="mx-4 mt-4"><GuaranteeRibbon /></div>
       {/* ── Premium Hero Section ── */}
       <div className="relative overflow-hidden rounded-xl mx-4 mt-4 premium-gradient" style={{ minHeight: '320px' }}>

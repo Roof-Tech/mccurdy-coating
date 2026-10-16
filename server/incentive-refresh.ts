@@ -10,7 +10,7 @@
  *   2. Calls Perplexity Sonar API to research: federal tax credits, CA state,
  *      Title 24, county programs, utility rebates, PACE / GoGreen financing.
  *   3. Parses AI response into structured programs matching our schema.
- *   4. Compares to prior year, logs diff, auto-publishes new data.
+ *   4. Compares to prior year, logs diff, stores new data as "needs review" for admin approval.
  *   5. Emails owner a full "What Changed for 2027" summary.
  */
 
@@ -77,7 +77,7 @@ export function buildResearchPrompt(countyName: string, taxYear: number, climate
   return `You are a research analyst compiling a definitive list of ${taxYear} tax credits, rebates, and incentive programs available to commercial and residential property owners in ${countyName}, California who are installing silicone roof coating systems.
 
 REQUIRED CATEGORIES (find at least one program per category if available):
-1. FEDERAL tax credits/deductions (25C, Section 179, Section 179D, Section 45L, Inflation Reduction Act updates for ${taxYear})
+1. FEDERAL tax deductions for commercial roofs (Section 179 qualified real property limits for ${taxYear}, Section 179D — note it ends for construction beginning after June 30, 2026 — and any newer federal law). Do NOT include Section 25C: it ended for property placed in service after December 31, 2025.
 2. CALIFORNIA STATE programs (Title 24 Part 6 requirements for ${taxYear}, Cool Roof requirements, SGIP, TECH Clean California)
 3. COUNTY-LEVEL programs specific to ${countyName}
 4. UTILITY rebates (PG&E, and county-specific like ${climateZoneHint} utilities: PCE, CleanPowerSF, EBCE, MCE, SVCE, TID, MID, AMP)
@@ -268,8 +268,10 @@ export async function refreshAllCounties(
       const changed = diff.added.length + diff.removed.length + diff.updated.length + diff.amountChanges.length;
       totalChanges += changed;
 
-      // AUTO-PUBLISH: upsert to database
+      // Store as NEEDS REVIEW: AI-researched programs are shown to customers only as
+      // "pending verification" (no dollar amounts) until an admin approves them.
       const now = new Date().toISOString();
+      newData.programs = newData.programs.map((p: any) => ({ ...p, source: "auto_research", reviewStatus: "needs_review" }));
       db.prepare(`
         INSERT INTO county_incentives (county_key, county_name, climate_zone, utility, programs, tax_year, last_updated, last_audit_passed, sources_json)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)

@@ -17,10 +17,16 @@ import {
   FileText,
   MessageSquare,
   Activity,
-  Settings,
+
   Users,
   Gift,
   Sparkles,
+  ShieldCheck,
+  Receipt,
+  ScrollText,
+  CloudLightning,
+  CalendarDays,
+  Landmark,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -33,8 +39,12 @@ const adminNav = [
   { title: "Crew", url: "/admin/crew", icon: Users },
   { title: "Referrals", url: "/admin/referrals", icon: Gift },
   { title: "Instant Estimates", url: "/admin/instant-estimates", icon: Sparkles },
-  { title: "Financing", url: "/admin/financing", icon: Settings },
-  { title: "Scheduling", url: "/admin/scheduling", icon: Settings },
+  { title: "Invoices", url: "/admin/invoices", icon: Receipt },
+  { title: "Incentive Review", url: "/admin/incentives", icon: ScrollText },
+  { title: "Storm Follow-ups", url: "/admin/storm-followups", icon: CloudLightning },
+  { title: "Financing", url: "/admin/financing", icon: Landmark },
+  { title: "Scheduling", url: "/admin/scheduling", icon: CalendarDays },
+  { title: "Team & Security", url: "/admin/team", icon: ShieldCheck },
 ];
 
 export function AdminSidebar() {

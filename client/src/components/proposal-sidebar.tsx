@@ -41,6 +41,7 @@ import {
   MessageSquare,
   Receipt,
   Settings,
+  Building2,
   ChevronDown,
 } from "lucide-react";
 import { useProposal } from "@/lib/proposal-context";
@@ -87,6 +88,7 @@ const groups: { title: string; items: N[]; after?: boolean }[] = [
       { title: "My Warranty", path: "/warranty", icon: Shield },
       { title: "Refer a Neighbor", path: "/refer", icon: Gift },
       { title: "Leave a Review", path: "/review", icon: Star },
+      { title: "My Properties", path: "/properties", icon: Building2 },
       { title: "Email Preferences", path: "/preferences", icon: Settings },
     ],
   },

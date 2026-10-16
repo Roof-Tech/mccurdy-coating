@@ -68,6 +68,20 @@ interface CountyProgram {
   amount?: string;
   notes?: string;
   verified?: string;
+  verificationStatus?: "current" | "needs_review" | "expired";
+  reviewNote?: string;
+  unconfirmedAmount?: string;
+}
+
+/** Programs not yet confirmed by McCurdy are clearly labeled and never show a dollar amount as confirmed. */
+function VerificationNote({ status, note, unconfirmedAmount, testId }: { status?: string; note?: string; unconfirmedAmount?: string; testId: string }) {
+  if (status !== "needs_review") return null;
+  return (
+    <div className="rounded-md border border-amber-300 bg-amber-50 px-2.5 py-1.5 text-xs text-amber-900 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-100" data-testid={testId}>
+      <b>Pending verification.</b> {note || "Check with the provider before relying on it."}
+      {unconfirmedAmount ? <span className="block">Amount to be confirmed — not included in your savings.</span> : null}
+    </div>
+  );
 }
 
 interface CountyData {
@@ -116,7 +130,7 @@ export default function SavingsIncentives() {
     }
     setLoadingCounty(true);
     setCountyError(false);
-    apiRequest("GET", `/api/county-incentives/${selectedCounty}?propertyType=${encodeURIComponent(proposal?.propertyType || proposal?.projectType || "commercial")}&utilityTerritory=${encodeURIComponent(proposal?.utilityTerritory || "")}`)
+    apiRequest("GET", `/api/county-incentives/${selectedCounty}?propertyType=${encodeURIComponent(proposal?.propertyType || proposal?.projectType || "commercial")}&utilityTerritory=${encodeURIComponent(proposal?.utilityTerritory || "")}${(proposal as any)?.scheduledStartDate ? `&constructionStart=${encodeURIComponent(String((proposal as any).scheduledStartDate).slice(0, 10))}` : ""}`)
       .then(r => r.json())
       .then(data => {
         setCountyData(data);
@@ -332,7 +346,8 @@ export default function SavingsIncentives() {
                       {prog.notes && (
                         <p className="text-xs text-muted-foreground italic border-l-2 border-muted/50 pl-2.5 py-0.5">{prog.notes}</p>
                       )}
-                      {prog.verified && <p className="text-xs text-muted-foreground">Verified: {new Date(`${prog.verified}T12:00:00`).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}</p>}
+                      <VerificationNote status={prog.verificationStatus} note={prog.reviewNote} unconfirmedAmount={prog.unconfirmedAmount} testId={`status-program-${type}-${idx}`} />
+                      {prog.verified && prog.verificationStatus !== "needs_review" && <p className="text-xs text-muted-foreground">Verified: {new Date(`${prog.verified}T12:00:00`).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}</p>}
                       <a
                         href={prog.link}
                         target="_blank"
@@ -395,6 +410,7 @@ export default function SavingsIncentives() {
                   </div>
                   {inc.applicability && <p className="text-xs text-foreground/75 leading-relaxed">{inc.applicability}</p>}
                   {inc.notes && <p className="text-xs text-muted-foreground italic border-l-2 border-muted/50 pl-2.5">{inc.notes}</p>}
+                  <VerificationNote status={(inc as any).verificationStatus} note={(inc as any).reviewNote} unconfirmedAmount={(inc as any).unconfirmedAmount} testId={`status-incentive-${inc.id}`} />
                   <div className="flex items-center gap-4 pt-1">
                     {inc.officialLink && (
                       <a href={inc.officialLink} target="_blank" rel="noopener noreferrer" className="text-xs text-primary flex items-center gap-1.5 font-medium hover:text-primary/80 transition-colors group">
@@ -403,9 +419,9 @@ export default function SavingsIncentives() {
                         <ChevronRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
                       </a>
                     )}
-                    {inc.lastVerifiedDate && (
+                    {inc.lastVerifiedDate && (inc as any).verificationStatus !== "needs_review" && (
                       <span className="text-xs text-muted-foreground bg-muted/30 px-2 py-0.5 rounded-full">
-                        Verified: {typeof inc.lastVerifiedDate === "number" ? new Date(inc.lastVerifiedDate * 1000).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }) : inc.lastVerifiedDate}
+                        Verified: {(() => { const v: any = inc.lastVerifiedDate; const d = /^\d{4}-\d{2}-\d{2}/.test(String(v)) ? new Date(`${String(v).slice(0, 10)}T12:00:00`) : new Date(Number(v) * 1000); return Number.isNaN(d.getTime()) ? "" : d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }); })()}
                       </span>
                     )}
                   </div>

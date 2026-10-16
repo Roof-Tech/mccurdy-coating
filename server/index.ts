@@ -5,6 +5,8 @@ import { sqliteConnection } from "./db";
 import { startIncentiveScheduler } from "./incentive-scheduler";
 import { serveStatic } from "./static";
 import { processScheduledEmails } from "./scheduled-jobs";
+import { runStormWatch } from "./retention";
+import { runInvoiceReminders } from "./customer-portal";
 import { createServer } from "http";
 
 const app = express();
@@ -99,6 +101,9 @@ app.use((req, res, next) => {
   processScheduledEmails().catch((error) =>
     console.error("[scheduled-jobs]", error),
   );
+  setInterval(() => runInvoiceReminders().catch((e) => console.error("[invoice-reminders]", e)), 15 * 60 * 1000);
+  // Storm watch: every 6 hours (sends at most once per 7 days, opt-in customers only).
+  setInterval(() => runStormWatch().catch((e) => console.error("[storm-watch]", e)), 6 * 60 * 60 * 1000);
 
   // Start yearly + quarterly auto-refresh of county incentives.
   // Fires Jan 1 (full refresh) and Apr 1 / Jul 1 / Oct 1 (safety checks).
