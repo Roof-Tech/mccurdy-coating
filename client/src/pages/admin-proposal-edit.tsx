@@ -10,10 +10,10 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { useRoute, Link } from "wouter";
+import { useRoute } from "wouter";
 import {
   FileText, Upload, Trash2, ArrowLeft, File, Image, FileSpreadsheet,
-  Eye, X, Sparkles, Plus, Save, Check, Copy,
+  Eye, X, Sparkles, Plus, Save, Check, Copy, Loader2, Star,
 } from "lucide-react";
 import { useState, useRef, useCallback, useEffect } from "react";
 import type { Proposal, Material, Document as DocType, WarrantyDocument, ProposalImage } from "@shared/schema";
@@ -29,8 +29,18 @@ function tryParseArray(json: string | null | undefined): string[] {
   }
 }
 
-function FileIcon({ name }: { name: string }) {
-  const ext = name.split(".").pop()?.toLowerCase();
+function toLines(json: string | null | undefined): string {
+  return tryParseArray(json).join("\n");
+}
+
+function fromLines(text: string): string {
+  return JSON.stringify((text || "").split("\n").filter(s => s.trim()));
+}
+
+// Pass url (actual file URL) so the extension is readable even when title has no extension
+function FileIcon({ name, url }: { name: string; url?: string }) {
+  const source = url || name;
+  const ext = source.split(".").pop()?.toLowerCase().split("?")[0];
   if (ext === "pdf") return <FileText className="w-5 h-5 text-red-500" />;
   if (["jpg", "jpeg", "png", "gif", "webp"].includes(ext || "")) return <Image className="w-5 h-5 text-blue-500" />;
   if (["xls", "xlsx", "csv"].includes(ext || "")) return <FileSpreadsheet className="w-5 h-5 text-green-500" />;
@@ -48,19 +58,25 @@ function UploadZone({ onUpload, label }: { onUpload: (file: File) => void; label
     if (file) onUpload(file);
   }, [onUpload]);
 
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    // Ignore leave events when cursor moves over a child element
+    if (e.currentTarget.contains(e.relatedTarget as Node)) return;
+    setDragging(false);
+  }, []);
+
   return (
     <div
       className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${dragging ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"}`}
       onClick={() => fileRef.current?.click()}
       onDragOver={e => { e.preventDefault(); setDragging(true); }}
-      onDragLeave={() => setDragging(false)}
+      onDragLeave={handleDragLeave}
       onDrop={handleDrop}
       data-testid="upload-zone"
     >
       <Upload className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
       <p className="text-sm font-medium text-foreground">{label}</p>
       <p className="text-xs text-muted-foreground mt-1">Drag & drop or click to browse</p>
-      <p className="text-[10px] text-muted-foreground mt-0.5">PDF, images, Word, Excel — up to 50MB</p>
+      <p className="text-[10px] text-muted-foreground mt-0.5">PDF, images, Word, Excel — up to 50 MB</p>
       <input
         ref={fileRef}
         type="file"
@@ -75,6 +91,7 @@ function UploadZone({ onUpload, label }: { onUpload: (file: File) => void; label
 // ── Pricing tier editor ────────────────────────────────────────
 
 interface PricingOption {
+  id: string;
   name: string;
   price: string;
   description: string;
@@ -91,6 +108,11 @@ function PricingTierCard({
   onChange: (updates: Partial<PricingOption>) => void;
   onRemove: () => void;
 }) {
+  const handleRemove = () => {
+    if (!window.confirm("Remove this pricing tier? This cannot be undone.")) return;
+    onRemove();
+  };
+
   return (
     <div className={`border rounded-lg p-4 space-y-3 ${opt.recommended ? "border-accent/60 bg-accent/5" : "border-border"}`}>
       <div className="flex items-center justify-between gap-2">
@@ -103,14 +125,16 @@ function PricingTierCard({
           />
           <span className="font-medium text-foreground">Mark as Recommended</span>
           {opt.recommended && (
-            <Badge className="text-[9px] h-4 bg-accent text-white border-0">★ Recommended</Badge>
+            <Badge className="text-[10px] h-4 bg-accent text-white border-0 flex items-center gap-0.5">
+              <Star className="w-2.5 h-2.5 fill-current" /> Recommended
+            </Badge>
           )}
         </label>
         <Button
           variant="ghost"
           size="sm"
           className="h-6 w-6 p-0 text-destructive hover:text-destructive"
-          onClick={onRemove}
+          onClick={handleRemove}
           data-testid="button-remove-tier"
         >
           <X className="w-3.5 h-3.5" />
@@ -158,19 +182,26 @@ function PricingTierCard({
   );
 }
 
+const IMAGE_TYPE_LABELS: Record<string, string> = {
+  before: "Before",
+  after: "After",
+  comparison: "Comparison",
+  ai_white: "AI White",
+  ai_gray: "AI Gray",
+};
+
 function AITransformSection({ images }: { images: ProposalImage[] }) {
   const beforeImages = images.filter(img => img.imageType === "before");
-  const aiWhiteImages = images.filter(img => img.imageType === "ai_white");
-  const aiGrayImages = images.filter(img => img.imageType === "ai_gray");
+  const aiImages = images.filter(img => img.imageType === "ai_white" || img.imageType === "ai_gray");
   if (beforeImages.length === 0) return null;
-  const totalAi = aiWhiteImages.length + aiGrayImages.length;
+  const totalAi = aiImages.length;
   return (
     <div className="rounded-lg border border-amber-200 bg-amber-50/50 dark:bg-amber-950/20 dark:border-amber-800 p-4 space-y-3">
       <div className="flex items-center gap-2">
         <Sparkles className="w-4 h-4 text-amber-600" />
         <h4 className="text-sm font-semibold text-foreground">AI Roof Transformation</h4>
         {totalAi > 0 && (
-          <Badge className="text-[9px] h-4 bg-green-100 text-green-800 border-green-300">
+          <Badge className="text-[10px] h-4 bg-green-100 text-green-800 border-green-300">
             {totalAi} preview{totalAi > 1 ? "s" : ""} ready
           </Badge>
         )}
@@ -192,21 +223,41 @@ function AITransformSection({ images }: { images: ProposalImage[] }) {
 
 export default function AdminProposalEdit() {
   const [, params] = useRoute("/admin/proposals/:id");
-  const proposalId = parseInt(params?.id || "0");
+  const proposalId = parseInt(params?.id || "0", 10);
   const { toast } = useToast();
 
   const [uploading, setUploading] = useState(false);
   const [uploadCategory, setUploadCategory] = useState("proposal");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [isDirty, setIsDirty] = useState(false);
 
   // Content editing state — flat string map (JSON arrays stored as line-separated text)
   const [ed, setEd] = useState<Record<string, string>>({});
   const [pricingOpts, setPricingOpts] = useState<PricingOption[]>([]);
   const edInitialized = useRef(false);
 
-  const setField = (field: string, value: string) =>
+  const setField = (field: string, value: string) => {
+    setIsDirty(true);
     setEd(prev => ({ ...prev, [field]: value }));
+  };
+
+  // ── Reset init flag when navigating to a different proposal ──
+  useEffect(() => {
+    edInitialized.current = false;
+    setIsDirty(false);
+  }, [proposalId]);
+
+  // ── Warn on unsaved changes ──
+  useEffect(() => {
+    const handler = (e: BeforeUnloadEvent) => {
+      if (!isDirty) return;
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [isDirty]);
 
   // ── Data fetching ──
   const { data: proposal } = useQuery<Proposal>({
@@ -233,7 +284,13 @@ export default function AdminProposalEdit() {
     enabled: !!proposalId,
   });
 
-  // ── Initialize edit state from proposal (once) ──
+  const { data: materials = [] } = useQuery<Material[]>({
+    queryKey: ["/api/admin/proposals", proposalId, "materials"],
+    queryFn: () => apiRequest("GET", `/api/admin/proposals/${proposalId}/materials`).then(r => r.json()),
+    enabled: !!proposalId,
+  });
+
+  // ── Initialize edit state from proposal (once per proposal ID) ──
   useEffect(() => {
     if (!proposal || edInitialized.current) return;
     edInitialized.current = true;
@@ -260,23 +317,37 @@ export default function AdminProposalEdit() {
       colorNotes: proposal.colorNotes || "",
       totalDryMils: proposal.totalDryMils || "",
       milsExplanation: proposal.milsExplanation || "",
+      // Coating system details
+      coatingType: proposal.coatingType || "",
+      primer: proposal.primer || "",
+      baseCoat: proposal.baseCoat || "",
+      topCoat: proposal.topCoat || "",
+      reinforcement: proposal.reinforcement || "",
+      // Warranty
       warrantyTerm: proposal.warrantyTerm || "",
       manufacturerWarranty: proposal.manufacturerWarranty || "",
       workmanshipWarranty: proposal.workmanshipWarranty || "",
       ndlWarranty: proposal.ndlWarranty || "",
       warrantySummary: proposal.warrantySummary || "",
       warrantyMaintenance: proposal.warrantyMaintenance || "",
+      // Payment
       paymentSchedule: proposal.paymentSchedule || "",
       financingNotes: proposal.financingNotes || "",
       // JSON arrays as newline-separated text
-      roofAreas: tryParseArray(proposal.roofAreas).join("\n"),
-      whyRecommended: tryParseArray(proposal.whyRecommended).join("\n"),
-      keyIssues: tryParseArray(proposal.keyIssues).join("\n"),
-      addOns: tryParseArray(proposal.addOns).join("\n"),
+      roofAreas: toLines(proposal.roofAreas),
+      whyRecommended: toLines(proposal.whyRecommended),
+      keyIssues: toLines(proposal.keyIssues),
+      addOns: toLines(proposal.addOns),
+      alternateColors: toLines(proposal.alternateColors),
+      accessories: toLines(proposal.accessories),
     });
     try {
-      const opts = JSON.parse(proposal.pricingOptions || "[]");
-      setPricingOpts(Array.isArray(opts) ? opts : []);
+      const opts: Omit<PricingOption, "id">[] = JSON.parse(proposal.pricingOptions || "[]");
+      setPricingOpts(
+        Array.isArray(opts)
+          ? opts.map(o => ({ ...o, id: (o as any).id || crypto.randomUUID() }))
+          : []
+      );
     } catch {
       setPricingOpts([]);
     }
@@ -285,30 +356,42 @@ export default function AdminProposalEdit() {
   // ── Save content ──
   const handleSave = async () => {
     setSaving(true);
+    // Destructure line-text fields so they don't overwrite the serialized JSON versions below
+    const {
+      roofAreas: _ra, whyRecommended: _wr, keyIssues: _ki,
+      addOns: _ao, alternateColors: _ac, accessories: _acc,
+      ...restEd
+    } = ed;
     try {
       await apiRequest("PATCH", `/api/admin/proposals/${proposalId}`, {
-        ...ed,
+        ...restEd,
         pricingOptions: JSON.stringify(pricingOpts),
-        roofAreas: JSON.stringify((ed.roofAreas || "").split("\n").filter(s => s.trim())),
-        whyRecommended: JSON.stringify((ed.whyRecommended || "").split("\n").filter(s => s.trim())),
-        keyIssues: JSON.stringify((ed.keyIssues || "").split("\n").filter(s => s.trim())),
-        addOns: JSON.stringify((ed.addOns || "").split("\n").filter(s => s.trim())),
+        roofAreas: fromLines(ed.roofAreas),
+        whyRecommended: fromLines(ed.whyRecommended),
+        keyIssues: fromLines(ed.keyIssues),
+        addOns: fromLines(ed.addOns),
+        alternateColors: fromLines(ed.alternateColors),
+        accessories: fromLines(ed.accessories),
       });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/proposals", proposalId] });
       toast({ title: "Saved", description: "All changes saved successfully." });
       setSaved(true);
+      setIsDirty(false);
       setTimeout(() => setSaved(false), 3000);
     } catch (e: any) {
       toast({ title: "Save failed", description: e.message || "Please try again.", variant: "destructive" });
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
   };
 
   // ── Pricing tier helpers ──
   const addPricingTier = () => {
+    setIsDirty(true);
     setPricingOpts(prev => [
       ...prev,
       {
+        id: crypto.randomUUID(),
         name: "",
         price: "",
         description: "",
@@ -323,6 +406,7 @@ export default function AdminProposalEdit() {
   };
 
   const updatePricingTier = (i: number, updates: Partial<PricingOption>) => {
+    setIsDirty(true);
     setPricingOpts(prev => {
       const next = [...prev];
       next[i] = { ...next[i], ...updates };
@@ -331,6 +415,7 @@ export default function AdminProposalEdit() {
   };
 
   const removePricingTier = (i: number) => {
+    setIsDirty(true);
     setPricingOpts(prev => prev.filter((_, idx) => idx !== i));
   };
 
@@ -341,8 +426,13 @@ export default function AdminProposalEdit() {
       const formData = new FormData();
       formData.append("file", file);
       const uploadRes = await fetch("/api/admin/upload", { method: "POST", body: formData });
-      const uploadData = await uploadRes.json();
-      if (!uploadRes.ok) throw new Error(uploadData.error || "Upload failed");
+      let uploadData: any;
+      try {
+        uploadData = await uploadRes.json();
+      } catch {
+        throw new Error(`Upload failed: ${uploadRes.statusText}`);
+      }
+      if (!uploadRes.ok) throw new Error(uploadData?.error || "Upload failed");
 
       if (category === "photo_before" || category === "photo_after") {
         await apiRequest("POST", "/api/admin/images", {
@@ -375,40 +465,95 @@ export default function AdminProposalEdit() {
       toast({ title: "File uploaded", description: file.name });
     } catch (e: any) {
       toast({ title: "Upload failed", description: e.message, variant: "destructive" });
+    } finally {
+      setUploading(false);
     }
-    setUploading(false);
   };
 
   const deleteDocument = async (id: number) => {
-    await apiRequest("DELETE", `/api/admin/documents/${id}`);
-    queryClient.invalidateQueries({ queryKey: ["/api/admin/proposals", proposalId, "documents"] });
-    toast({ title: "Document removed" });
+    if (!window.confirm("Remove this document? This cannot be undone.")) return;
+    try {
+      await apiRequest("DELETE", `/api/admin/documents/${id}`);
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/proposals", proposalId, "documents"] });
+      toast({ title: "Document removed" });
+    } catch (e: any) {
+      toast({ title: "Delete failed", description: e.message, variant: "destructive" });
+    }
   };
 
   const deleteImage = async (id: number) => {
-    await apiRequest("DELETE", `/api/admin/images/${id}`);
-    queryClient.invalidateQueries({ queryKey: ["/api/admin/proposals", proposalId, "images"] });
-    toast({ title: "Image removed" });
+    if (!window.confirm("Remove this image? This cannot be undone.")) return;
+    try {
+      await apiRequest("DELETE", `/api/admin/images/${id}`);
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/proposals", proposalId, "images"] });
+      toast({ title: "Image removed" });
+    } catch (e: any) {
+      toast({ title: "Delete failed", description: e.message, variant: "destructive" });
+    }
   };
 
   const deleteWarrantyDoc = async (id: number) => {
-    await apiRequest("DELETE", `/api/admin/warranty-docs/${id}`);
-    queryClient.invalidateQueries({ queryKey: ["/api/admin/proposals", proposalId, "warranty-docs"] });
-    toast({ title: "Warranty document removed" });
+    if (!window.confirm("Remove this warranty document? This cannot be undone.")) return;
+    try {
+      await apiRequest("DELETE", `/api/admin/warranty-docs/${id}`);
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/proposals", proposalId, "warranty-docs"] });
+      toast({ title: "Warranty document removed" });
+    } catch (e: any) {
+      toast({ title: "Delete failed", description: e.message, variant: "destructive" });
+    }
+  };
+
+  const deleteMaterial = async (id: number) => {
+    if (!window.confirm("Remove this material? This cannot be undone.")) return;
+    try {
+      await apiRequest("DELETE", `/api/admin/materials/${id}`);
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/proposals", proposalId, "materials"] });
+      toast({ title: "Material removed" });
+    } catch (e: any) {
+      toast({ title: "Delete failed", description: e.message, variant: "destructive" });
+    }
   };
 
   const copyLink = () => {
     if (!proposal) return;
     const url = `${window.location.origin}/#/view/${proposal.accessToken}`;
-    navigator.clipboard?.writeText(url).then(() =>
-      toast({ title: "Link copied", description: "Customer proposal link copied to clipboard." })
-    );
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(url).then(() =>
+        toast({ title: "Link copied", description: "Customer proposal link copied to clipboard." })
+      ).catch(() => {
+        toast({ title: "Copy failed", description: `Link: ${url}`, variant: "destructive" });
+      });
+    } else {
+      // Fallback for non-HTTPS contexts
+      try {
+        const ta = document.createElement("textarea");
+        ta.value = url;
+        ta.style.position = "fixed";
+        ta.style.opacity = "0";
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        document.execCommand("copy");
+        document.body.removeChild(ta);
+        toast({ title: "Link copied", description: "Customer proposal link copied to clipboard." });
+      } catch {
+        toast({ title: "Copy link", description: url });
+      }
+    }
   };
+
+  if (!proposalId) {
+    return (
+      <div className="p-6 max-w-6xl mx-auto">
+        <p className="text-sm text-destructive">Invalid proposal ID.</p>
+      </div>
+    );
+  }
 
   if (!proposal) {
     return (
-      <div className="p-6 max-w-6xl mx-auto">
-        <p className="text-sm text-muted-foreground">Loading proposal...</p>
+      <div className="p-6 max-w-6xl mx-auto flex items-center gap-2 text-sm text-muted-foreground">
+        <Loader2 className="w-4 h-4 animate-spin" /> Loading proposal...
       </div>
     );
   }
@@ -426,31 +571,43 @@ export default function AdminProposalEdit() {
     { value: "photo_after", label: "Photo: After" },
   ];
 
+  const docCategoryLabel = (val: string) =>
+    docCategories.find(c => c.value === val)?.label ?? val.replace(/_/g, " ");
+
   return (
     <div className="p-6 max-w-6xl mx-auto space-y-5" data-testid="page-admin-proposal-edit">
 
       {/* ── Header ── */}
       <div className="flex items-center gap-3">
-        <Link href="/admin/proposals">
-          <Button variant="ghost" size="sm" className="h-8 gap-1.5 text-xs" data-testid="button-back">
-            <ArrowLeft className="w-3.5 h-3.5" /> Back
-          </Button>
-        </Link>
+        <a
+          href="/#/admin/proposals"
+          className="inline-flex items-center gap-1.5 h-8 px-2 text-xs font-medium rounded-md hover:bg-accent hover:text-accent-foreground transition-colors"
+          data-testid="button-back"
+        >
+          <ArrowLeft className="w-3.5 h-3.5" /> Back
+        </a>
         <div className="flex-1">
           <PageHeader
-            title={`Manage: ${proposal.customerName}`}
+            title={proposal.customerName}
             subtitle={`${proposal.proposalNumber} — ${proposal.propertyAddress}`}
             icon={<FileText className="w-5 h-5" />}
           />
         </div>
         <div className="flex gap-2">
+          {isDirty && (
+            <span className="text-[10px] text-amber-600 self-center font-medium">Unsaved changes</span>
+          )}
           <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs" onClick={copyLink}>
             <Copy className="w-3.5 h-3.5" /> Copy Link
           </Button>
-          <a href={`/#/view/${proposal.accessToken}`} target="_blank" rel="noopener noreferrer">
-            <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs" data-testid="button-preview">
-              <Eye className="w-3.5 h-3.5" /> Preview
-            </Button>
+          <a
+            href={`/#/view/${proposal.accessToken}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 h-8 px-3 text-xs font-medium border border-border rounded-md bg-background hover:bg-accent hover:text-accent-foreground transition-colors"
+            data-testid="button-preview"
+          >
+            <Eye className="w-3.5 h-3.5" /> Preview
           </a>
         </div>
       </div>
@@ -484,15 +641,15 @@ export default function AdminProposalEdit() {
             </div>
             <div>
               <span className="text-muted-foreground">County</span>
-              <div className="font-medium mt-1">{proposal.county || "—"}</div>
+              <div className="font-medium mt-1">{ed.county || proposal.county || "—"}</div>
             </div>
             <div>
               <span className="text-muted-foreground">System</span>
-              <div className="font-medium mt-1 truncate">{proposal.systemType || "—"}</div>
+              <div className="font-medium mt-1 truncate">{ed.systemType || proposal.systemType || "—"}</div>
             </div>
             <div>
               <span className="text-muted-foreground">Date</span>
-              <div className="font-medium mt-1">{proposal.proposalDate}</div>
+              <div className="font-medium mt-1">{ed.proposalDate || proposal.proposalDate}</div>
             </div>
           </div>
         </CardContent>
@@ -506,6 +663,9 @@ export default function AdminProposalEdit() {
           </TabsTrigger>
           <TabsTrigger value="files" className="gap-1.5 text-xs">
             <Upload className="w-3.5 h-3.5" /> Files & Media
+          </TabsTrigger>
+          <TabsTrigger value="materials" className="gap-1.5 text-xs">
+            <Star className="w-3.5 h-3.5" /> Materials
           </TabsTrigger>
         </TabsList>
 
@@ -521,27 +681,59 @@ export default function AdminProposalEdit() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <Label className="text-xs">Customer Name</Label>
-                  <Input value={ed.customerName || ""} onChange={e => setField("customerName", e.target.value)} />
+                  <Input
+                    placeholder="John Smith"
+                    value={ed.customerName || ""}
+                    onChange={e => setField("customerName", e.target.value)}
+                  />
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-xs">Company Name</Label>
-                  <Input value={ed.companyName || ""} onChange={e => setField("companyName", e.target.value)} />
+                  <Input
+                    placeholder="Smith Industrial LLC"
+                    value={ed.companyName || ""}
+                    onChange={e => setField("companyName", e.target.value)}
+                  />
                 </div>
                 <div className="sm:col-span-2 space-y-1.5">
                   <Label className="text-xs">Property Address</Label>
-                  <Input value={ed.propertyAddress || ""} onChange={e => setField("propertyAddress", e.target.value)} />
+                  <Input
+                    placeholder="1234 Industrial Blvd, South San Francisco, CA 94080"
+                    value={ed.propertyAddress || ""}
+                    onChange={e => setField("propertyAddress", e.target.value)}
+                  />
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-xs">City</Label>
-                  <Input value={ed.city || ""} onChange={e => setField("city", e.target.value)} />
+                  <Input
+                    placeholder="South San Francisco"
+                    value={ed.city || ""}
+                    onChange={e => setField("city", e.target.value)}
+                  />
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-xs">County</Label>
-                  <Input value={ed.county || ""} onChange={e => setField("county", e.target.value)} />
+                  <Input
+                    placeholder="San Mateo"
+                    value={ed.county || ""}
+                    onChange={e => setField("county", e.target.value)}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">State</Label>
+                  <Input
+                    placeholder="CA"
+                    value={ed.state || ""}
+                    onChange={e => setField("state", e.target.value)}
+                  />
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-xs">Utility Territory</Label>
-                  <Input placeholder="PG&E" value={ed.utilityTerritory || ""} onChange={e => setField("utilityTerritory", e.target.value)} />
+                  <Input
+                    placeholder="PG&E"
+                    value={ed.utilityTerritory || ""}
+                    onChange={e => setField("utilityTerritory", e.target.value)}
+                  />
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-xs">Project Type</Label>
@@ -555,11 +747,19 @@ export default function AdminProposalEdit() {
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-xs">Proposal Date</Label>
-                  <Input type="date" value={ed.proposalDate || ""} onChange={e => setField("proposalDate", e.target.value)} />
+                  <Input
+                    type="date"
+                    value={ed.proposalDate || ""}
+                    onChange={e => setField("proposalDate", e.target.value)}
+                  />
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-xs">Estimator</Label>
-                  <Input value={ed.estimator || ""} onChange={e => setField("estimator", e.target.value)} />
+                  <Input
+                    placeholder="Mike McCurdy"
+                    value={ed.estimator || ""}
+                    onChange={e => setField("estimator", e.target.value)}
+                  />
                 </div>
               </div>
             </CardContent>
@@ -575,7 +775,7 @@ export default function AdminProposalEdit() {
                 <Label className="text-xs">Welcome Message</Label>
                 <Textarea
                   className="min-h-[80px] text-sm"
-                  placeholder="Thank you for allowing McCurdy Roofing..."
+                  placeholder="Thank you for allowing McCurdy Roofing to evaluate your roofing needs..."
                   value={ed.welcomeMessage || ""}
                   onChange={e => setField("welcomeMessage", e.target.value)}
                 />
@@ -632,6 +832,15 @@ export default function AdminProposalEdit() {
                   placeholder={"Additional drain installation\nParapet wall cap metal replacement"}
                   value={ed.addOns || ""}
                   onChange={e => setField("addOns", e.target.value)}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Accessories — one per line</Label>
+                <Textarea
+                  className="min-h-[52px] text-sm"
+                  placeholder={"Pitch pans\nFlashing tape\nDrain covers"}
+                  value={ed.accessories || ""}
+                  onChange={e => setField("accessories", e.target.value)}
                 />
               </div>
             </CardContent>
@@ -691,7 +900,7 @@ export default function AdminProposalEdit() {
               )}
               {pricingOpts.map((opt, i) => (
                 <PricingTierCard
-                  key={i}
+                  key={opt.id}
                   opt={opt}
                   onChange={updates => updatePricingTier(i, updates)}
                   onRemove={() => removePricingTier(i)}
@@ -748,6 +957,55 @@ export default function AdminProposalEdit() {
                     onChange={e => setField("warrantyTerm", e.target.value)}
                   />
                 </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Coating Type</Label>
+                  <Input
+                    placeholder="ASC Qualifying Silicone Roof Coating"
+                    value={ed.coatingType || ""}
+                    onChange={e => setField("coatingType", e.target.value)}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Primer</Label>
+                  <Input
+                    placeholder="ASC Silicone Primer"
+                    value={ed.primer || ""}
+                    onChange={e => setField("primer", e.target.value)}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Base Coat</Label>
+                  <Input
+                    placeholder="ASC Silicone Base Coat"
+                    value={ed.baseCoat || ""}
+                    onChange={e => setField("baseCoat", e.target.value)}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Top Coat</Label>
+                  <Input
+                    placeholder="ASC Silicone Top Coat"
+                    value={ed.topCoat || ""}
+                    onChange={e => setField("topCoat", e.target.value)}
+                  />
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Reinforcement</Label>
+                <Input
+                  placeholder="Polyester reinforcing fabric at all seams, penetrations, and transitions"
+                  value={ed.reinforcement || ""}
+                  onChange={e => setField("reinforcement", e.target.value)}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Alternate Colors — one per line</Label>
+                <Textarea
+                  className="min-h-[52px] text-sm"
+                  placeholder={"Light Gray\nTan"}
+                  value={ed.alternateColors || ""}
+                  onChange={e => setField("alternateColors", e.target.value)}
+                />
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs">Mils Explanation</Label>
@@ -796,7 +1054,7 @@ export default function AdminProposalEdit() {
                 <Label className="text-xs">NDL Warranty Description</Label>
                 <Textarea
                   className="min-h-[60px] text-sm"
-                  placeholder="NDL warranty covers 100% of material and labor costs for the full warranty term..."
+                  placeholder="NDL warranty covers 100% of material and labor costs for the full warranty term with no depreciation or dollar cap."
                   value={ed.ndlWarranty || ""}
                   onChange={e => setField("ndlWarranty", e.target.value)}
                 />
@@ -805,6 +1063,7 @@ export default function AdminProposalEdit() {
                 <Label className="text-xs">Warranty Summary</Label>
                 <Textarea
                   className="min-h-[60px] text-sm"
+                  placeholder="Your roof will be covered by an ASC manufacturer warranty matched to the mil thickness of the system installed, plus a McCurdy Roofing workmanship warranty."
                   value={ed.warrantySummary || ""}
                   onChange={e => setField("warrantySummary", e.target.value)}
                 />
@@ -813,7 +1072,7 @@ export default function AdminProposalEdit() {
                 <Label className="text-xs">Maintenance Requirements</Label>
                 <Textarea
                   className="min-h-[56px] text-sm"
-                  placeholder="Annual inspection recommended..."
+                  placeholder="Annual inspection recommended. McCurdy offers a maintenance program that includes roof inspection, drain clearing, minor touch-up repairs, and warranty compliance documentation."
                   value={ed.warrantyMaintenance || ""}
                   onChange={e => setField("warrantyMaintenance", e.target.value)}
                 />
@@ -859,7 +1118,7 @@ export default function AdminProposalEdit() {
               {saved ? (
                 <><Check className="w-4 h-4" /> Saved</>
               ) : saving ? (
-                "Saving..."
+                <><Loader2 className="w-4 h-4 animate-spin" /> Saving...</>
               ) : (
                 <><Save className="w-4 h-4" /> Save Changes</>
               )}
@@ -897,10 +1156,19 @@ export default function AdminProposalEdit() {
                 onUpload={file => handleUpload(file, uploadCategory)}
               />
               {uploading && (
-                <p className="text-xs text-center text-muted-foreground animate-pulse">Uploading...</p>
+                <p className="text-xs text-center text-muted-foreground flex items-center justify-center gap-1.5">
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" /> Uploading...
+                </p>
               )}
             </CardContent>
           </Card>
+
+          {/* Empty state when no files exist */}
+          {documents.length === 0 && images.length === 0 && warrantyDocs.length === 0 && (
+            <p className="text-xs text-center text-muted-foreground py-4">
+              No files uploaded yet. Use the categories above to add documents, photos, or warranty paperwork.
+            </p>
+          )}
 
           {/* Documents list */}
           {documents.length > 0 && (
@@ -913,17 +1181,17 @@ export default function AdminProposalEdit() {
               <CardContent className="space-y-2">
                 {documents.map(doc => (
                   <div key={doc.id} className="flex items-center gap-3 p-2 rounded-md hover:bg-muted/50 group" data-testid={`row-doc-${doc.id}`}>
-                    <FileIcon name={doc.title} />
+                    <FileIcon name={doc.title} url={doc.documentUrl || undefined} />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium truncate">{doc.title}</p>
                       <div className="flex items-center gap-2">
-                        <Badge variant="outline" className="text-[9px]">{doc.category}</Badge>
+                        <Badge variant="outline" className="text-[10px]">{docCategoryLabel(doc.category)}</Badge>
                         {doc.description && (
                           <span className="text-[10px] text-muted-foreground truncate">{doc.description}</span>
                         )}
                       </div>
                     </div>
-                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="flex gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                       {doc.documentUrl && (
                         <a href={doc.documentUrl} target="_blank" rel="noopener noreferrer">
                           <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
@@ -964,16 +1232,18 @@ export default function AdminProposalEdit() {
                         <Button
                           variant="destructive"
                           size="sm"
-                          className="h-7 text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                          className="h-7 text-xs opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
                           onClick={() => deleteImage(img.id)}
                         >
                           <Trash2 className="w-3 h-3 mr-1" /> Remove
                         </Button>
                       </div>
-                      <div className="p-2">
-                        <Badge variant="outline" className="text-[9px]">{img.imageType}</Badge>
+                      <div className="p-2 flex items-center gap-1 overflow-hidden">
+                        <Badge variant="outline" className="text-[10px] flex-shrink-0">
+                          {IMAGE_TYPE_LABELS[img.imageType] ?? img.imageType}
+                        </Badge>
                         {img.caption && (
-                          <span className="text-[10px] text-muted-foreground ml-1">{img.caption}</span>
+                          <span className="text-[10px] text-muted-foreground truncate">{img.caption}</span>
                         )}
                       </div>
                     </div>
@@ -999,10 +1269,10 @@ export default function AdminProposalEdit() {
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium truncate">{doc.title}</p>
                       {doc.documentType && (
-                        <Badge variant="outline" className="text-[9px]">{doc.documentType}</Badge>
+                        <Badge variant="outline" className="text-[10px] capitalize">{doc.documentType.replace(/_/g, " ")}</Badge>
                       )}
                     </div>
-                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="flex gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                       {doc.documentUrl && (
                         <a href={doc.documentUrl} target="_blank" rel="noopener noreferrer">
                           <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
@@ -1025,6 +1295,61 @@ export default function AdminProposalEdit() {
               </CardContent>
             </Card>
           )}
+        </TabsContent>
+
+        {/* ══ MATERIALS TAB ══ */}
+        <TabsContent value="materials" className="space-y-4 mt-4">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                <Star className="w-4 h-4 text-primary" /> Materials Library ({materials.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {materials.length === 0 ? (
+                <p className="text-xs text-muted-foreground text-center py-6">
+                  No materials added yet. Materials are seeded automatically when creating a proposal.
+                </p>
+              ) : (
+                materials
+                  .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
+                  .map(mat => (
+                    <div
+                      key={mat.id}
+                      className="flex items-start gap-3 p-3 rounded-md border bg-muted/20 group"
+                      data-testid={`row-material-${mat.id}`}
+                    >
+                      <div className="flex-1 min-w-0 space-y-0.5">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium">{mat.productName}</span>
+                          {mat.category && (
+                            <Badge variant="outline" className="text-[10px] capitalize">{mat.category.replace(/_/g, " ")}</Badge>
+                          )}
+                        </div>
+                        {mat.manufacturer && (
+                          <p className="text-xs text-muted-foreground">{mat.manufacturer}</p>
+                        )}
+                        {mat.usedFor && (
+                          <p className="text-xs text-foreground/70">{mat.usedFor}</p>
+                        )}
+                        {mat.technicalSummary && (
+                          <p className="text-[11px] text-muted-foreground italic">{mat.technicalSummary}</p>
+                        )}
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 w-7 p-0 text-destructive opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity flex-shrink-0"
+                        onClick={() => deleteMaterial(mat.id)}
+                        data-testid={`button-delete-material-${mat.id}`}
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </Button>
+                    </div>
+                  ))
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>
