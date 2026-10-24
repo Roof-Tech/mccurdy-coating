@@ -10,7 +10,6 @@ import {
   Palette, DollarSign, Shield, ImageIcon, TrendingUp,
   Scale, Droplets, Printer, FolderOpen, Users, CheckCircle,
 } from "lucide-react";
-import { PerplexityAttribution } from "./PerplexityAttribution";
 import { useProposal } from "@/lib/proposal-context";
 
 const customerNav = [
@@ -82,7 +81,6 @@ export function ProposalSidebar() {
         <div className="text-[11px] text-sidebar-foreground/40 text-center">
           McCurdy Roofing Inc. &middot; Lic #477152
         </div>
-        <PerplexityAttribution />
       </SidebarFooter>
     </Sidebar>
   );

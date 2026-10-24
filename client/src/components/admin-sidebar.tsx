@@ -8,7 +8,6 @@ import { McCurdyLogo } from "./mccurdy-logo";
 import {
   LayoutDashboard, FileText, MessageSquare, Activity, Settings,
 } from "lucide-react";
-import { PerplexityAttribution } from "./PerplexityAttribution";
 
 const adminNav = [
   { title: "Dashboard", url: "/admin", icon: LayoutDashboard },
@@ -63,7 +62,6 @@ export function AdminSidebar() {
         <div className="text-[11px] text-sidebar-foreground/40 text-center">
           McCurdy Roofing Inc. &middot; Admin Portal
         </div>
-        <PerplexityAttribution />
       </SidebarFooter>
     </Sidebar>
   );

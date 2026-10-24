@@ -7,6 +7,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { ProposalSidebar } from "@/components/proposal-sidebar";
 import { AdminSidebar } from "@/components/admin-sidebar";
+import { AdminAuthGate } from "@/components/admin-auth-gate";
 import { ProposalProvider } from "@/lib/proposal-context";
 import { useState, useEffect } from "react";
 
@@ -91,6 +92,7 @@ function AdminApp() {
   };
 
   return (
+    <AdminAuthGate>
     <SidebarProvider style={sidebarStyle as React.CSSProperties}>
       <div className="flex h-screen w-full">
         <AdminSidebar />
@@ -113,6 +115,7 @@ function AdminApp() {
         </div>
       </div>
     </SidebarProvider>
+    </AdminAuthGate>
   );
 }
 
